@@ -1,96 +1,132 @@
 package com.main;
 
 import com.utils.Constants;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import com.utils.JsonHelper;
+import com.utils.UtilFunctions;
+import com.utils.Variable;
+import elemental.json.Json;
+import elemental.json.JsonObject;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
- * @author ChristofferHjeltnes
+ * @author Christoffer Hjeltnes Støle
  */
-public class SNP {
-    
+public class SNP {    
     String ID;
     Constants constants = new Constants();
     String[] ageVariables = constants.getAgeVariables();
-    //ResultSet resultSet;
     String chromosome;
     String position;
+    Map <String, String> sexMap = constants.getSexMap();
+    UtilFunctions utilFunctions = new UtilFunctions();
     
-    Map <String, Map <String, Map <String, Map <String,
-            List <String>>>>> genotypes;
+    JsonObject dataObject;
     
-    public SNP(String ID, String chromosome, String position) {
-        this.ID = ID;
+    public SNP(String ID, String chromosome, String position, String data) {
+        if (ID.contains(":")) {
+            this.ID = "?";
+        }
+        else {
+            this.ID = ID;
+        }        
         this.chromosome = chromosome;
         this.position = position;
-        //this.resultSet = resultSet;
-        //build();
+        
+        if (data != null) {
+            handleData(data);
+        }        
     }
     
-    
-    public void setData(ResultSet resultSet) {
-        genotypes = new HashMap();
-        genotypes.put("AA", new HashMap());
-        genotypes.put("AB", new HashMap());
-        genotypes.put("BB", new HashMap());
+    private void handleData(String data) {
+        dataObject = Json.createObject();
         
-        for (String genotype : new String[] {"AA", "AB", "BB"}) {        
-            for (String attribute : new String[] {"height", "weight", "BMI"}) {
-                genotypes.get(genotype).put(attribute, new HashMap());
-                for (String sex : new String [] {"female", "male"}) {
-                    genotypes.get(genotype).get(attribute).put(sex, new HashMap());                    
-                }
-            }   
-        }
+        //System.out.println("handleData(): " + data);
         
-        try {
-            ID = resultSet.getString("id");
-                        
-            while (resultSet.next()) {
-                String genotype = resultSet.getString("snp");
-                String attribute = resultSet.getString("pheno");
-                String sex = resultSet.getString("sex").toLowerCase();
-                if (!attribute.equals("BMI")) {
-                    attribute = attribute.toLowerCase();
+        String [] lines = data.split("\n");
+        
+        //System.out.println("lines: " + Arrays.toString(lines));
+        
+        for (String line : lines) {
+            String [] columns = line.split("\t");
+            //System.out.println("columns: " + Arrays.toString(columns));
+            String rawPhenotype = columns[0];
+            String sex = sexMap.get(columns[1]);
+            String genotype = columns[2];
+            String statistic = columns[3];
+            String value = columns[4];
+            String phenotype = "";
+            String age = "";
+            boolean longitudinal = false;
+            
+            Pattern pattern = Pattern.compile("(.*?)(Birth|[0-9-]+(w|m|y))");
+            Matcher patternMatch = pattern.matcher(rawPhenotype);
+            if (patternMatch.find()) {
+                longitudinal = true;
+                phenotype = patternMatch.group(1);
+                age = patternMatch.group(2).toLowerCase();
+//                System.out.println("phenoype: " + phenotype + ", age: " + age);
+            }
+            else {
+                phenotype = rawPhenotype;
+            }
+            
+            phenotype = new Variable(phenotype).getDisplayName();
+            statistic = new Variable(statistic).getDisplayName();
+            if (longitudinal && statistic.equals("50%")) {
+                statistic = "median";
+            }
+
+            if (!dataObject.hasKey(phenotype)) {
+                dataObject.put(phenotype, Json.createObject());
+                for (String sexKey : new String [] {"female", "male"}) {
+                    dataObject.getObject(phenotype).put(sexKey, Json.createObject());
+                    for (String genotypeKey : new String [] {"AA", "AB", "BB"}) {
+                        dataObject.getObject(phenotype).getObject(sexKey).put(genotypeKey, Json.createObject());
+                    }
                 }
-                String statistic = resultSet.getString("stat");
-                if (statistic.equals("Median")) {
-                    statistic = statistic.toLowerCase();
+                dataObject.getObject(phenotype).put("longitudinal", longitudinal);
+            }
+            
+            if (longitudinal) {
+//                System.out.println("Objects here: " + Arrays.toString(new JsonObject[] {
+//                    dataObject.getObject(phenotype).getObject(sex),
+//                    dataObject.getObject(phenotype).getObject(sex).getObject(genotype)}));
+                if (!dataObject.getObject(phenotype).getObject(sex).getObject(genotype).hasKey(statistic)) {
+                    dataObject.getObject(phenotype).getObject(sex).getObject(genotype).put(statistic, Json.createArray());
                 }
-                //System.out.println(genotype + " " + attribute + " " + statistic);
-                if (!genotypes.get(genotype).get(attribute).get(sex).containsKey(statistic)) {
-                    genotypes.get(genotype).get(attribute).get(sex).put(statistic, new ArrayList());
-                }
-                for (String age : ageVariables) {
-                    genotypes.get(genotype).get(attribute).get(sex).get(statistic).add(resultSet.getString(age));
-                    //totalData.get(dataName).add(resultSet.getString(age));
-                    //System.out.println(resultSet.getString(age));
-                }
-                //index++;
+                
+                int index = dataObject.getObject(phenotype).getObject(sex).getObject(genotype).getArray(statistic).length();
+                dataObject.getObject(phenotype).getObject(sex).getObject(genotype).getArray(statistic).set(index, value);
+            }
+            else {
+                dataObject.getObject(phenotype).getObject(sex).getObject(genotype).put(statistic, value);
             }
         }
-        catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
+        //System.out.println("data object: " + dataObject.toJson()); // TODO: await
+        //System.out.println("data object: " + new JsonHelper().stringify(dataObject));
     }
+
     
     public boolean hasData() {
-        return genotypes != null;
+        return dataObject != null;
     }
     
-    public List <String> getData(String query) {
-        if (genotypes == null) {
+    public JsonObject getDataObject() {
+        return dataObject;
+    }
+    
+    public Json queryData(String query) {
+        if (dataObject == null) {
             return null;
         }
         String[] args = query.split(" ");
         //System.out.println(query);
         //System.out.println(genotypes.get(args[0]).get(args[1]));
-        return genotypes.get(args[0]).get(args[1]).get(args[2]).get(args[3]);
+        return dataObject.getObject(args[0]).getObject(args[1]).getObject(args[2]).get(args[3]);
     }
     
     public String getID() {
@@ -101,6 +137,5 @@ public class SNP {
     }
     public String getPosition() {
         return position;
-    }
-    
+    }    
 }

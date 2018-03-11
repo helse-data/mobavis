@@ -3,28 +3,40 @@ package com.main;
 import javax.servlet.annotation.WebServlet;
 
 import com.vaadin.annotations.Theme;
+import com.vaadin.annotations.Title;
 import com.vaadin.annotations.VaadinServletConfiguration;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServlet;
 import com.vaadin.ui.Component;
 import com.vaadin.ui.UI;
+import java.util.HashMap;
+import java.util.Map;
 
-@Theme("mytheme")
+@Theme("mobatheme")
+@Title("Mobavis")
 public class MyUI extends UI {
     
-     Main main;
-     LandingPage landingPage;
+    Main main;
+    Map <String, Object> highLevelComponents = new HashMap();
+    LandingPage landingPage;
        
-    @Override
+    @Override    
     protected void init(VaadinRequest vaadinRequest) {
-        landingPage = new LandingPage(this);
-        setContent(landingPage.getComponent());
-        main = new Main(this);
+        landingPage = new LandingPage(highLevelComponents);
+        highLevelComponents.put("landing page", landingPage);
+        main = new Main(highLevelComponents);
+        highLevelComponents.put("main", main);
+        // 0
+//        setContent(landingPage.getComponent());
+        // -1
+        main.execute(3);
+        setContent(main.getComponent());
+        // 1
     }
     
-    public void enter(boolean firstLanding) {
+    public void enter(boolean firstLanding, int viewOption) {
         if (firstLanding) {
-            main.execute();
+            main.execute(viewOption);
         }        
         setContent(main.getComponent());
     }

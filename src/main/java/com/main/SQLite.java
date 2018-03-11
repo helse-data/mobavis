@@ -65,23 +65,23 @@ public class SQLite {
         //System.out.println(tables.get("1").get(tables.get("1").size()-1));
     }
     
-    public SNP getSNP(String SNPID) {        
-        System.out.println("Fetching SNP \"" + SNPID + "\" ...");
+    public SNPOld getSNP(String snpID) {        
+        System.out.println("Fetching SNP \"" + snpID + "\" ...");
         
         String chromosome;
         String position;
         
         String table;
-        if (SNPID.matches("\\d+_.*")){
-            String[] split = SNPID.split("_");
+        if (snpID.matches("\\d+_.*")){
+            String[] split = snpID.split("_");
 
             chromosome = split[0];
             position = split[1];
         }
         else {
-            String [] searchResult = searchIndices(SNPID);
+            String [] searchResult = searchIndices(snpID);
             if (searchResult == null) {
-                System.out.println("The SNP \"" + SNPID + "\" could not be located in the correct index.");
+                System.out.println("The SNP \"" + snpID + "\" could not be located in the correct index.");
                 return null;
             }
             chromosome = searchResult[0];
@@ -89,11 +89,11 @@ public class SQLite {
             
         }
         
-        SNP snp = new SNP(SNPID, chromosome, position);
+        SNPOld snp = new SNPOld(snpID, chromosome, position);
         
         table = getTable(chromosome, position);
         if (table == null) {
-                System.out.println("No table was found for the SNP \"" + SNPID + "\"");
+                System.out.println("No table was found for the SNP \"" + snpID + "\"");
         }
         queryDatabaseTable(chromosome + "_db", table, snp);
 
@@ -103,7 +103,7 @@ public class SQLite {
     }
     
         
-    private void queryDatabaseTable(String database, String table, SNP snp) {
+    private void queryDatabaseTable(String database, String table, SNPOld snp) {
         ResultSet resultSet;
                 
         String chromosome = database.replaceFirst("_db", "");
