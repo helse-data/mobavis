@@ -6,7 +6,7 @@ import java.util.List;
  *
  * @author ChristofferHjeltnes
  */
-public class HTML {
+public class HtmlHelper {
     
     public String bold(String string) {
         return "<b>" + string + "</b>";
@@ -41,6 +41,10 @@ public class HTML {
         }
         listString += "</ul>";
         return listString;
+    }
+    
+    public String colour(String string, String rgb) {
+        return "<div style=\"color:rgb" + rgb + "\">" + string + "</div>";
     }
     
 }
