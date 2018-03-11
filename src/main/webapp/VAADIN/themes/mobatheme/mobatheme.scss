@@ -1,0 +1,30 @@
+@import "../valo/valo.scss";
+
+@mixin mobatheme {
+    @include valo;
+    
+    .v-popupview-own-popupview-style {      
+	color: #000000;
+	text-decoration: none;
+    }
+    
+    .v-popupview-own-popupview-style:focus:after {
+	border-color: #197de1;
+	-webkit-box-shadow: 0 0 0 2px rgba(25, 125, 225, 0.5);
+	box-shadow: 0 0 0 2px rgba(25, 125, 225, 0.5);
+}
+
+    .v-button-own-button-link-style {
+        color: #000000;
+        text-decoration: none;
+    }
+     
+    .v-textfield-problem {
+	border-color: red;
+	box-shadow: 0 0 0 2px rgba(225, 25, 25, 0.5);
+    }
+    .v-textfield-problem:focus {
+	border-color: yellow;
+	box-shadow: 0 0 0 2px rgba(255, 153, 0, 0.5);
+    }
+}
