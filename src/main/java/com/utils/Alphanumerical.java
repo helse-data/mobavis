@@ -57,8 +57,8 @@ public class Alphanumerical implements Comparable<Alphanumerical> {
             }
         }
         
-        Pattern patternNumerical = Pattern.compile("^([0-9]+)");
-        Pattern patternNonNumerical = Pattern.compile("^([^0-9]+)");
+        Pattern patternNumerical = Pattern.compile("^([<>]|)([0-9]+)");
+        Pattern patternNonNumerical = Pattern.compile("^([<>]|)([^0-9]+)");
         Matcher matchThisNumerical;
         Matcher matchThisNonNumerical;
         Matcher matchOtherNumerical;
@@ -67,42 +67,62 @@ public class Alphanumerical implements Comparable<Alphanumerical> {
         String thisResidue = value;
         String otherResidue = otherValue;
         
-        while (thisResidue.length() > 0 && otherResidue.length() > 0) {
+        while (thisResidue.length() > 0 && otherResidue.length() > 0) { // compare all pairs of (non-) numerical sections of the alphanumerical
             matchThisNumerical = patternNumerical.matcher(thisResidue);
             matchThisNonNumerical = patternNonNumerical.matcher(thisResidue);
             matchOtherNumerical = patternNumerical.matcher(otherResidue);
             matchOtherNonNumerical = patternNonNumerical.matcher(otherResidue);
             
-            if (matchThisNumerical.find()) {
-                if (!matchOtherNumerical.find()) {
+            if (matchThisNumerical.find()) { // this one is numerical
+                if (!matchOtherNumerical.find()) { // the other one is not, and should come after
                     return -1;                    
                 }
-                else {
-                    int comparison = Integer.compare(Integer.parseInt(matchThisNumerical.group(1)),
-                            Integer.parseInt(matchOtherNumerical.group(1)));
-                    if (comparison != 0) {
+                else { // both are numerical                    
+                    int comparison = Integer.compare(Integer.parseInt(matchThisNumerical.group(2)),
+                            Integer.parseInt(matchOtherNumerical.group(2)));
+                    if (comparison != 0) { // we have a ranking
                         return comparison;
+                    }
+                    else if (!matchThisNumerical.group(1).equals("")) { // we may still have a ranking because of operators
+                        if (!matchOtherNumerical.group(1).equals("")) {
+                            int operatorComparison = matchThisNonNumerical.group(1).compareTo(matchOtherNonNumerical.group(1));
+                            if (comparison != 0) { // we have ranking
+                                return comparison;
+                            }
+                        }
+                        else if (matchThisNumerical.group(1).equals(">")) {
+                            return 1;
+                        }
+                        else if (matchOtherNumerical.group(1).equals(">")) {
+                            return -1;
+                        }
+                        else if (matchThisNumerical.group(1).equals("<")) {
+                            return -1;
+                        }
+                        else if (matchOtherNumerical.group(1).equals("<")) {
+                            return 1;
+                        }
                     }
                     
-                    thisResidue = thisResidue.replaceFirst(matchThisNumerical.group(1), "");
-                    otherResidue = otherResidue.replaceFirst(matchOtherNumerical.group(1), "");
+                    thisResidue = thisResidue.replaceFirst(Pattern.quote(matchThisNumerical.group(2)), ""); // replacing a string, not regex
+                    otherResidue = otherResidue.replaceFirst(Pattern.quote(matchOtherNumerical.group(2)), "");
                 }
             }
-            else if (matchThisNonNumerical.find()) {
-                if (matchOtherNumerical.find()) {
+            else if (matchThisNonNumerical.find()) { // this one is not numerical
+                if (matchOtherNumerical.find()) { // the other one is, and should come first
                     return 1;                    
                 }
-                else if (matchOtherNonNumerical.find()) {
-                    int comparison = matchThisNonNumerical.group(1).compareTo(matchOtherNonNumerical.group(1));
-                    if (comparison != 0) {
+                else if (matchOtherNonNumerical.find()) { // neither are numerical
+                    int comparison = matchThisNonNumerical.group(2).compareTo(matchOtherNonNumerical.group(2));
+                    if (comparison != 0) { // we have ranking
                         return comparison;
                     }
-                    thisResidue = thisResidue.replaceFirst(matchThisNonNumerical.group(1), "");
-                    otherResidue = otherResidue.replaceFirst(matchOtherNonNumerical.group(1), "");
+                    thisResidue = thisResidue.replaceFirst(Pattern.quote(matchThisNonNumerical.group(2)), "");
+                    otherResidue = otherResidue.replaceFirst(Pattern.quote(matchOtherNonNumerical.group(2)), "");
                 }
             }
         }
-        return value.compareTo(otherValue);
+        return value.compareTo(otherValue); //regular string comparison
     }
     
     @Override
@@ -127,6 +147,10 @@ public class Alphanumerical implements Comparable<Alphanumerical> {
         return toString().replace(" ", "&nbsp;");
     }
     
+    /**
+     * 
+     * @return the raw string representation of the object; the string the object was created with
+     */ 
     public String getValue() {
         return value;
     }

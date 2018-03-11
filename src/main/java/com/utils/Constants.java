@@ -1,25 +1,40 @@
 package com.utils;
 
+import java.util.HashMap;
+import java.util.Map;
+
 
 /**
  *
  * @author ChristofferHjeltnes
  */
-public class Constants {
-    
+public class Constants {    
     public String[] getAges() {
-        return new String[] {"birth", "5 weeks", "3 months", "6 months", "8 months", "1 year",
+        return new String[] {"birth", "6 weeks", "3 months", "6 months", "8 months", "1 year",
             "15-18 months", "2 years", "3 years", "5 years", "7 years", "8 years"};
     }
     
     public String[] getAgesShort() {
-        return new String[] {"birth", "5w", "3m", "6m", "8m", "1y", "15-18m", "2y", "3y", "5y", "7y", "8y"};
+        return new String[] {"birth", "6w", "3m", "6m", "8m", "1y", "15-18m", "2y", "3y", "5y", "7y", "8y"};
     }
 
     public String[] getAgeVariables() {
         return new String[] {"age0", "age1", "age2", "age3", "age4", "age5", "age6", "age8", "age9", "age10", "age11", "age12"};
     }
+    public Map <String, String> getSexMap() {
+        Map <String, String> map = new HashMap();
+        map.put("1", "female");
+        map.put("2", "male");
+        return map;
+    }
     
+    public String[] getTimeUnits() {
+        return new String[] {"day", "week", "month", "year"};
+    }
+    public String[] getTimeUnitsShort() {
+        return new String[] {"d", "w", "m", "y"};
+    }
+       
     public String[] getChromosomeList() {
         return new String[] {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11",
                 "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "X", "Y"};
