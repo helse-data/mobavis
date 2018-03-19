@@ -72,12 +72,12 @@ public class LandingPage {
         
         snpButton = new Button("SNP data");//, VaadinIcons.ARROW_RIGHT);
         //snpButton.addStyleName(ValoTheme.BUTTON_ICON_ALIGN_RIGHT);
-        snpButton.addClickListener(event -> checkKey(0));
+        snpButton.addClickListener(event -> checkKey(Main.MenuOption.SNP_PLOT));
         //snpButton.setSizeFull();
         
         summaryButton = new Button("summary statistics");//, VaadinIcons.ARROW_RIGHT);
         //summaryButton.addStyleName(ValoTheme.BUTTON_ICON_ALIGN_RIGHT);
-        summaryButton.addClickListener(event -> checkKey(2));
+        summaryButton.addClickListener(event -> checkKey(Main.MenuOption.SUMMARY_STATISTICS));
         //summaryButton.setSizeFull();
         
         entryDescription = new Label("Type of data to visualise:");
@@ -87,7 +87,7 @@ public class LandingPage {
         keyInputField.addShortcutListener(new ShortcutListener("Enter", ShortcutAction.KeyCode.ENTER, null) {
                     @Override
                     public void handleAction(Object sender, Object target) {
-                        checkKey(0);
+                        checkKey(Main.MenuOption.SNP_PLOT);
                     }
                     });
  
@@ -120,7 +120,7 @@ public class LandingPage {
         page.setComponentAlignment(buttonBox, Alignment.MIDDLE_CENTER);        
     }
     
-    private void enter(int viewOption) {        
+    private void enter(Main.MenuOption viewOption) {        
         //upper.enter(firstLanding, viewOption);
         
         if (firstLanding) {
@@ -133,7 +133,7 @@ public class LandingPage {
             firstLanding = false;
             returnButton = new Button("return", VaadinIcons.ARROW_RIGHT);
             returnButton.addStyleName(ValoTheme.BUTTON_ICON_ALIGN_RIGHT);
-            returnButton.addClickListener(event -> checkKey(-1));
+            returnButton.addClickListener(event -> checkKey(Main.MenuOption.SNP_PLOT));
             page.removeComponent(keyInputField);
             page.removeComponent(entryDescription);
             buttonBox.removeAllComponents();
@@ -146,7 +146,7 @@ public class LandingPage {
         return page;
     }    
     
-    private void checkKey(int viewOption) {
+    private void checkKey(Main.MenuOption viewOption) {
         if (accessKey == null) {
             try {
                 String basepath = VaadinService.getCurrent().getBaseDirectory().getAbsolutePath();

@@ -30,10 +30,15 @@ public class JsonHelper {
     
     public void putAlphanumerical(JsonObject jsonObject, String key, List <Alphanumerical> list) {
         JsonArray jsonArray = Json.createArray();
-        for (Alphanumerical element : list) {            
-            this.set(jsonArray, jsonArray.length(), element.toString());                
-        }        
-        jsonObject.put(key, jsonArray);
+        if (list == null) {
+            jsonObject.put(key, Json.createNull());
+        }
+        else {
+            for (Alphanumerical element : list) {            
+                this.set(jsonArray, jsonArray.length(), element.toString());                
+            }        
+            jsonObject.put(key, jsonArray);
+        }
         
     }
     

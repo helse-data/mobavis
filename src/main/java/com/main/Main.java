@@ -6,6 +6,7 @@ import com.plotting.ParameterisedPlotComponent;
 import com.plotting.SNPPlotBox;
 import com.utils.Constants;
 import com.utils.HtmlHelper;
+import com.vaadin.data.HasValue;
 import com.vaadin.icons.VaadinIcons;
 import com.vaadin.shared.ui.ContentMode;
 import com.vaadin.ui.Alignment;
@@ -15,6 +16,8 @@ import com.vaadin.ui.GridLayout;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.NativeSelect;
+import com.vaadin.ui.Panel;
+import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.themes.ValoTheme;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,9 +39,9 @@ public class Main {
     
     ParameterisedPlotComponent parameterisedPlotComponent;
 
-    ClickMenu viewSelector;
-    List <String> viewOptions = new ArrayList();
-    String currentView;
+    ClickMenu <MenuOption> viewSelector;
+    List <MenuOption> viewOptions = new ArrayList();
+    MenuOption currentView;
     
     List <List <Double>> percentileData;
  
@@ -54,28 +57,48 @@ public class Main {
     public Main(Map <String, Object> independentComponents) {
         this.highLevelComponents = independentComponents;
     }
+    
+    public enum MenuOption {
+        SNP_PLOT("phenotype by SNP genotype"),
+        SNP_STATISTICS("SNP statistics"),
+        SUMMARY_STATISTICS("summary MoBa statistics"),
+        NEW_SNP_PLOT("new SNP genotype page"),
+        MANHATTAN("Manhattan plots");
+        private final String displayName;
+     
+        MenuOption(String displayName) {
+            this.displayName = displayName;
+        }
         
-    public void execute(int viewOption) {        
+        @Override
+        public String toString() {
+            return displayName;
+        }
+    }
+     
+       
+    
+    public void execute(MenuOption viewOption) {        
         
         // top row
         // view selection        
-        viewOptions.addAll(Arrays.asList(new String[]{
-            "phenotype by SNP genotype",
-            "SNP statistics",
-            "summary MoBa statistics",
-            "new SNP genotype page"}));      
+        viewOptions.addAll(Arrays.asList(new MenuOption[] {
+            MenuOption.SNP_PLOT,
+            MenuOption.SNP_STATISTICS,
+            MenuOption.SUMMARY_STATISTICS,
+            MenuOption.NEW_SNP_PLOT,
+            MenuOption.MANHATTAN}));      
         
         viewSelector = new ClickMenu("Select data to visualise");
         //viewSelector.setTextInputAllowed(false);
+        viewSelector.addButtonStyleName("main-selector");
         viewSelector.setItems(viewOptions);        
-        viewSelector.addValueChangeListener(event -> changeView(String.valueOf(
-                event.getValue())));
+        viewSelector.addValueChangeListener(event -> changeView(event));
         
         Button homeLink = new Button("Home");
         homeLink.setIcon(VaadinIcons.ARROW_LEFT);
         homeLink.addStyleName(ValoTheme.BUTTON_LINK);
-        homeLink.addStyleName("own-button-link-style");
-        homeLink.addStyleName("own-button-link-style:active");
+        homeLink.addStyleNames("own-button-link-style", "own-button-link-style:active", "home-link");
         homeLink.addClickListener(event -> goHome());
         Label title = new Label(htmlHelper.bold("MoBa visualisation prototype"), ContentMode.HTML);        
         
@@ -111,7 +134,7 @@ public class Main {
 //        else {
 //            viewSelector.setValue(viewOptions.get(2));
 //        }
-        viewSelector.setValue(viewOptions.get(viewOption));
+        viewSelector.setValue(viewOption);
         setupOngoing = false;
     }
     
@@ -125,40 +148,55 @@ public class Main {
         currentContentBox = middleBox;
     }
     
-    private void changeView(String option) {
-        if (option.equals("null") || option.equals(currentView)){
+    private void changeView(HasValue.ValueChangeEvent event) {        
+        MenuOption option = (MenuOption) event.getValue();
+        
+        //if (option.equals("null") || option.equals(currentView)){
+        if (option == currentView ){
             return;
         }
         
-        if (option.equals(viewOptions.get(0))) {
+        if (option == MenuOption.SNP_PLOT) {
             if (snpPlotBoxOld == null) {
                 snpPlotBoxOld = new SNPPlotBoxOld();
             }
             setMiddleBox(snpPlotBoxOld.getComponent());
         }
-        if (option.equals(viewOptions.get(1))) {
+        if (option == MenuOption.SNP_STATISTICS) {
             if (statsPage == null) {
                 statsPage = new SummaryPage().getComponent();
             }
             setMiddleBox(statsPage);
         }
-        else if (option.equals(viewOptions.get(2))) {
+        else if (option == MenuOption.SUMMARY_STATISTICS) {
             if (overlayPlotBox == null) {
                 overlayPlotBox = new OverlayPlotBox();
             }
             setMiddleBox(overlayPlotBox.getComponent());
         }
-        if (option.equals(viewOptions.get(3))) {
+        else if (option == MenuOption.NEW_SNP_PLOT) {
             if (snpPlotBox == null) {
                 snpPlotBox = new SNPPlotBox();
             }
             setMiddleBox(snpPlotBox.getComponent());
         }
-        //else if (option.equals(viewOptions.get(3))) {
+        else if (option == MenuOption.MANHATTAN) {
             
-            //middleBox.addComponent(parameterisedPlotComponent.getComponent(), 0, 0, 70, 99);
-            //middleBox.addComponent(optionsBox, 71, 0, 99, 99);
-        //}
+            // start of code that can be deleted
+            
+            Panel panel = new Panel();
+            VerticalLayout layout = new VerticalLayout();
+            layout.setSizeFull();
+            Label label = new Label("Manhattan plot and associated content goes here.");
+            layout.addComponent(label);
+            layout.setComponentAlignment(label, Alignment.MIDDLE_CENTER);
+            panel.setContent(layout);
+            panel.setSizeFull();
+            
+            // end of code that can be deleted
+            
+            setMiddleBox(panel); // replace the panel with the actual content component
+        }
         currentView = option;      
     }
 

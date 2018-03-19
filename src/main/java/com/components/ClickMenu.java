@@ -18,10 +18,10 @@ import java.util.logging.Logger;
  *
  * @author Christoffer Hjeltnes Støle
  */
-public class ClickMenu extends CustomComponent {    
+public class ClickMenu <T> extends CustomComponent {    
     HorizontalLayout root = new HorizontalLayout();
     Button button;
-    NativeSelect selector = new NativeSelect();
+    NativeSelect <T> selector = new NativeSelect();
     
     public ClickMenu(String caption) {
         button = new Button(caption);
@@ -46,12 +46,16 @@ public class ClickMenu extends CustomComponent {
     public void setItems(Collection items) {
         selector.setItems(items);
     }
-    public void setValue(Object value) {
+    public void setValue(T value) {
         selector.setValue(value);
     }
     
     public void addValueChangeListener(ValueChangeListener listener) {
         selector.addValueChangeListener(listener);
+    }
+    
+    public void addButtonStyleName(String styleName) {
+        button.addStyleName(styleName);
     }
     
     private void buttonClicked() {

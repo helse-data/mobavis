@@ -115,7 +115,16 @@ public class Variable implements Comparable <Variable> {
     
     
     @Override
-    public int compareTo(Variable other) {       
+    public int compareTo(Variable other) {
+        if (this.isLongitudinal() != null && this.isLongitudinal()) { // sort longitudinal variables first
+            if (other.isLongitudinal() != null && !other.isLongitudinal()) {
+                return -1;
+            }
+        }
+        else if (other.isLongitudinal() != null && other.isLongitudinal()) {
+                return 1;
+        }
+        
         int alphanumericalComparison = new Alphanumerical(getType()).compareTo(new Alphanumerical(other.getType()));
         
 //        System.out.println("getType(): " + getType());

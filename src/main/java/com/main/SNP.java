@@ -21,7 +21,7 @@ public class SNP {
     String[] ageVariables = constants.getAgeVariables();
     String chromosome;
     String position;
-    Map <String, String> sexMap = constants.getSexMap();
+    Map <String, String> sexMap = constants.getNumberToTextSexMap();
     UtilFunctions utilFunctions = new UtilFunctions();
     
     JsonObject dataObject;

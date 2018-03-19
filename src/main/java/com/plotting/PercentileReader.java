@@ -2,6 +2,7 @@ package com.plotting;
 
 import com.utils.Age;
 import com.utils.Alphanumerical;
+import com.utils.Constants;
 import com.utils.UtilFunctions;
 import com.utils.Variable;
 import com.vaadin.server.VaadinService;
@@ -37,6 +38,7 @@ public class PercentileReader {
     
     String[] ages;
     UtilFunctions utilFunctions = new UtilFunctions();
+    Constants constants = new Constants();
     Age ageUtils = new Age();
     
     Set <String> longitudinalPhenotypes = new HashSet();
@@ -48,7 +50,7 @@ public class PercentileReader {
     Map <String, Map <String, List <String[]>>> nonLongitudinalData;
     Map <String, Map <String, Map <String, List <String[]>>>> longitudinalData;
     
-    Map <String, String> sexMap = new HashMap();
+    Map <String, String> sexMap = constants.getTextToNumberSexMap();
     
     List <Alphanumerical> percentileList;
     List <Alphanumerical> percentileTextList;
@@ -56,10 +58,8 @@ public class PercentileReader {
     final String CONDITIONAL_DATA_TEXT_FILE = "population_conditioned.txt";
     
     public PercentileReader() {
-        ages = new String[] {"birth", "6w", "3m", "6m", "8m", "1y", "15-18m", "2y", "3y", "5y", "7y", "8y"}; // constants.getAgesShort();
-        sexMap.put("female", "1");
-        sexMap.put("male", "2");
-        
+        ages = new String[] {"birth", "6w", "3m", "6m", "8m", "1y", "15-18m", "2y", "3y", "5y", "7y", "8y"}; // constants.getAgesShort(); 
+       
         sharedPath = VaadinService.getCurrent().getBaseDirectory().getAbsolutePath();
         sharedPath = sharedPath + "/../../../../server/data";
         
@@ -139,28 +139,25 @@ public class PercentileReader {
         catch (IOException e) {
             System.out.println(e.getMessage());
         }
-    }
+    }    
     
-    
-//    public JsonObject getPhenotypeData(Variable phenotype, String sex, Variable conditionCategory, Alphanumerical condition) {
-//        return null;
-//    }
-    
-    
-    public JsonObject getNonConditionalPhenotypeData(String phenotype, String sex) {
+    public JsonObject getNonConditionalPhenotypeData(Variable phenotype, String sex) {
         sex = sexMap.get(sex);
         if (longitudinalData == null) {
             readWholePopulation();
+        }
+        if (longitudinalData == null) {
+            return null;
         }
         //System.out.println("sex: " + sex);
         System.out.println("phenotype: " + phenotype);
         //System.out.println("longitudinalData: " + longitudinalData);
         JsonObject object = Json.createObject();
-        object.put("phenotype", phenotype);
+        object.put("phenotype", phenotype.getDisplayName());
         JsonObject dataObject = Json.createObject();
-        if (longitudinalData.containsKey(phenotype)) {         
-            for (String percentile : longitudinalData.get(phenotype).get(sex).keySet()) {
-                List <String[]> rawData = longitudinalData.get(phenotype).get(sex).get(percentile);
+        if (phenotype.isLongitudinal()) {         
+            for (String percentile : longitudinalData.get(phenotype.getName()).get(sex).keySet()) {
+                List <String[]> rawData = longitudinalData.get(phenotype.getName()).get(sex).get(percentile);
                 dataObject.put(percentile, Json.createObject());
                 for (String[] rawDataList : rawData) {
                     String age = rawDataList[0];
@@ -173,7 +170,7 @@ public class PercentileReader {
             object.put("data", dataObject);
         }
         else {            
-            List <String[]> rawData = nonLongitudinalData.get(phenotype).get(sex);
+            List <String[]> rawData = nonLongitudinalData.get(phenotype.getName()).get(sex);
             
             for (String[] rawDataList : rawData) {
                 dataObject.put(rawDataList[0], rawDataList[1]);
@@ -269,6 +266,9 @@ public class PercentileReader {
             if (longitudinalData == null) {
                 readWholePopulation();
             }
+            if (longitudinalData == null) { // something went wrong
+                return null;
+            }
             for (String percentile : longitudinalData.get(longitudinalData.keySet().iterator().next()).get("1").keySet()) {
                 if (!percentile.equals("N")) {
                     percentileList.add(new Alphanumerical(percentile.replace("%", "")));
@@ -308,7 +308,9 @@ public class PercentileReader {
             }
             List <String> dataList = conditionDataLists.get(phenotype);
             Set <String> conditionStrings = new HashSet();
-
+            if (dataList == null) {
+                return null;
+            }
             for (String line : dataList) {
                  String[] splitLine = line.split(columnSeparator);
                  String conditionPhenotype = splitLine[2];
@@ -321,11 +323,11 @@ public class PercentileReader {
         return conditions.get(phenotype).keySet();    
     }
     
-    public List <Alphanumerical> getConditions(Variable phenotype, Variable condition) {
+    public List <Alphanumerical> getConditions(Variable phenotype, Variable conditionCategory) {
         if (!conditions.containsKey(phenotype)) {
             PercentileReader.this.getConditionCategories(phenotype);
         }
-        if (conditions.get(phenotype).get(condition) == null) {
+        if (conditions.get(phenotype).get(conditionCategory) == null) {
             List <String> dataList = conditionDataLists.get(phenotype);
             Set <String> conditionSet = new HashSet();
             for (String line : dataList) {
@@ -334,10 +336,10 @@ public class PercentileReader {
             }
             List <Alphanumerical> conditionList = new ArrayList();
             conditionSet.forEach(conditionString -> conditionList.add(new Alphanumerical(conditionString)));
-            conditions.get(phenotype).put(condition, conditionList);
+            conditions.get(phenotype).put(conditionCategory, conditionList);
         }
         
-        return conditions.get(phenotype).get(condition);
+        return conditions.get(phenotype).get(conditionCategory);
         
      
     }

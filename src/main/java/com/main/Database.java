@@ -32,8 +32,6 @@ import org.rocksdb.RocksDBException;
 public class Database {
     Constants constants = new Constants();
     String[] chromosomeList = constants.getChromosomeList();
-    String[] databaseList = {"2", "21"};
-    //String[] databaseList = constants.getDatabaseList();
     String sharedPath;
     Map <String, String> indices = new HashMap();
     Map <String, List <String>> tables = new HashMap();
@@ -48,6 +46,7 @@ public class Database {
     
     public Database() {
         sharedPath = VaadinService.getCurrent().getBaseDirectory().getAbsolutePath();
+        System.out.println("sharedPath: " + sharedPath);
         sharedPath = sharedPath + "/../../../../server/data";
         
         readMasterIndex();

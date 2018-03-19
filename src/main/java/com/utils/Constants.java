@@ -21,10 +21,17 @@ public class Constants {
     public String[] getAgeVariables() {
         return new String[] {"age0", "age1", "age2", "age3", "age4", "age5", "age6", "age8", "age9", "age10", "age11", "age12"};
     }
-    public Map <String, String> getSexMap() {
+    public Map <String, String> getNumberToTextSexMap() {
         Map <String, String> map = new HashMap();
-        map.put("1", "female");
-        map.put("2", "male");
+        map.put("1", "male");
+        map.put("2", "female");
+        return map;
+    }
+    
+    public Map <String, String> getTextToNumberSexMap() {
+        Map <String, String> map = new HashMap();
+        map.put("male", "1");
+        map.put("female", "2");
         return map;
     }
     

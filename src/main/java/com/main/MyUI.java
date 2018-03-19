@@ -29,12 +29,12 @@ public class MyUI extends UI {
         // 0
 //        setContent(landingPage.getComponent());
         // -1
-        main.execute(3);
+        main.execute(Main.MenuOption.NEW_SNP_PLOT);
         setContent(main.getComponent());
         // 1
     }
     
-    public void enter(boolean firstLanding, int viewOption) {
+    public void enter(boolean firstLanding, Main.MenuOption viewOption) {
         if (firstLanding) {
             main.execute(viewOption);
         }        

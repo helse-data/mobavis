@@ -10,9 +10,11 @@ import com.utils.UtilFunctions;
 import com.utils.JsonHelper;
 import com.utils.Variable;
 import com.vaadin.data.HasValue;
+import com.vaadin.data.HasValue.ValueChangeEvent;
 import com.vaadin.event.selection.SelectionEvent;
 import com.vaadin.icons.VaadinIcons;
 import com.vaadin.server.Page;
+import com.vaadin.server.Sizeable;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.CheckBoxGroup;
@@ -21,9 +23,13 @@ import com.vaadin.ui.FormLayout;
 import com.vaadin.ui.GridLayout;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
+import com.vaadin.ui.NativeButton;
 import com.vaadin.ui.NativeSelect;
 import com.vaadin.ui.Notification;
+import com.vaadin.ui.Panel;
+import com.vaadin.ui.TabSheet;
 import com.vaadin.ui.TextField;
+import com.vaadin.ui.Window;
 import com.vaadin.ui.themes.ValoTheme;
 import elemental.json.Json;
 import elemental.json.JsonBoolean;
@@ -44,7 +50,7 @@ import java.util.Set;
  */
 public class OverlayPlotBox {
     JsonObject userData;
-    JsonObject percentileData;
+    Map <String, JsonObject> currentDataObjects = new HashMap();
     JsonBoolean active;
     
     boolean percentilesShown = false;
@@ -62,7 +68,8 @@ public class OverlayPlotBox {
     GridLayout optionsGrid = new GridLayout(100, 100);
     HorizontalLayout formGrid = new HorizontalLayout();
     
-    Map <String, Label> formLabels = new HashMap();
+    Map <String, Label> formLabelsSideBar = new HashMap();
+    Map <String, Label> formLabelsTabSheet = new HashMap();
     
     NativeSelect <String> dataPresentationSelector;
     List <String> dataPresentationOptions = new ArrayList();
@@ -76,11 +83,18 @@ public class OverlayPlotBox {
     Map <String, NativeSelect <Variable>> phenotypeSelectors = new HashMap();
     List <Variable> phenotypeOptions = new ArrayList();
     
+    Map <String, Button> enterDataButtons = new HashMap();
+    
     boolean selectionRebound = false;
     
-    Map <String, TextField> inputFieldsAge = new HashMap();
-    Map <String, TextField> inputFields1 = new HashMap();
-    Map <String, TextField> inputFields2 = new HashMap();
+    Map <String, TextField> inputFieldsAgeSideBar = new HashMap();
+    Map <String, Map <String, TextField>> inputFieldsSideBar = new HashMap();
+    Map <String, TextField> inputFieldsAgeTabSheet;
+    Map <String, Map <String, TextField>> inputFieldsTabSheet;
+    
+    TabSheet dataTabSheet;
+    Window inputFormWindow;
+    PlotDataWindow plotDataWindow = new PlotDataWindow();
     
     //Map <String, Integer> ageToIndex = new HashMap();
     
@@ -107,6 +121,9 @@ public class OverlayPlotBox {
     
     JsonObject metaData = Json.createObject();
     
+    Alphanumerical NONE_ALPHANUMERICAL = new Alphanumerical("[none]");
+    Variable NULL_VARIABLE = new Variable(null);
+    
     int FULL_PLOT_HEIGHT = 83;
     int FULL_PLOT_WIDTH = 83;
     
@@ -127,7 +144,7 @@ public class OverlayPlotBox {
         nonLongitudinalChartMap.put("2", null);
         
         int plotStartY = 6;
-        box.addComponent(topBox, 1, 0, 70, plotStartY-1);
+        box.addComponent(topBox, 1, 0, 90, plotStartY-1);
         box.addComponent(plotBox, 1, plotStartY, 70, 99);
         box.addComponent(optionsBox, 72, plotStartY+1, 99, 99);
 
@@ -162,7 +179,7 @@ public class OverlayPlotBox {
             conditionCategorySelector.setIcon(VaadinIcons.CHART_LINE);
             //conditionSelector.setItems(Arrays.asList(new String[] {"none"}));
             conditionCategorySelector.setEmptySelectionAllowed(false);
-            conditionCategorySelector.addValueChangeListener(event -> selectConditionCategory(plotNumber, (Variable) event.getValue()));
+            conditionCategorySelector.addValueChangeListener(event -> selectConditionCategory(plotNumber, event));
             //topBox.addComponent(conditionCategorySelector);
         }
         
@@ -176,7 +193,7 @@ public class OverlayPlotBox {
             //conditionSelector.setIcon(VaadinIcons.CHART_LINE);
             //conditionSelector.setItems(Arrays.asList(new String[] {"none"}));
             conditionSelector.setEmptySelectionAllowed(false);
-            conditionSelector.addValueChangeListener(event -> selectCondition(plotNumber, (Alphanumerical) event.getValue()));
+            conditionSelector.addValueChangeListener(event -> selectCondition(plotNumber, event));
             //topBox.addComponent(conditionSelector);
         }
         
@@ -207,12 +224,25 @@ public class OverlayPlotBox {
             phenotypeSelector.setItems(phenotypeOptions);            
             phenotypeSelector.setIcon(VaadinIcons.CLIPBOARD_PULSE);
             phenotypeSelector.setEmptySelectionAllowed(false);
-            phenotypeSelector.addValueChangeListener(event -> selectPhenotype(plotNumber, (Variable) event.getValue()));
+            phenotypeSelector.addValueChangeListener(event -> selectPhenotype(plotNumber, event));
             //phenotypeSelector.setSizeFull();
+            Button enterDataButton = new Button("Enter own data");
+            enterDataButton.addStyleName("highlight-blue");
+            enterDataButton.addClickListener(event -> showDataFormWindow(plotNumber));
+            enterDataButtons.put(plotNumber, enterDataButton);
             topBox.addComponent(phenotypeSelector);  
             topBox.addComponent(conditionCategorySelectors.get(plotNumber));
             topBox.addComponent(conditionSelectors.get(plotNumber));
+            if (plotNumber.equals("2")) {
+                topBox.addComponent(enterDataButton);
+                topBox.setComponentAlignment(enterDataButton, Alignment.BOTTOM_CENTER);
+            }            
         }
+        
+        Button viewPlotDataButton = new Button("View plot data");
+        topBox.addComponent(viewPlotDataButton);
+        topBox.setComponentAlignment(viewPlotDataButton, Alignment.BOTTOM_CENTER);
+        viewPlotDataButton.addClickListener(event -> viewPlotData());
         
         // show or hide percentiles
         showOptions.add("percentiles");        
@@ -222,86 +252,31 @@ public class OverlayPlotBox {
         
         // input        
         formGrid = new HorizontalLayout();
-                     
+
+        Panel formPanel = new Panel();
+        formPanel.setContent(formGrid);
+        
         optionsGrid.addComponent(showOptionsSelector, 0, 0, 99, 5);
-        optionsGrid.addComponent(formGrid, 0, 6, 97, 97);
-        optionsGrid.setComponentAlignment(formGrid, Alignment.TOP_CENTER); 
+        optionsGrid.addComponent(formPanel, 0, 6, 97, 97);
+        optionsGrid.setComponentAlignment(formPanel, Alignment.TOP_CENTER); 
         
         optionsBox.addComponent(optionsGrid);
         
-        formLabels.put("1", new Label());
-        formLabels.put("2", new Label());
         
-        //formLabels.get("1").setSizeFull();
-        //formLabels.get("2").setSizeFull();
+        FormLayout formAge = createAgeForm(inputFieldsAgeSideBar);
         
-        FormLayout formAge = new FormLayout();
-        Label formAgeLabel = new Label("age");
-        formAge.addComponent(formAgeLabel);
-        formAge.setComponentAlignment(formAgeLabel, Alignment.MIDDLE_CENTER);
         //formAgeLabel.setSizeFull();
-        
-        FormLayout form1 = new FormLayout();
-        form1.addComponent(formLabels.get("1"));
-        form1.setComponentAlignment(formLabels.get("1"), Alignment.MIDDLE_RIGHT);
-        //formLabels.get("1").setSizeFull();
-        
-        FormLayout form2 = new FormLayout();
-        form2.addComponent(formLabels.get("2"));
-        form2.setComponentAlignment(formLabels.get("2"), Alignment.MIDDLE_RIGHT);
-        //formLabels.get("2").setSizeFull();
-
         formGrid.addComponent(formAge);
-        formGrid.addComponent(form1);
-        formGrid.addComponent(form2);
         
-        for (int i = 0; i < storedAges.size(); i++) {
-            //ageToIndex.put(age, index);
-            final String index = Integer.toString(i);
-            //String index = Integer.toString(i);
-            //Label currLabel = new Label(age, ContentMode.HTML);
-            TextField currAge = new TextField();
-            currAge.setValue(storedAges.get(i).getDescription());
-            currAge.addValueChangeListener(event -> updateAge(index, event));
-            
-            TextField curr1 = new TextField();
-            //curr1.setCaption(age);
-            curr1.setMaxLength(7);
-            curr1.addValueChangeListener(event -> updateDataPoint(event, index, "1"));
-            
-            TextField curr2 = new TextField();
-            curr2.setMaxLength(7);
-            curr2.addValueChangeListener(event -> updateDataPoint(event, index, "2"));
-            
-            currAge.setSizeFull();
-            curr1.setSizeFull();
-            //curr2.setWidth(80, Unit.PERCENTAGE);
-            curr2.setSizeFull();
-            //formAge.addComponent(currLabel);
-            formAge.addComponent(currAge);
-            form1.addComponent(curr1);
-            form1.setComponentAlignment(curr1, Alignment.MIDDLE_RIGHT);
-            form2.addComponent(curr2);
-            form2.setComponentAlignment(curr2, Alignment.MIDDLE_RIGHT);
-            inputFieldsAge.put(index, currAge);
-            inputFields1.put(index, curr1);
-            inputFields2.put(index, curr2);
+        for (String plotNumber : new String[] {"1", "2"}) {
+            Label formLabel = new Label();
+            formLabelsSideBar.put(plotNumber, formLabel);
+            inputFieldsSideBar.put(plotNumber, new HashMap());
+            FormLayout phenotypeForm = createPhenotypeForm(plotNumber, formLabel, inputFieldsSideBar);
+            phenotypeForm.setSizeFull();
+            formGrid.addComponent(phenotypeForm);       
         }
-        
-        // buttons for clearing data
-        Button clearingButtonAge = new Button("Clear");
-        clearingButtonAge.addClickListener(event -> clearDataPoints("age"));
-        formAge.addComponent(clearingButtonAge);
-        formAge.setComponentAlignment(clearingButtonAge, Alignment.MIDDLE_CENTER);
-        Button clearingButton1 = new Button("Clear");
-        clearingButton1.addClickListener(event -> clearDataPoints("1"));
-        form1.addComponent(clearingButton1);
-        form1.setComponentAlignment(clearingButton1, Alignment.MIDDLE_RIGHT);
-        Button clearingButton2 = new Button("Clear");
-        clearingButton2.addClickListener(event -> clearDataPoints("2"));
-        form2.addComponent(clearingButton2);
-        form2.setComponentAlignment(clearingButton2, Alignment.MIDDLE_RIGHT);
-        
+
         jsonHelper.putAlphanumerical(metaData, "percentiles", percentiles);
                 //, Arrays.asList(
                 //new String[] {"1", "5", "10", "25", "50", "75", "90", "95", "99"}));
@@ -321,29 +296,84 @@ public class OverlayPlotBox {
         // set default values
         dataPresentationSelector.setValue(dataPresentationOptions.get(1));
         sexSelector.setValue("female");
-        conditionCategorySelectors.get("1").setValue(new Variable(null));
-        conditionCategorySelectors.get("2").setValue(new Variable(null));
         phenotypeSelectors.get("1").setValue(new Variable("height", true));
-        phenotypeSelectors.get("2").setValue(new Variable("weight", true));        
+        updatePhenotypeData("1", "phenotype");
+        phenotypeSelectors.get("2").setValue(new Variable("weight", true));
+        updatePhenotypeData("2", "phenotype");
+        conditionCategorySelectors.get("1").setValue(NULL_VARIABLE);
+        conditionCategorySelectors.get("2").setValue(NULL_VARIABLE);
+               
         
         showOptionsSelector.setItems(showOptions);
         showOptionsSelector.updateSelection(showOptions, new HashSet());
         
-        // set sizes to full   
-        
+        // set sizes to full
         box.setSizeFull();
         topBox.setSizeFull();
         optionsGrid.setSizeFull();
         optionsBox.setSizeFull();
         showOptionsSelector.setSizeFull();
         formGrid.setSizeFull();
+        formPanel.setSizeFull();
         plotBox.setSizeFull();
 
         formAge.setSizeFull();
-        form1.setSizeFull();
-        form2.setSizeFull();
     }
           
+    private FormLayout createAgeForm(Map inputFieldsMap) {
+        FormLayout ageForm = new FormLayout();
+        
+        Label formAgeLabel = new Label("age");
+        ageForm.addComponent(formAgeLabel);
+        ageForm.setComponentAlignment(formAgeLabel, Alignment.MIDDLE_CENTER);
+        
+        for (int i = 0; i < storedAges.size(); i++) {
+            final String index = Integer.toString(i);
+            TextField currentAgeInputField = new TextField();
+            currentAgeInputField.setValue(storedAges.get(i).getDescription());
+            currentAgeInputField.addValueChangeListener(event -> updateAge(index, event));
+            currentAgeInputField.setSizeFull();
+            ageForm.addComponent(currentAgeInputField);
+            inputFieldsMap.put(index, currentAgeInputField);
+        }
+        
+        Button clearingButtonAge = new Button("Clear");
+        clearingButtonAge.addClickListener(event -> clearDataPoints("age"));
+        ageForm.addComponent(clearingButtonAge);
+        ageForm.setComponentAlignment(clearingButtonAge, Alignment.MIDDLE_CENTER);
+
+        return ageForm;
+    }
+    
+    private FormLayout createPhenotypeForm(String plotNumber, Label label, Map <String, Map <String, TextField>> inputFieldsMap) {
+        FormLayout phenotypeForm = new FormLayout();
+        inputFieldsMap.put(plotNumber, new HashMap());
+        phenotypeForm.addComponent(label);
+        phenotypeForm.setComponentAlignment(label, Alignment.MIDDLE_RIGHT);
+        
+        for (int i = 0; i < storedAges.size(); i++) {
+            final String index = Integer.toString(i);
+
+            TextField currentInputField = new TextField();
+            currentInputField.setMaxLength(7);
+            currentInputField.addValueChangeListener(event -> updateDataPoint(event, index, plotNumber));
+            currentInputField.setSizeFull();
+
+            phenotypeForm.addComponent(currentInputField);
+            phenotypeForm.setComponentAlignment(currentInputField, Alignment.MIDDLE_RIGHT);
+
+            inputFieldsMap.get(plotNumber).put(index, currentInputField);
+        }
+        
+        // buttons for clearing data
+        Button clearingButton = new Button("Clear");
+        clearingButton.addClickListener(event -> clearDataPoints(plotNumber));
+        phenotypeForm.addComponent(clearingButton);
+        phenotypeForm.setComponentAlignment(clearingButton, Alignment.MIDDLE_RIGHT);
+
+        return phenotypeForm;
+    }
+    
     // create a JSON object from a list of strings
     private JsonObject createJson(String phenotype, List <String> data) {
         JsonObject jsonObject = Json.createObject(); // create a new object each time
@@ -353,6 +383,7 @@ public class OverlayPlotBox {
     }
     
     public void setUserData(String plotNumber, Variable phenotype, List <String> enteredData) {
+        System.out.println("setting user data");
         storedUserData.put(phenotype, enteredData);
         userData = createJson(phenotype.getDisplayName(), enteredData);
         if (longitudinalChartMap.get(plotNumber) != null) {
@@ -360,11 +391,12 @@ public class OverlayPlotBox {
         }
     }
     
-    public void setPlotData(String plotNumber, Variable phenotype) {
+    public void setPlotData(String plotNumber, Variable phenotype, JsonObject dataObject) {
         if (phenotype == null) {
             return;
         }
         
+        plotDataWindow.setTab(plotNumber, dataObject.toJson(), phenotype.getDisplayName());
         int thisComponentNumber = Integer.parseInt(plotNumber) - 1;
         Component chartRef = null;
         if (phenotype.isLongitudinal()) {
@@ -377,8 +409,8 @@ public class OverlayPlotBox {
             }
             chart = longitudinalChartMap.get(plotNumber);
             chartRef = chart;
-            chart.sendPercentileData(percentileData);
-            System.out.println("percentileData: " + percentileData);
+            chart.sendPercentileData(dataObject);
+            System.out.println("percentile data: " + dataObject);
         }
         else {
             BarPlot chart;
@@ -403,9 +435,9 @@ public class OverlayPlotBox {
             chartRef = chart;
             JsonObject layout = Json.createObject();
             layout.put("y-axis", yAxisLabel);
-            layout.put("title", phenotype + " [n = " + percentileData.getObject("data").getString("N") + "]");
-            percentileData.put("layout", layout);
-            chart.sendData(percentileData);
+            layout.put("title", phenotype + " [n = " + dataObject.getObject("data").getString("N") + "]");
+            dataObject.put("layout", layout);
+            chart.sendData(dataObject);
         }
         
         
@@ -423,48 +455,124 @@ public class OverlayPlotBox {
     public void setPhenotype(String plotNumber, Variable phenotype) {
         if (phenotype == null) {// || (dataPresentationSelector.getValue().equals(dataPresentationOptions.get(0)) && plotNumber.equals("2"))) {
             return;
-        }         
-        formLabels.get(plotNumber).setCaption(phenotype.getDisplayName());
+        }
+        
+        if (storedUserData.containsKey(phenotype)) {
+            setFormData(plotNumber, storedUserData.get(phenotype), inputFieldsSideBar);
+            if (inputFieldsTabSheet != null) {
+                setFormData(plotNumber, storedUserData.get(phenotype), inputFieldsTabSheet);
+            }
+            setUserData(plotNumber, phenotype, storedUserData.get(phenotype));
+        }
+        else {
+            List <String> nullList = createNullList(storedAges.size());
+            setFormData(plotNumber, nullList, inputFieldsSideBar);
+            if (inputFieldsTabSheet != null) {
+                setFormData(plotNumber, nullList, inputFieldsTabSheet);
+            }
+            setUserData(plotNumber, phenotype, nullList);
+        }
+        
+        formLabelsSideBar.get(plotNumber).setValue(phenotype.getDisplayName());
+        if (dataTabSheet != null) {// update tab captions
+            dataTabSheet.getTab(Integer.parseInt(plotNumber)-1).setCaption(phenotype.getDisplayName()); 
+            formLabelsTabSheet.get(plotNumber).setValue(phenotype.getDisplayName());
+        }        
         phenotypeMap.put(plotNumber, phenotype);
         
         
         // conditions start        
         Variable currentConditionCategory = conditionCategorySelectors.get(plotNumber).getValue();        
         Set <Variable> conditionCategories = percentileReader.getConditionCategories(phenotype);
-        
-        List <Variable> conditionCategoryList = new ArrayList();
-        conditionCategoryList.addAll(conditionCategories);
-        Collections.sort(conditionCategoryList);
-        conditionCategoryList.add(0, new Variable(null));
-        
-        if (conditionCategoryList.contains(currentConditionCategory)) {
-            conditionCategorySelectors.get(plotNumber).setValue(currentConditionCategory);
+        if (conditionCategories != null) {
+            List <Variable> conditionCategoryList = new ArrayList();
+            conditionCategoryList.addAll(conditionCategories);
+            Collections.sort(conditionCategoryList);
+            conditionCategoryList.add(0, NULL_VARIABLE);
+            conditionCategorySelectors.get(plotNumber).setItems(conditionCategoryList);
+            System.out.println("current condition category: " + currentConditionCategory + ", retained: " + conditionCategoryList.contains(currentConditionCategory));
+            if (conditionCategoryList.contains(currentConditionCategory)) { // retain the condition category if possible
+                conditionCategorySelectors.get(plotNumber).setValue(currentConditionCategory);
+            }
+            else {
+                conditionCategorySelectors.get(plotNumber).setValue(NULL_VARIABLE);
+            }
         }
-        else {
-            conditionCategorySelectors.get(plotNumber).setValue(new Variable(null));
-        }
-        
         //System.out.println("condition categories: " + conditionCategories);
-        
-        conditionCategorySelectors.get("1").setItems(conditionCategoryList);
-        conditionCategorySelectors.get("2").setItems(conditionCategoryList);
-        
-        
-        
-        // conditions end
-        
-        percentileData = percentileReader.getNonConditionalPhenotypeData(phenotype.getName(), sex);        
-        setPlotData(plotNumber, phenotype);
-        
+
+        // conditions end      
         
     }
     
-    private void selectPhenotype(String plotNumber, Variable option) {
-        if (option.getDisplayName().equals("null") || option.equals(phenotypeMap.get(plotNumber)) || selectionRebound){
+    
+    private void updatePhenotypeData(String plotNumber, String updatedOption) { // TODO: evaluate
+        Variable currentPhenotype = phenotypeSelectors.get(plotNumber).getValue();
+        if (currentPhenotype == null) {
+            return;
+        }
+        Variable currentConditionCategory = conditionCategorySelectors.get(plotNumber).getValue();
+        Alphanumerical currentCondition = conditionSelectors.get(plotNumber).getValue();
+        
+        System.out.println("updated option: " + updatedOption);
+        System.out.println("Current selection:\n\tphenotype: " + currentPhenotype + "\n\tcondition category: " + currentConditionCategory
+        + "\n\tcondition: " + currentCondition);
+       
+        JsonObject dataObject = null;
+        
+        if (currentCondition != null && !currentCondition.equals(NONE_ALPHANUMERICAL)) {
+            dataObject = percentileReader.getConditionalPhenotypeData(currentPhenotype, sex, currentConditionCategory, currentCondition);
+        }
+        else {
+            dataObject = percentileReader.getNonConditionalPhenotypeData(currentPhenotype, sex);
+        }
+//        if (updatedOption.equals("condition")) {
+//            if (!(currentCondition == null || currentCondition.equals(NONE_ALPHANUMERICAL))) {
+//                dataObject = percentileReader.getConditionalPhenotypeData(currentPhenotype, sex, currentConditionCategory, currentCondition);
+//            }
+//            else {
+//                dataObject =  percentileReader.getNonConditionalPhenotypeData(currentPhenotype, sex);
+//            }
+//            setPlotData(plotNumber, currentPhenotype, dataObject);
+//        }
+//        else if (updatedOption.equals("category")) {
+//            //setConditionCategory(plotNumber, currentConditionCategory);
+//            if (currentConditionCategory == null || currentConditionCategory.equals(NULL_VARIABLE)) {
+//                dataObject = percentileReader.getNonConditionalPhenotypeData(currentPhenotype, sex);
+//                setPlotData(plotNumber, currentPhenotype, dataObject);
+//            }
+////            if (!(currentCondition == null || currentCondition.equals(NONE_ALPHANUMERICAL))) {
+////                dataObject = percentileReader.getConditionalPhenotypeData(currentPhenotype, sex, currentConditionCategory, currentCondition);
+////            }
+//            
+//        }
+//        else if (updatedOption.equals("phenotype")){
+//            if (currentConditionCategory == null || currentConditionCategory.equals(NULL_VARIABLE) || currentCondition == null || currentCondition.equals(NONE_ALPHANUMERICAL)) {
+//                dataObject = percentileReader.getNonConditionalPhenotypeData(currentPhenotype, sex);
+//                setPlotData(plotNumber, currentPhenotype, dataObject);
+//            }
+//            setPhenotype(plotNumber, currentPhenotype);
+//        }
+        
+        if (dataObject != null) {
+            System.out.println("data object: " + dataObject.toJson());
+            setPlotData(plotNumber, currentPhenotype, dataObject);
+        }
+        if (updatedOption.equals("category")) {
+            setConditionCategory(plotNumber, currentConditionCategory);
+        }
+        else if (updatedOption.equals("phenotype")){
+            setPhenotype(plotNumber, currentPhenotype);
+        }
+    }
+    
+    private void selectPhenotype(String plotNumber, ValueChangeEvent event) {
+        Variable phenotype = (Variable) event.getValue();
+        
+        if (phenotype.getDisplayName().equals("null") || phenotype.equals(phenotypeMap.get(plotNumber)) || selectionRebound){
             selectionRebound = false;
             return;
         }
-        if (phenotypeMap.containsValue(option)) {
+        if (phenotypeMap.containsValue(phenotype)) {
             Notification notification = new Notification("This phenotype has already been selected for another plot.", Notification.Type.HUMANIZED_MESSAGE);
             notification.setDelayMsec(5000);
             notification.show(Page.getCurrent());
@@ -472,51 +580,57 @@ public class OverlayPlotBox {
             phenotypeSelectors.get(plotNumber).setValue(phenotypeMap.get(plotNumber));
             return;            
         }
-        System.out.println("option: " + option);
-        setPhenotype(plotNumber, option);
-        if (storedUserData.containsKey(option)) {
-            setFormData(plotNumber, storedUserData.get(option));
-            setUserData(plotNumber, option, storedUserData.get(option));
+        
+        if (event.isUserOriginated()) {
+            updatePhenotypeData(plotNumber, "phenotype");
         }
-        else {
-            List <String> nullList = createNullList(storedAges.size());
-            setFormData(plotNumber, nullList);
-            setUserData(plotNumber, option, nullList);
-        }      
-        phenotypeMap.put(plotNumber, option);
+        System.out.println("phenotype selected: " + phenotype + ", is longitudinal: " + phenotype.isLongitudinal());
+        //setPhenotype(plotNumber, option);
     }
     
     
     private void setConditionCategory(String plotNumber, Variable conditionCategory) {
         if (conditionCategory == null) {
             return;
-        }     
+        }
+        System.out.println("Condition category set: " + conditionCategory + " (" + plotNumber + ")");
+        // conditions start
+        if (!conditionCategory.equals(NULL_VARIABLE)) {
+            Alphanumerical currentCondition = conditionSelectors.get(plotNumber).getValue();
+            List <Alphanumerical> conditions = percentileReader.getConditions(phenotypeSelectors.get(plotNumber).getValue(), conditionCategory);
+            
+            if (!conditions.contains(NONE_ALPHANUMERICAL)) { // TODO: better way?
+                Collections.sort(conditions);
+                conditions.add(0, NONE_ALPHANUMERICAL);
+            }            
+            conditionSelectors.get(plotNumber).setItems(conditions);
+            System.out.println("current condition: " + currentCondition + ", retained: " + conditions.contains(currentCondition));
+            if (conditions.contains(currentCondition)) { // retain the condition if possible
+                conditionSelectors.get(plotNumber).setValue(currentCondition);
+            }
+            else {
+                conditionSelectors.get(plotNumber).setValue(NONE_ALPHANUMERICAL);
+            }
+        }
+        else {
+            conditionSelectors.get(plotNumber).setItems(new HashSet());
+        }
+        
+        
+        // conditions end
     }
     
-    private void selectConditionCategory(String plotNumber, Variable conditionCategory) {
-        //Variable conditionCategoryVariable = conditionCategorySelectors.get(plotNumber).getValue();
-        System.out.println("Condition category selected: " + conditionCategory.getDisplayName() + " (" + plotNumber + ")");
+    private void selectConditionCategory(String plotNumber, ValueChangeEvent event) {
+        Variable conditionCategory = (Variable) event.getValue();
         setConditionCategory(plotNumber, conditionCategory);
-        if (conditionCategory.equals(new Variable(null))) {
+        if (!event.isUserOriginated()) {
             return;
         }
         
-        Alphanumerical currentCondition = conditionSelectors.get(plotNumber).getValue();
-        // conditions
-        List <Alphanumerical> conditions = percentileReader.getConditions(phenotypeSelectors.get(plotNumber).getValue(), conditionCategory);
+        System.out.println("Condition category selected: " + conditionCategory.getDisplayName() + " (" + plotNumber + ")");
         
-        Collections.sort(conditions);
-        conditions.add(0, new Alphanumerical("[none]"));
-        conditionSelectors.get("1").setItems(conditions);
-        conditionSelectors.get("2").setItems(conditions);
-        System.out.println("condition phenotype: " + conditionCategory + ", conditions: " + conditions);
-        
-        if (conditions.contains(currentCondition)) {
-            conditionSelectors.get(plotNumber).setValue(currentCondition);
-        }
-        else {
-            conditionSelectors.get(plotNumber).setValue(conditions.get(0));
-        }
+        updatePhenotypeData(plotNumber, "category");
+    
         
     }
     
@@ -527,20 +641,24 @@ public class OverlayPlotBox {
         System.out.println("Condition set: " + condition.getValue() + " (" + plotNumber + ")");
         Variable phenotype = phenotypeMap.get(plotNumber);
         Variable conditionCategory = conditionCategorySelectors.get(plotNumber).getValue();
-        if (condition.equals(new Alphanumerical("[none]"))) {
-            percentileData = percentileReader.getNonConditionalPhenotypeData(phenotype.getName(), sexSelector.getValue());
-        }
-        else {
-            percentileData = percentileReader.getConditionalPhenotypeData(phenotype, sex, conditionCategory, condition);
-        }
-        
-        setPlotData(plotNumber, phenotype);
+        JsonObject object = null;
+        updatePhenotypeData(plotNumber, "condition");
     }
     
-    private void selectCondition(String plotNumber, Alphanumerical condition) {
+    private void selectCondition(String plotNumber, ValueChangeEvent event) {
+        if (!event.isUserOriginated()) {
+            return;
+        }
+        
+        System.out.println("event.getOldValue(): " + event.getOldValue());
+        
         //Alphanumerical conditionObject = conditionSelectors.get(plotNumber).getValue();
         //System.out.println("Condition selected: " + condition.getValue() + " (" + plotNumber + ")");
-        setCondition(plotNumber, condition);
+        Alphanumerical oldValue = (Alphanumerical) event.getOldValue();
+        Alphanumerical newValue = (Alphanumerical) event.getValue();
+        if (!newValue.equals(NONE_ALPHANUMERICAL) || oldValue != null) { // check if the new value is "none" and the previous one null
+            setCondition(plotNumber, newValue);
+        }
     }
     
     private List <String> createNullList(int length) {
@@ -551,23 +669,14 @@ public class OverlayPlotBox {
         return nullList;
     }
     
-    private void setFormData(String plotNumber, List <String> data) {
-        Map <String, TextField> inputFieldMap = null;
-        
-        if (plotNumber.equals("1")) {
-            inputFieldMap = inputFields1;
-        }
-        else if (plotNumber.equals("2")) {
-            inputFieldMap = inputFields2;
-        }
-
+    private void setFormData(String plotNumber, List <String> data, Map <String, Map <String, TextField>> inputFieldMap) {
         for (int i = 0; i < data.size(); i++) {
-            String dataPoint = data.get(i);            
+            String dataPoint = data.get(i);
             if (dataPoint != null) {            
-                inputFieldMap.get(Integer.toString(i)).setValue(dataPoint);
+                inputFieldMap.get(plotNumber).get(Integer.toString(i)).setValue(dataPoint);
             }
             else {
-                inputFieldMap.get(Integer.toString(i)).setValue("");
+                inputFieldMap.get(plotNumber).get(Integer.toString(i)).setValue("");
             }          
         }        
     }
@@ -593,11 +702,13 @@ public class OverlayPlotBox {
     
     private void setSex(String sex) {
         this.sex = sex;
+        updatePhenotypeData("1", "sex");
+        updatePhenotypeData("2", "sex");
         //if (longitudinalPhenotypes.contains(phenotypeMap.get("1"))) {
-            setPhenotype("1", phenotypeMap.get("1"));
+            //setPhenotype("1", phenotypeMap.get("1"));
         //}
         //if (longitudinalPhenotypes.contains(phenotypeMap.get("2"))) {
-            setPhenotype("2", phenotypeMap.get("2"));
+            //setPhenotype("2", phenotypeMap.get("2"));
         //}
     }
     
@@ -607,10 +718,12 @@ public class OverlayPlotBox {
     }
         
     public void show(String statistic, boolean show) {
-        //for (OverlayPlot chart : new OverlayPlot[] {chart1, chart2}) {
-        for (String number : new String[] {"1", "2"}) {
-            System.out.println(show);
-            longitudinalChartMap.get(number).sendShowStatus(show);
+        //System.out.println("longitudinalChartMap: " + longitudinalChartMap);
+        for (String number : longitudinalChartMap.keySet()) {
+            //System.out.println("show: " + show);
+            if (longitudinalChartMap.get(number) != null) {
+                longitudinalChartMap.get(number).sendShowStatus(show);
+            }            
         }         
     }
     
@@ -629,24 +742,15 @@ public class OverlayPlotBox {
             if (s.equals("percentiles")) {
                 percentilesShown = !percentilesShown;
                 //System.out.println("percentiles shown: " + percentilesShown);
-                effectuatePercentiles();
+                show("percentiles", percentilesShown);
             }
         }
         previousShowOptions = showOptionsSelector.getValue();
     }
     
-    private void effectuatePercentiles() {
-//        if (currentView.equals(viewOptions.get(2))) {
-        show("percentiles", percentilesShown);
-//        }
-//        if (currentView.equals(viewOptions.get(3))) {                    
-//            parameterisedPlotComponent.show("percentiles", percentilesShown);
-//        }
-    }
-    
     private void clearDataPoints(String attribute) {        
         if (attribute.equals("age")) {
-            inputFieldsAge.values().forEach(inputField -> {
+            inputFieldsAgeSideBar.values().forEach(inputField -> {
                 inputField.clear();
                 inputField.removeStyleName("problem");
             });
@@ -655,7 +759,7 @@ public class OverlayPlotBox {
         }
         else if (attribute.equals("1") || attribute.equals("2")) {
             Variable phenotype = phenotypeMap.get(attribute);
-            inputFields1.values().forEach(inputField -> {
+            inputFieldsSideBar.values().forEach(inputField -> {
                 inputField.clear();
             });
             setElementsToNull(storedUserData.get(phenotype));
@@ -709,7 +813,7 @@ public class OverlayPlotBox {
     
     private void setAgeFieldToTroubled(String fieldIndex) {
         storedAges.set(Integer.parseInt(fieldIndex), null);
-        inputFieldsAge.get(fieldIndex).addStyleName("problem");
+        inputFieldsAgeSideBar.get(fieldIndex).addStyleName("problem");
     }
     
     private void updateAge(String index, HasValue.ValueChangeEvent<String> event) {
@@ -733,8 +837,8 @@ public class OverlayPlotBox {
             }        
             storedAges.set(Integer.parseInt(index), age);
             setAges(storedAges);
-            inputFieldsAge.get(index).removeStyleName("problem");
-            inputFieldsAge.get(index).setValue(age.getDescription());   
+            inputFieldsAgeSideBar.get(index).removeStyleName("problem");
+            inputFieldsAgeSideBar.get(index).setValue(age.getDescription());   
         }
         else {
             Notification notification = new Notification("Valid age formats: birth|x-y day(s)|week(s)|month(s)|year(s)", Notification.Type.HUMANIZED_MESSAGE);
@@ -742,6 +846,51 @@ public class OverlayPlotBox {
             notification.show(Page.getCurrent());
             setAgeFieldToTroubled(index);
         }
+    }
+    
+    private void toggleWindowVisibility(Window window) {
+        if (!window.isAttached()) { // is the window already open?
+            getComponent().getUI().getUI().addWindow(window);
+        }
+        else{
+            window.close();
+        }
+    }
+    
+    private void showDataFormWindow(String plotNumber) {
+        System.out.println("phenotypeMap: " + phenotypeMap);
+        if (dataTabSheet == null) {
+            dataTabSheet = new TabSheet();
+            inputFieldsTabSheet = new HashMap();
+            for (String thisPlotNumber : phenotypeMap.keySet()) {            
+                Variable phenotype = phenotypeMap.get(thisPlotNumber);
+                //dataTabSheet.addTab(dataForms.get(thisPlotNumber), phenotypeMap.get(thisPlotNumber).getDisplayName());
+                HorizontalLayout tab = new HorizontalLayout();
+                inputFieldsAgeTabSheet = new HashMap();
+                FormLayout ageForm = createAgeForm(inputFieldsAgeTabSheet); 
+                inputFieldsTabSheet.put(thisPlotNumber, new HashMap());
+                Label phenotypeLabel = new Label(phenotype.getDisplayName());
+                formLabelsTabSheet.put(thisPlotNumber, phenotypeLabel);
+                FormLayout phenotypeForm = createPhenotypeForm(thisPlotNumber, phenotypeLabel, inputFieldsTabSheet);
+                tab.addComponent(ageForm);
+                tab.addComponent(phenotypeForm);
+                tab.setCaption(phenotype.getDisplayName());
+                dataTabSheet.addTab(tab);
+            }
+            inputFormWindow = new Window("Enter own data");
+            inputFormWindow.setContent(dataTabSheet);
+            inputFormWindow.setWidth(Math.round(phenotypeMap.keySet().size()*250), Sizeable.Unit.PIXELS);
+            inputFormWindow.setHeight(90, Sizeable.Unit.PERCENTAGE);
+            inputFormWindow.center();
+        }
+        toggleWindowVisibility(inputFormWindow);        
+
+        System.out.println("Show data form for plot number " + plotNumber);
+    }
+    
+    private void viewPlotData() {
+        Window window = (Window) plotDataWindow.getComponent();
+        toggleWindowVisibility(window);
     }
     
     public Component getComponent() {

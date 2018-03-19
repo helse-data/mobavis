@@ -51,6 +51,7 @@ public class SNPPlotBox {
     
     SNPPlot femaleChart;
     SNPPlot maleChart;
+    PlotDataWindow plotDataWindow = new PlotDataWindow();
     GridLayout SNPRightGrid = new GridLayout(10, 4);
     HorizontalLayout SNPShowOptionsSelectorBox = new HorizontalLayout();
     HorizontalLayout topBox = new HorizontalLayout();
@@ -109,9 +110,10 @@ public class SNPPlotBox {
         phenotypeSelector.setIcon(VaadinIcons.CLIPBOARD_PULSE);
         phenotypeSelector.setEmptySelectionAllowed(false);
         
-        // LocusZoom
-        
         locusZoomButton.addClickListener(event -> openLocusZoomWindow());
+        
+        Button viewPlotDataButton = new Button("View plot data");
+        viewPlotDataButton.addClickListener(event -> viewPlotData());
 
         // changeShowStatus options
         List <Option> SNPShowOptions = new ArrayList();
@@ -135,7 +137,7 @@ public class SNPPlotBox {
 //            "rs9996", "21_10915988_A_C"}));
 //        }
 //        else {
-            SNPOptions = new ArrayList(Arrays.asList(new String[]{"rs775977022", "rs553763040", 
+            SNPOptions = new ArrayList(Arrays.asList(new String[]{"rs13046557", "rs775977022", "rs553763040", 
             "rs9996", "rs2767486 [big difference]", "rs117845375 [female plunge]", "rs41301756 [female plunge x2]", "21_10915988_A_C", "rs12627379", "rs28720096 [AA-only]", "rs62033413", "rs375583050 [BB-only]",
         "rs147446959", "1_154729900_T_G [large chromosome]"}));
                         
@@ -166,7 +168,9 @@ public class SNPPlotBox {
         topBox.addComponent(SNPInput);
         topBox.addComponent(phenotypeSelector);
         topBox.addComponent(locusZoomButton);
-        topBox.setComponentAlignment(locusZoomButton, Alignment.MIDDLE_CENTER);
+        topBox.setComponentAlignment(locusZoomButton, Alignment.BOTTOM_CENTER);
+        topBox.addComponent(viewPlotDataButton);
+        topBox.setComponentAlignment(viewPlotDataButton, Alignment.BOTTOM_CENTER);
         
         box.setSizeFull();
         topBox.setSizeFull();
@@ -190,12 +194,16 @@ public class SNPPlotBox {
                         
             int overallMaxN = 0;
             SNPPlot chart = null;
+            String indexString = "";
             if (sex.equals("female")) {
+                indexString = "1";
                 chart = femaleChart;                
             }
             else if (sex.equals("male")) {
                 chart = maleChart;
+                indexString = "2";
             }
+            
             for (String genotype : new String[] {"AA", "AB", "BB"}) { 
                 JsonObject snpDataObject = snp.getDataObject();
                 System.out.println("phenotype: " + phenotype);
@@ -234,6 +242,7 @@ public class SNPPlotBox {
                 
             }
             chart.sendData(dataObject);
+            plotDataWindow.setTab(indexString, dataObject.toJson(), sex);
         }        
     }
     
@@ -282,6 +291,7 @@ public class SNPPlotBox {
             selection.addValueChangeListener(event -> searchSNP(event.getValue()));
             String windowCaption = "SNPs nearest to position " + position + " on chromosome " + chromosome + ":";
             Window window = new Window(windowCaption);
+            window.center();
             window.setContent(selection);
             window.setWidth(Math.round(windowCaption.length()*9.7), Sizeable.Unit.PIXELS);
             window.setHeight(10, Sizeable.Unit.PERCENTAGE);
@@ -471,6 +481,19 @@ public class SNPPlotBox {
         getComponent().getUI().getUI().addWindow(locusZoomWindow);
     }
     
+    private void toggleWindowVisibility(Window window) {
+        if (!window.isAttached()) { // is the window already open?
+            getComponent().getUI().getUI().addWindow(window);
+        }
+        else{
+            window.close();
+        }
+    }
+    
+    private void viewPlotData() {
+        Window window = (Window) plotDataWindow.getComponent();
+        toggleWindowVisibility(window);
+    }
     
     public SNPPlot getChart1() {
         return femaleChart;

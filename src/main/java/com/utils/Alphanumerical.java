@@ -2,6 +2,7 @@ package com.utils;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -161,6 +162,25 @@ public class Alphanumerical implements Comparable<Alphanumerical> {
     
     public boolean hasDigitsOnly() {
         return digitsOnly;
+    }
+    
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (object == null) {
+            return false;
+        }
+        if (getClass() != object.getClass()) {
+            return false;
+        }
+        final Alphanumerical other = (Alphanumerical) object;
+        return Objects.equals(getValue(), other.getValue());
+    }
+    @Override
+    public int hashCode() {
+        return getValue().hashCode();
     }
     
 }

@@ -23,7 +23,7 @@ public class OverlayCommon extends PlotlyJs {
         data.put("boolean version", booleanPercentileVersion);
         //System.out.println("Sent boolean version: " + booleanPercentileVersion);
         booleanPercentileVersion = !booleanPercentileVersion;
-        //System.out.println("setting percentileData: " + phenotypeID);
+        System.out.println("sendPercentileData(), data: " + data);
         getState().setPercentileData(data);
     }
     
