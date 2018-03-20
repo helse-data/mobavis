@@ -15,6 +15,16 @@ function plotlyPlot (element, number, type, style) {
     this.chromosomes = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11',
                     '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', 'X', 'Y'];
 
+    this.commonConfiguration = {
+        scrollZoom: true,
+        modeBarButtonsToAdd: [{ // add option to download SVG
+        name: 'Download plot as SVG',
+        icon: Plotly.Icons.camera,
+        click: function(gd) {
+          Plotly.downloadImage(gd, {format: 'svg'})
+        }
+    }]};
+
     // use d3 for automatic resizing  
     d3 = Plotly.d3;
 //    this.gd3 = d3.select('#' + this.divID);
@@ -44,7 +54,7 @@ function plotlyPlot (element, number, type, style) {
         console.log('changed size');
     };    
     
-    // use addEventListener to support resizing of multiple plots
+    // use addEventListener to support resizing of multiple plots on the same page
     this.resize = function() {
         console.log('resize()');
         if (thisObject.elementIsVisible()) { // only resize visible elements

@@ -272,7 +272,7 @@ SNPPlot.Component = function (element, number) {
 
     this.updateData = function (newData) {         
         if (newData != null){
-            //console.log('newData: ' + JSON.stringify(newData)); // TODO: await
+            //console.log('newData: ' + JSON.stringify(newData));
             var AAData = newData['AA'];
             var ABData = newData['AB'];
             var BBData = newData['BB'];            
@@ -281,8 +281,12 @@ SNPPlot.Component = function (element, number) {
             console.log('statisticIndexMap: ' + JSON.stringify(statisticIndexMap));
             for (var j = 0; j < genotypes.length; j++) {
                 for (var i = 0; i < dataTypes.length; i++) {
-                    console.log('line (' + genotypes[j] + ', ' + dataTypes[i] + '): ' + newData[genotypes[j]][dataTypes[i]]);
-                    dataList.push(newData[genotypes[j]][dataTypes[i]]);
+                    var line = newData[genotypes[j]][dataTypes[i]];
+                    if (line == null) {
+                        line = [];
+                    }
+                    console.log('line (' + genotypes[j] + ', ' + dataTypes[i] + '): ' + line);
+                    dataList.push(line);
                 }
             }
             //console.log(dataList);
@@ -305,7 +309,8 @@ SNPPlot.Component = function (element, number) {
         }
     };
     // creating the plot
-    var configuration = {scrollZoom: true, modeBarButtonsToRemove: ['sendDataToCloud']};
+    var configuration = this.commonConfiguration;
+    configuration['modeBarButtonsToRemove'] = ['sendDataToCloud'];
     Plotly.newPlot(this.gd, traceList, layout, configuration);
  
     
@@ -356,7 +361,7 @@ SNPPlot.Component = function (element, number) {
         
     var plot = document.getElementById(this.divID);
     
-    plot.on('plotly_restyle', function(eventData){ // register legend clicks
+//    plot.on('plotly_restyle', function(eventData){ // register legend clicks
 //        if (eventData[0]['visible'] != null && !thisObject.isGraphEmpty()) {
 //            console.log("Restyle: " + JSON.stringify(eventData));
 //            thisObject.updateLegendGroupStatuses();
@@ -377,5 +382,5 @@ SNPPlot.Component = function (element, number) {
 //                
 //            }
 //        }        
-    }); 
+//    }); 
 };

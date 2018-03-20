@@ -75,7 +75,8 @@ barPlot.Component = function (element, number) {
                         //pad: 4
                     }
         };
-        var configuration = {scrollZoom: true, modeBarButtonsToRemove: ['sendDataToCloud']};
+        var configuration = this.commonConfiguration;
+        configuration['modeBarButtonsToRemove'] = ['sendDataToCloud'];
         Plotly.newPlot(this.gd, data, layout, configuration);
 }
     

@@ -63,7 +63,7 @@ function OverlayCommon(plotObject) {
     
     this.manageData = function(metaData, percentileData, userData, userAges, showStatus, size) {        
         console.log('meta data: ' + JSON.stringify(metaData));
-        //console.log('percentile data: ' + JSON.stringify(percentileData));
+        console.log('percentile data: ' + JSON.stringify(percentileData));
         console.log('plot size: ' + JSON.stringify(size));
         //console.log('user data: ' + JSON.stringify(userData));
         console.log('user ages: ' + JSON.stringify(userAges));
@@ -78,8 +78,9 @@ function OverlayCommon(plotObject) {
             };
         };
         if (percentileData != null) {
+            console.log('booleanVersions[\'percentiles\']: ' + booleanVersions['percentiles']);
             if (firstData || booleanVersions['percentiles'] != percentileData['boolean version']) {
-                console.log('New percentile data provided.')
+                console.log('New percentile data provided: ' + JSON.stringify(percentileData));
                 plotObject.setPercentileData(percentileData);
                 booleanVersions['percentiles'] = percentileData['boolean version'];
             };

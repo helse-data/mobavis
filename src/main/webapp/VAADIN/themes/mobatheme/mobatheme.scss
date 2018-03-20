@@ -3,6 +3,8 @@
 @mixin mobatheme {
     @include valo;
     
+    // popup view
+    
     .v-popupview-own-popupview-style {      
 	color: #000000;
 	text-decoration: none;
@@ -13,12 +15,32 @@
 	-webkit-box-shadow: 0 0 0 2px rgba(25, 125, 225, 0.5);
 	box-shadow: 0 0 0 2px rgba(25, 125, 225, 0.5);
 }
-
+    // button
+    
     .v-button-own-button-link-style {
         color: #000000;
         text-decoration: none;
     }
-     
+    
+    .v-button-main-selector {
+	background-image: -webkit-linear-gradient(top, rgba(156, 156, 156, 0.49) 2%, rgba(255, 255, 255, 0.09) 98%);
+	-webkit-box-shadow: inset 0 1px 0 #f7f7ff, inset 0 -1px 0 #b3b3b3, 0 2px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .v-button-home-link {
+        background-color: white;
+        //@include background-image(linear-gradient(to bottom, white 2%, rgba(177, 177, 189, 0) 98%));
+    }
+
+    .v-button-highlight-blue {
+        border: none;
+	background-image: -webkit-linear-gradient(top, rgba(3, 99, 255, 0.63) 2%, rgba(3, 145, 255, 0.28) 98%);
+	//background-image: linear-gradient(to bottom,rgba(3, 154, 255, 0.49) 2%, rgba(165, 165, 167, 0.09) 98%);
+	-webkit-box-shadow: inset 0 1px 0 #f7f7ff, inset 0 -1px 0 #4876c6, 0 2px 3px rgba(0, 0, 0, 0.05);
+    }
+    
+    // text field
+    
     .v-textfield-problem {
 	border-color: red;
 	box-shadow: 0 0 0 2px rgba(225, 25, 25, 0.5);
@@ -26,5 +48,5 @@
     .v-textfield-problem:focus {
 	border-color: yellow;
 	box-shadow: 0 0 0 2px rgba(255, 153, 0, 0.5);
-    }
+    }    
 }

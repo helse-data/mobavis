@@ -198,7 +198,9 @@ overlayPlot.Component = function (element, number) {
         };
         // create the plot
         //console.log('data object: ' + JSON.stringify(data));
-        var configuration = {scrollZoom: true, modeBarButtonsToRemove: ['sendDataToCloud', 'select2d', 'lasso2d']};
+        var configuration = this.commonConfiguration;
+        configuration['modeBarButtonsToRemove'] = ['sendDataToCloud', 'select2d', 'lasso2d'];
+        
         Plotly.newPlot(this.gd, data, layout, configuration);
         console.log("set up");
     }
@@ -300,6 +302,7 @@ overlayPlot.Component = function (element, number) {
             annotations[index]['y'] = percentileData[index][percentileData[index].length - 1];
             visibleAnnotations.push(annotations[index]);
         };
+        console.log('current title: ' + phenotype);
         Plotly.relayout(this.divID, {title : phenotype, yaxis : {title : phenotype}, annotations : visibleAnnotations});    
     };
     
