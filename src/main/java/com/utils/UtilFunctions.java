@@ -80,6 +80,27 @@ public class UtilFunctions {
         }
     }
     
+    public String maxDouble(List <String> values) {
+        double max = Double.parseDouble(values.get(0));        
+        for (int i = 1; i < values.size(); i++) {
+            double value = Double.parseDouble(values.get(i)); 
+            if (value > max) {
+                max = value;
+            }
+        }
+        return Double.toString(max);
+    }
+    public String minDouble(List <String> values) {
+        double min = Double.parseDouble(values.get(0));        
+        for (int i = 1; i < values.size(); i++) {
+            double value = Double.parseDouble(values.get(i)); 
+            if (value < min) {
+                min = value;
+            }
+        }
+        return Double.toString(min);
+    }
+    
     public List <String> jsonArrayToList(JsonArray array) {
         List <String> list = new ArrayList();
         for (int i = 0; i < array.length(); i++) {

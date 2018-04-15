@@ -75,6 +75,7 @@ public class SNPPlotBoxOld {
     boolean mediansShown = true;
     boolean SEMShown = true;
     boolean CIShown = false;
+    boolean nShown = true;
     
     
     public SNPPlotBoxOld() {        
@@ -103,7 +104,7 @@ public class SNPPlotBoxOld {
 
         // show options
         List <String> SNPShowOptions = new ArrayList();
-        SNPShowOptions.addAll(Arrays.asList(new String[] {"medians", "SEM", "confidence intervals"}));//, "number of individuals"}));
+        SNPShowOptions.addAll(Arrays.asList(new String[] {"medians", "SEM", "confidence intervals", "n"}));
         SNPShowOptionsSelector = new CheckBoxGroup("Show");
         SNPShowOptionsSelector.setItems(SNPShowOptions);
 
@@ -143,11 +144,11 @@ public class SNPPlotBoxOld {
         currentShowStatus.put("medians", true);
         currentShowStatus.put("SEM", true);
         currentShowStatus.put("confidence intervals", false);
+        currentShowStatus.put("n", true);
         
         
         Set initialSNPShowSettings = new HashSet();
-        initialSNPShowSettings.addAll(Arrays.asList(new String[] {"medians", "SEM"}));//, "confidence intervals"}));//, "number of individuals"}));
-        //initialSNPShowSettings.addAll(Arrays.asList(new String[] {"medians", "number of individuals"}));
+        initialSNPShowSettings.addAll(Arrays.asList(new String[] {"medians", "SEM", "n"}));//, "confidence intervals"}));
         SNPShowOptionsSelector.setValue(initialSNPShowSettings);
         previousSNPShowOptions = SNPShowOptionsSelector.getValue();
         SNPShowOptionsSelector.addSelectionListener(event -> changeSNPShowSettings(event));
@@ -194,6 +195,8 @@ public class SNPPlotBoxOld {
                 jsonHelper.put(genotypeObject, "upper SEM", snp.getData(genotype + " " + phenotype + " " + sex +  " 95%_SEM_down")); // sic
                 jsonHelper.put(genotypeObject, "lower CI", snp.getData(genotype + " " + phenotype + " " + sex +  " 95%_CI_up"));
                 jsonHelper.put(genotypeObject, "upper CI", snp.getData(genotype + " " + phenotype + " " + sex +  " 95%_CI_down"));    
+                jsonHelper.put(genotypeObject, "N", snp.getData(genotype + " " + phenotype + " " + sex +  " n"));    
+                
                 
                 List <String> nData = snp.getData(genotype + " " + phenotype + " " + sex +  " n");
                 String nMin = converter.minInteger(nData);
@@ -223,7 +226,7 @@ public class SNPPlotBoxOld {
                
                 jsonHelper.put(genotypeObject, "labels", Arrays.asList(new String[] {genotype + separator + info}));
                 data.put(genotype, genotypeObject);    
-                
+                //System.out.println("genotypeObject: " + genotypeObject);
             }
             chart.sendData(data);
         }        
@@ -381,10 +384,10 @@ public class SNPPlotBoxOld {
                 CIShown = !CIShown;
                 show(s, CIShown);
             }
-//            else if (s.equals("number of individuals")) {
-//                nShown = !nShown;
-//                snpPlotBox.show(s, nShown);
-//            }
+            else if (s.equals("n")) {
+                nShown = !nShown;
+                show(s, nShown);
+            }
         }
         previousSNPShowOptions = SNPShowOptionsSelector.getValue();
     }
@@ -395,10 +398,11 @@ public class SNPPlotBoxOld {
         for (String stat : currentShowStatus.keySet()) {
             showStatus.put(stat, currentShowStatus.get(stat));
         }
-        
+        showStatus.put("percentiles", false); // forward compatibility
         for (SNPPlot chart : new SNPPlot[] {femaleChart, maleChart}) {
-            chart.sendShowStatus(showStatus);
-        }         
+            chart.sendPlotOptions(showStatus);
+        }
+        System.out.println("showStatus: " + showStatus);
     }
     
     private void clearSNPInput(boolean clear) {

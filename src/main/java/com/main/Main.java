@@ -98,7 +98,7 @@ public class Main {
         Button homeLink = new Button("Home");
         homeLink.setIcon(VaadinIcons.ARROW_LEFT);
         homeLink.addStyleName(ValoTheme.BUTTON_LINK);
-        homeLink.addStyleNames("own-button-link-style", "own-button-link-style:active", "home-link");
+        homeLink.addStyleNames("own-button-link-style", "own-button-link-style:active");//, "home-link");
         homeLink.addClickListener(event -> goHome());
         Label title = new Label(htmlHelper.bold("MoBa visualisation prototype"), ContentMode.HTML);        
         

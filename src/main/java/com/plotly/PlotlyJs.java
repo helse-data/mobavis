@@ -4,6 +4,7 @@ import com.vaadin.annotations.JavaScript;
 import com.vaadin.ui.AbstractJavaScriptComponent;
 import elemental.json.JsonObject;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -39,7 +40,9 @@ public class PlotlyJs extends AbstractJavaScriptComponent {
    
     public void sendData(JsonObject data) {
          getState().setData(data);
-
+    }
+    public void sendData(Map data) {
+         getState().setMapData(data);
     }
     
     public void setSize(JsonObject size) {

@@ -97,9 +97,9 @@ public class LandingPage {
         message.setValue(messageText);
         message.setSizeFull();
         //message.setHeight(100, Sizeable.Unit.PERCENTAGE);
-        snpButton.setSizeFull();
-        summaryButton.setSizeFull();
-        keyInputField.setSizeFull();
+        //snpButton.setSizeFull();
+        //summaryButton.setSizeFull();
+        //keyInputField.setSizeFull();
         
         page.setSizeFull();
         buttonBox.setSizeFull();

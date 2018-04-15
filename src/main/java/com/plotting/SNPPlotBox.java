@@ -4,18 +4,22 @@ import com.locuszoom.LocusZoom;
 import com.plotly.SNPPlot;
 import com.main.Database;
 import com.main.SNP;
+import com.plotly.ScatterPlot;
 import com.utils.Alphanumerical;
 import com.utils.Constants;
 import com.utils.UtilFunctions;
 import com.utils.HtmlHelper;
 import com.utils.JsonHelper;
 import com.utils.Option;
+import com.vaadin.data.HasValue.ValueChangeEvent;
 import com.vaadin.event.selection.SelectionEvent;
+import com.vaadin.event.selection.SingleSelectionEvent;
 import com.vaadin.icons.VaadinIcons;
 import com.vaadin.server.Sizeable;
 import com.vaadin.shared.ui.ContentMode;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
+import com.vaadin.ui.CheckBox;
 import com.vaadin.ui.CheckBoxGroup;
 import com.vaadin.ui.ComboBox;
 import com.vaadin.ui.Component;
@@ -24,7 +28,9 @@ import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.NativeSelect;
 import com.vaadin.ui.RadioButtonGroup;
+import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.Window;
+import com.vaadin.ui.themes.ValoTheme;
 import elemental.json.Json;
 import elemental.json.JsonObject;
 import java.util.ArrayList;
@@ -44,19 +50,25 @@ public class SNPPlotBox {
     
     JsonObject dataObject;
     JsonHelper jsonHelper = new JsonHelper();
-    JsonObject showStatusObject;
+    JsonObject plotOptionsObject;
         
     GridLayout box = new GridLayout(100, 100);
     HorizontalLayout plotBox = new HorizontalLayout();
     
     SNPPlot femaleChart;
+    VerticalLayout femalePlotBox = new VerticalLayout();
     SNPPlot maleChart;
+    VerticalLayout malePlotBox = new VerticalLayout();
     PlotDataWindow plotDataWindow = new PlotDataWindow();
-    GridLayout SNPRightGrid = new GridLayout(10, 4);
-    HorizontalLayout SNPShowOptionsSelectorBox = new HorizontalLayout();
+    GridLayout rightGrid = new GridLayout(10, 10);
+    VerticalLayout showOptionsSelectorBox = new VerticalLayout();
+    Button moreShowOptionsButton = new Button("More options");
+    Window moreShowOptionsWindow;
     HorizontalLayout topBox = new HorizontalLayout();
-    CheckBoxGroup <Option> SNPShowOptionsSelector;
-    Set <Option> previousSNPShowOptions = new HashSet();
+    CheckBoxGroup <Option <Boolean>> showOptionsSelector;
+    Map <String, Option <Boolean>> booleanOptions = new HashMap();
+    Map <String, Option <String>> stringOptions = new HashMap();
+    Set <Option <Boolean>> previousShowOptions = new HashSet();
     Label message;
     Label SNPInformation = new Label();
     
@@ -90,15 +102,17 @@ public class SNPPlotBox {
         femaleChart = new SNPPlot();
         maleChart = new SNPPlot();
         
-        plotBox.addComponent(femaleChart);
-        plotBox.addComponent(maleChart);
+        //femalePlotBox.addComponents(femaleChart, numberPlotFemale);
+        //malePlotBox.addComponents(maleChart, numberPlotMale);
+        //plotBox.addComponents(femalePlotBox, malePlotBox);
+        plotBox.addComponents(femaleChart, maleChart);
         
         int n10 = (int) ((box.getColumns()-1)*0.1);
         
         int plotStartY = 7;
         box.addComponent(topBox, 1, 0, 70, plotStartY-1);
         box.addComponent(plotBox, 1, plotStartY, 82, 99);
-        box.addComponent(SNPRightGrid, 83, plotStartY+1, 99, 99);
+        box.addComponent(rightGrid, 83, plotStartY+1, 99, 99);
         
         // phenotype selector
         phenotypeOptions.addAll(Arrays.asList(new String[]{
@@ -115,17 +129,32 @@ public class SNPPlotBox {
         Button viewPlotDataButton = new Button("View plot data");
         viewPlotDataButton.addClickListener(event -> viewPlotData());
 
-        // changeShowStatus options
-        List <Option> SNPShowOptions = new ArrayList();
-        Option medians = new Option("medians", "medians", true);
-        Option SEM = new Option("SEM", "SEM", true);
-        Option percentiles = new Option("percentiles", "2.5th and 97.5th percentiles", false);
-        SNPShowOptions.add(medians);
-        SNPShowOptions.add(SEM);
-        SNPShowOptions.add(percentiles);
-        SNPShowOptionsSelector = new CheckBoxGroup("Show");
-        SNPShowOptionsSelector.setItems(SNPShowOptions);
+        // sendPlotOptions options
+        
+        Option <Boolean> medians = new Option("medians", "medians", true);
+        Option <Boolean> SEM = new Option("SEM", "SEM", true);
+        Option <Boolean> percentiles = new Option("percentiles", "2.5th and 97.5th percentiles", false);
+        Option <Boolean> n = new Option("n", "number of individuals", true);
+        Option <String> ageSpacing = new Option("age spacing", "age spacing", "to scale");
+        Option <Boolean> yaxisToZero = new Option("y to zero", "y-axis to zero", false);
+        
+        List <Option <Boolean>> showOptionList = new ArrayList();
+        showOptionList.add(medians);
+        showOptionList.add(SEM);
+        showOptionList.add(percentiles);
+        showOptionList.add(n);
+        
+        for (Option <Boolean> showOption : showOptionList) {
+            booleanOptions.put(showOption.getName(), showOption);
+        }
+        booleanOptions.put(yaxisToZero.getName(), yaxisToZero);
+        
+        stringOptions.put(ageSpacing.getName(), ageSpacing);
+        
+        showOptionsSelector = new CheckBoxGroup("Show");
+        showOptionsSelector.setItems(showOptionList);
 
+        moreShowOptionsButton.addClickListener(event -> openMoreShowOptionsWindow());
         
         SNPInput = new ComboBox("SNP");
 
@@ -158,12 +187,14 @@ public class SNPPlotBox {
         
         SNPInput.setValue(SNPOptions.get(0));  
         
-        SNPShowOptionsSelector.select(medians, SEM);
-        previousSNPShowOptions = SNPShowOptionsSelector.getValue();
-        SNPShowOptionsSelector.addSelectionListener(event -> changeSNPShowSettings(event));
+        showOptionsSelector.select(medians, SEM, n);
+        previousShowOptions = showOptionsSelector.getValue();
+        showOptionsSelector.addSelectionListener(event -> changeShowSettings(event));
         
-        SNPShowOptionsSelectorBox.addComponent(SNPShowOptionsSelector);
-        SNPRightGrid.addComponent(SNPShowOptionsSelectorBox, 1, 0, 9, 0);
+        showOptionsSelectorBox.addComponent(showOptionsSelector);
+        showOptionsSelectorBox.addComponent(moreShowOptionsButton);
+        
+        rightGrid.addComponent(showOptionsSelectorBox, 1, 0, 9, 4);
         
         topBox.addComponent(SNPInput);
         topBox.addComponent(phenotypeSelector);
@@ -175,45 +206,74 @@ public class SNPPlotBox {
         box.setSizeFull();
         topBox.setSizeFull();
         plotBox.setSizeFull();
+        femalePlotBox.setSizeFull();
+        malePlotBox.setSizeFull();
         femaleChart.setSizeFull();
         maleChart.setSizeFull();
-        SNPRightGrid.setSizeFull();
-        SNPShowOptionsSelectorBox.setSizeFull();        
+        rightGrid.setSizeFull();
+        showOptionsSelectorBox.setSizeFull();        
         SNPInput.setSizeFull();
         phenotypeSelector.setSizeFull();
-        
     }
        
     public void setDatasets(SNP snp, String phenotype) {
+        int overallMaxN = 0;
+        double overallMaxSEM = 0;
+        double overallMinSEM = -1;
+        double overallMaxPercentile = 0;
+        double overallMinPercentile = -1;        
+
+        JsonObject snpDataObject = snp.getDataObject();
+        
+        Map <String, JsonObject> dataObjects = new HashMap();
+        
         for (String sex : new String[] {"female", "male"}) {
             dataObject = Json.createObject();
+            dataObjects.put(sex, dataObject);
             
             dataObject.put("sex", sex);
             dataObject.put("SNP ID", snp.getID());
-            dataObject.put("phenotype", phenotype);            
-                        
-            int overallMaxN = 0;
-            SNPPlot chart = null;
-            String indexString = "";
-            if (sex.equals("female")) {
-                indexString = "1";
-                chart = femaleChart;                
-            }
-            else if (sex.equals("male")) {
-                chart = maleChart;
-                indexString = "2";
-            }
+            dataObject.put("phenotype", phenotype);
             
             for (String genotype : new String[] {"AA", "AB", "BB"}) { 
-                JsonObject snpDataObject = snp.getDataObject();
-                System.out.println("phenotype: " + phenotype);
+                //System.out.println("phenotype: " + phenotype);
                 //System.out.println("phenotype: " + phenotype + ", object: " + snpDataObject.getObject(phenotype).getObject(sex));
                 JsonObject genotypeObject = snpDataObject.getObject(phenotype).getObject(sex).getObject(genotype);
-                
+                //System.out.println("genotypeObject: " + genotypeObject.toJson());
                 if (snpDataObject.getObject(phenotype).getBoolean("longitudinal")) {
                     List <String> nData = converter.jsonArrayToList(genotypeObject.get("N"));
                     String nMin = converter.minInteger(nData);
                     String nMax = converter.maxInteger(nData);
+                    
+                    if (genotypeObject.hasKey("upper SEM")) {
+                        List <String> upperSEMData = converter.jsonArrayToList(genotypeObject.get("upper SEM"));
+                        double semMax = Double.parseDouble(converter.maxDouble(upperSEMData));
+                        if (semMax > overallMaxSEM) {
+                            overallMaxSEM = semMax;
+                        }   
+                    }
+                    if (genotypeObject.hasKey("lower SEM")) {
+                        List <String> lowerSEMData = converter.jsonArrayToList(genotypeObject.get("lower SEM"));
+                        double semMin = Double.parseDouble(converter.minDouble(lowerSEMData));
+                        if (semMin < overallMinSEM || overallMinSEM < 0) {
+                            overallMinSEM = semMin;
+                        }
+                    }
+                    if (genotypeObject.hasKey("97.5%")) {
+                        List <String> upperPercentileData = converter.jsonArrayToList(genotypeObject.get("97.5%"));
+                        double percentileMax = Double.parseDouble(converter.maxDouble(upperPercentileData));
+                        if (percentileMax > overallMaxPercentile) {
+                            overallMaxPercentile = percentileMax;
+                        }
+                    }
+                    if (genotypeObject.hasKey("2.5%")) {
+                        List <String> lowerPercentileData = converter.jsonArrayToList(genotypeObject.get("2.5%"));
+                        double percentileMin = Double.parseDouble(converter.minDouble(lowerPercentileData));
+                        if (percentileMin < overallMinPercentile || overallMinPercentile < 0) {
+                            overallMinPercentile = percentileMin;
+                        }
+                    }
+
 
                     String info  = "";
 
@@ -241,9 +301,26 @@ public class SNPPlotBox {
                 dataObject.put(genotype, genotypeObject);    
                 
             }
-            chart.sendData(dataObject);
-            plotDataWindow.setTab(indexString, dataObject.toJson(), sex);
-        }        
+            
+            JsonObject numberObject = Json.createObject();
+            for (String genotype : new String[] {"AA", "AB", "BB"}) {
+                numberObject.put(genotype, dataObject.getObject(genotype).getArray("N"));
+            }
+            //numberPlot.sendData(numberObject);
+        }
+        
+        // enter extreme values and send
+        for (String sex : new String[] {"female", "male"}) {
+            dataObjects.get(sex).put("SEM min", overallMinSEM);
+            dataObjects.get(sex).put("SEM max", overallMaxSEM);
+            dataObjects.get(sex).put("percentile max", overallMaxPercentile);
+            dataObjects.get(sex).put("percentile min", overallMinPercentile);
+            dataObjects.get(sex).put("n max", overallMaxN);
+        }
+        femaleChart.sendData(dataObjects.get("female"));
+        maleChart.sendData(dataObjects.get("male"));
+        plotDataWindow.setTab("1", dataObjects.get("female").toJson(), "female");
+        plotDataWindow.setTab("2", dataObjects.get("male").toJson(), "male");        
     }
     
     private boolean searchSNP(String option) {
@@ -271,7 +348,7 @@ public class SNPPlotBox {
        
         phenotypeSelector.setEnabled(false);
         //System.out.println("disabled");
-        //Notification.changeShowStatus("disabled", Notification.Type.TRAY_NOTIFICATION);
+        //Notification.sendPlotOptions("disabled", Notification.Type.TRAY_NOTIFICATION);
         currentSNPInputValue = option;
         
         SNP snp = null;
@@ -302,7 +379,7 @@ public class SNPPlotBox {
         }
         //viewSelector.setEnabled(true);
         phenotypeSelector.setEnabled(true);
-        //Notification.changeShowStatus("enabled", Notification.Type.TRAY_NOTIFICATION);
+        //Notification.sendPlotOptions("enabled", Notification.Type.TRAY_NOTIFICATION);
         //System.out.println("enabled");
         
         String SNPinformationString = "";
@@ -336,12 +413,12 @@ public class SNPPlotBox {
         if (snp == null || !snp.hasData()) {          
             plotBox.removeAllComponents();
             
-            SNPShowOptionsSelectorBox.removeComponent(SNPShowOptionsSelector);            
+            showOptionsSelectorBox.removeComponent(showOptionsSelector);            
             phenotypeSelector.setEnabled(false);
             //currentSNP = null;
 
             SNPInputActive = false;
-            SNPRightGrid.removeComponent(SNPInformation);
+            rightGrid.removeComponent(SNPInformation);
             if (snp != null) {
                 SNPinformationString += "<br><br>" + html.bold("No phenotype data could be found.");
                 message = new Label(html.bold("No phenotype data could be found for the SNP " + html.italics(option) + "."), ContentMode.HTML);
@@ -356,24 +433,23 @@ public class SNPPlotBox {
             plotBox.setComponentAlignment(message, Alignment.MIDDLE_CENTER);
             SNPInformation = new Label(SNPinformationString, ContentMode.HTML);
 
-            SNPRightGrid.addComponent(SNPInformation, 1, 1, 8, 3);
+            rightGrid.addComponent(SNPInformation, 1, 5, 8, 9);
             return false;
         }
         else {
             setDatasets(snp, currentPhenotype);
-            SNPRightGrid.removeComponent(SNPInformation);
+            rightGrid.removeComponent(SNPInformation);
             SNPInformation = new Label(SNPinformationString, ContentMode.HTML);
             SNPInformation.setSizeFull();
-            SNPRightGrid.addComponent(SNPInformation, 1, 1, 8, 3);
+            rightGrid.addComponent(SNPInformation, 1, 5, 8, 9);
 
             if (plotBox.getComponentCount() < 2) {
                 plotBox.removeAllComponents();
-                plotBox.addComponent(femaleChart);
-                plotBox.addComponent(maleChart);
+                //plotBox.addComponents(femalePlotBox, malePlotBox);
+                plotBox.addComponents(femaleChart, maleChart);
             }
-
             phenotypeSelector.setEnabled(true);
-            SNPShowOptionsSelectorBox.addComponent(SNPShowOptionsSelector);     
+            showOptionsSelectorBox.addComponent(showOptionsSelector);     
             SNPInputActive = false;
             return true;   
         }
@@ -417,41 +493,73 @@ public class SNPPlotBox {
         currentPhenotype = option;        
     }
     
-    private void changeSNPShowSettings(SelectionEvent event) {
-        //System.out.println("Changed");
-        Set <Option> currentlySelected = event.getAllSelectedItems();
+    
+    
+    private void changeShowSettings(SelectionEvent event) {
+        //System.out.println("Show settings shanged");
+        Set <Option <Boolean>> currentlySelected = event.getAllSelectedItems();
         
-        Set <Option> unselected = new HashSet();
-        unselected.addAll(previousSNPShowOptions);
+        Set <Option <Boolean>> unselected = new HashSet();
+        unselected.addAll(previousShowOptions);
         unselected.removeAll(currentlySelected);
         
-        Set <Option> newlySelected = new HashSet();
+        Set <Option <Boolean>> newlySelected = new HashSet();
         newlySelected.addAll(currentlySelected);
-        newlySelected.removeAll(previousSNPShowOptions);
+        newlySelected.removeAll(previousShowOptions);
         
-        Set <Option> changed = new HashSet();
+        Set <Option <Boolean>> changed = new HashSet();
         changed.addAll(newlySelected);
         changed.addAll(unselected);
         
+        for (Option <Boolean> option : changed) {
+            option.setValue(!option.getValue());
+        }  
         
-//        System.out.println("previously selected: " + previousSNPShowOptions);
+        
+//        System.out.println("previously selected: " + previousShowOptions);
 //        System.out.println("unselected: " + unselected);
 //        System.out.println("newly selected: " + newlySelected);
-//        System.out.println("changed: " + changed);
+        //System.out.println("changed show options: " + changed);
  
-        changeShowStatus(changed);
-        previousSNPShowOptions = SNPShowOptionsSelector.getValue();
+        //changeShowStatus(changed);
+        sendPlotOptions();
+        previousShowOptions = showOptionsSelector.getValue();
     }
+    
+    
         
-    public void changeShowStatus(Set <Option> options) {
-        showStatusObject = Json.createObject(); // create a new object each time
-        for (Option option : options) {
-            option.setVisible(!option.isVisible());
-            showStatusObject.put(option.getName(), option.isVisible());
-        }        
+    public void sendPlotOptions() {
+        plotOptionsObject = Json.createObject(); // create a new object each time
+        for (String optionKey : booleanOptions.keySet()) {
+            Option <Boolean> option = booleanOptions.get(optionKey);
+            plotOptionsObject.put(option.getName(), option.getValue());
+        }
+        for (String optionKey : stringOptions.keySet()) {
+            Option <String> option = stringOptions.get(optionKey);
+            plotOptionsObject.put(option.getName(), option.getValue());
+        }
+        //System.out.println("plotOptionsObject: " + plotOptionsObject.toJson());
         for (SNPPlot chart : new SNPPlot[] {femaleChart, maleChart}) {
-            chart.sendShowStatus(showStatusObject);
-        }         
+            chart.sendPlotOptions(plotOptionsObject);
+        }
+    }
+    
+    public void changeAgeSpacing(SingleSelectionEvent <String> event) {
+        if (!event.isUserOriginated()) {
+            return;
+        }
+        //System.out.println("event.getValue(): " + event.getValue());
+        stringOptions.get("age spacing").setValue(event.getValue());
+        sendPlotOptions();
+    }
+    
+    public void changeYaxisToZero(ValueChangeEvent <Boolean> event) {
+        if (!event.isUserOriginated()) {
+            return;
+        }
+        //System.out.println("event.getValue(): " + event.getValue());
+        booleanOptions.get("y to zero").setValue(event.getValue());
+        sendPlotOptions();
     }
     
     private void clearSNPInput(boolean clear) {
@@ -470,15 +578,44 @@ public class SNPPlotBox {
         if (locusZoomWindow == null) {
             locusZoom = new LocusZoom();
             locusZoomWindow = new Window("LocusZoom.js below - drag window here", locusZoom);
-        }
-        locusZoomWindow.setWidth(85, Sizeable.Unit.PERCENTAGE);
-        locusZoomWindow.setHeight(70, Sizeable.Unit.PERCENTAGE);
-        locusZoomWindow.center();
+            locusZoomWindow.setWidth(85, Sizeable.Unit.PERCENTAGE);
+            locusZoomWindow.setHeight(70, Sizeable.Unit.PERCENTAGE);
+            locusZoomWindow.center();
+        }        
         JsonObject region = Json.createObject();
         region.put("position", currentSNP.getPosition());
         region.put("chromosome", currentSNP.getChromosome());
         locusZoom.setRegion(region);
-        getComponent().getUI().getUI().addWindow(locusZoomWindow);
+        //getComponent().getUI().getUI().addWindow(locusZoomWindow);
+        toggleWindowVisibility(locusZoomWindow);
+    }
+    
+    private void openMoreShowOptionsWindow() {
+        if (moreShowOptionsWindow == null) {            
+            // age spacing
+            List <String> ageListSpacingOptions = Arrays.asList(new String [] {"to scale", "equal"});
+            RadioButtonGroup <String> ageSpacingSelector = new RadioButtonGroup("Spacing between ages", ageListSpacingOptions);
+            ageSpacingSelector.addSelectionListener(event -> changeAgeSpacing(event));
+            ageSpacingSelector.setSelectedItem(ageListSpacingOptions.get(0));
+            ageSpacingSelector.addStyleName(ValoTheme.OPTIONGROUP_HORIZONTAL);
+            
+            // y-axis range
+            CheckBox yAxisToZeroBox = new CheckBox("y-axis to zero", false);
+            yAxisToZeroBox.addValueChangeListener(event -> changeYaxisToZero(event));
+            
+            
+            VerticalLayout content = new VerticalLayout();
+            content.addComponent(ageSpacingSelector);
+            content.addComponent(new Label("<b>Miscellaneous</b>", ContentMode.HTML));
+            content.addComponent(yAxisToZeroBox);
+            moreShowOptionsWindow = new Window("Addtional plot options", content);
+            moreShowOptionsWindow.setWidth(30, Sizeable.Unit.PERCENTAGE);
+            moreShowOptionsWindow.setHeight(70, Sizeable.Unit.PERCENTAGE);
+            moreShowOptionsWindow.center();
+        }
+        toggleWindowVisibility(moreShowOptionsWindow);
+        
+        //getComponent().getUI().getUI().addWindow(moreShowOptionsWindow);
     }
     
     private void toggleWindowVisibility(Window window) {

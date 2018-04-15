@@ -3,8 +3,8 @@ var overlayPlot = overlayPlot || {};
 
 overlayPlot.Component = function (element, number) {   
     const style = {
-        width : '35vw',
-        height: '83vh'
+        width : '100%',
+        height: '100%'
     };
     
     plotlyPlot.call(this, element, number, 'overlay', style);
@@ -15,6 +15,7 @@ overlayPlot.Component = function (element, number) {
     var annotations = [];
     var showAnnotationIndices = [0, 9, 18];
     var phenotype = '';
+    var sex = '';
     var userData = [];
     var dataAges = {values: this.ages, descriptions : this.ageLabels};
     //var userAges = {};
@@ -93,10 +94,10 @@ overlayPlot.Component = function (element, number) {
                 };	
             }
             else if (i == 0) {
-                fillColour = 'rgb(0,0,0)',
+                fillColour = null,
                 mode = 'lines',
                 line = {
-                    color : fillColour,
+                    color : 'rgba(' + colourMap[percentileIndices.length-1] + ', 0.5)' ,
                     width: 0
                 };	
             }
@@ -281,8 +282,11 @@ overlayPlot.Component = function (element, number) {
             for (var i = 0; i < percentiles.length; i++) {
                 percentileData.push(newPercentileData['data'][percentiles[i] + '%']);
             }
-            
+            if (newPercentileData['null values'] != null) {
+                percentileData = defrayEnds(percentileData, newPercentileData['null values']);
+            }
             phenotype = newPercentileData['phenotype'];
+            sex = newPercentileData['sex'];
             console.log("phenotype: " + phenotype);
             //console.log("percentile data list: " + JSON.stringify(percentileData));
             //console.log("data list: " + dataList);
@@ -295,6 +299,34 @@ overlayPlot.Component = function (element, number) {
         };
     };
     
+    // missing values at the ends create ugly filled areas if not accounted for
+    this.defrayEnds = function(traceList, nullValues) {    
+        for (var traceNumber = 0; traceNumber < percentileIndices.length; traceNumber++) {
+            var traceNullValues = nullValues[traceNumber];
+            
+            if (traceNullValues[0] >= 0) {
+                // TODO: implement
+            }
+            
+            if (traceNullValues[1] >= 0) {
+                var trace = traceList[traceNumber];
+            
+                var spliceTrace = trace; // inherit from the original trace
+                var hoverInfo = ['skip'];
+                for (var j = 0; traceNumber < traceNullValues.length; j++) {
+                    var nullIndex = traceNullValues[j];
+                    hoverInfo.push('all');
+                }
+                var x = trace.x.slice(traceNullValues[1]-1, trace.x.length);
+                var y = trace.y.slice(traceNullValues[1]-1, trace.y.length);
+                spliceTrace.x = x;
+                spliceTrace.y = y;
+                spliceTrace.hoverinfo = hoverInfo;                
+            } 
+        }
+        return traceList;
+    };
+    
     this.setLayout = function () {
         var visibleAnnotations = [];
         for (var i = 0; i < showAnnotationIndices.length; i++) {
@@ -302,8 +334,9 @@ overlayPlot.Component = function (element, number) {
             annotations[index]['y'] = percentileData[index][percentileData[index].length - 1];
             visibleAnnotations.push(annotations[index]);
         };
-        console.log('current title: ' + phenotype);
-        Plotly.relayout(this.divID, {title : phenotype, yaxis : {title : phenotype}, annotations : visibleAnnotations});    
+        var title = phenotype + ' (' + sex + 's)'
+        console.log('current title: ' + title);
+        Plotly.relayout(this.divID, {title : title, yaxis : {title : phenotype}, annotations : visibleAnnotations});    
     };
     
     this.showPercentiles = function(showPercentiles) {

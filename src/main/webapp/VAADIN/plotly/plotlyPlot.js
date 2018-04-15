@@ -28,10 +28,13 @@ function plotlyPlot (element, number, type, style) {
     // use d3 for automatic resizing  
     d3 = Plotly.d3;
 //    this.gd3 = d3.select('#' + this.divID);
+
+    console.log('style: ' + (style['width']   || '98vw') + ' |-| ' +  (style['height'] || '96vh'));
+
     this.gd3 = d3.select('#' + this.divID).style({
-             width: style['width']   || '98vw',
-             height: style['height'] || '96vh',
-             'margin-top' : style['margin-top'] || '20px' 
+            width: style['width']   || '100%',
+            height: style['height'] || '100%'//,
+            //'margin-top' : style['margin-top'] || '20px' 
      });
 
 //    this.gd3 = d3.select('#' + this.divID).style({

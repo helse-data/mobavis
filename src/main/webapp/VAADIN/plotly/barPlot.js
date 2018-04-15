@@ -3,13 +3,9 @@ var barPlot = barPlot || {};
 barPlot.Component = function (element, number) {
     
     const style = {
-        width : '49vw',
-        height: '83vh'
+        width : '100%',
+        height: '100%'
     };
-//    const style = {
-//            width : '35vw',
-//            height: '83vh'
-//        };
 
     
     var x = [];
@@ -25,38 +21,75 @@ barPlot.Component = function (element, number) {
         console.log('Setup data: ' + JSON.stringify(setupData));
 
         const defaultValues = {
-            x : [],
-            y : [],
-            title : '',
-            colour : 'rgb(30, 0, 200)',
-            'x-axis' : '',
-            'y-axis' : ''
+            x: [],
+            y: [],
+            title: '',
+            colour: 'rgb(30, 0, 200)',
+            colour1: 'rgb(31, 119, 180)',
+            colour2: 'rgb(30, 200, 0)',
+            'x-axis': '',
+            'y-axis': ''
         };
         
         var initialValues = {};
-        const initialValueNames = ['x', 'y', 'title', 'colour', 'x-axis', 'y-axis'];
+        const initialValueNames = ['x', 'y', 'title', 'colour', 'colour2', 'x-axis', 'y-axis'];
         
         for (var i = 0; i < initialValueNames.length; i++) {
             var name = initialValueNames[i];
             initialValues[name] = setupData[name] || defaultValues[name];
         }
         
-        x = initialValues.x;
-        y = initialValues.y;
+       
         //console.log('x: ' + x);
-        var data = [
-          {
-            x: x, //this.chromosomes,
-            y: y,//SNPsPerChromosome,
-            type: 'bar',
-                marker : {
-                        color : initialValues.colour
+        
+        var data;
+        
+        if (setupData.barmode == 'stack') {
+            data = [];
+            var i = 1;
+            var colourKey;
+            
+            while (setupData['y' + i] != null) {
+                var nameData = setupData['name' + i];
+                var name = '';
+                var showlegend = false;
+                if (nameData != null) {
+                    name = nameData;
+                    showlegend = true;
                 }
-          }
-        ];
+                var dataObject = {
+                    x: initialValues.x,
+                    y: setupData['y' + i],
+                    name: name,
+                    type: 'bar',
+                    marker: {
+                        color : initialValues['colour' + i]
+                    },
+                    showlegend: showlegend
+                };
+                data.push(dataObject);
+                i++;
+            }
+            console.log('data: ' + JSON.stringify(data));
+            
+        }
+        else {
+            x = initialValues.x;
+            y = initialValues.y;
+            data = [{
+                x: x,
+                y: y,
+                type: 'bar',
+                marker: {
+                    color : initialValues.colour
+                }
+              }];
+        }
+        
 
         var layout = {
                 title : initialValues.title,
+                barmode: setupData.barmode,
                 xaxis : {
                         type : 'category',
                         title : initialValues['x-axis']
@@ -67,17 +100,20 @@ barPlot.Component = function (element, number) {
                 //yaxis : {
                 //        type: 'linear'
                 //},
-                margin: {
-                        l: 60,
-                        r: 20,
-                        b: 35,
-                        t: 60,
-                        //pad: 4
-                    }
+//                margin: {
+//                        l: 60,
+//                        r: 20,
+//                        b: 35,
+//                        t: 60,
+//                        //pad: 4
+//                    }
         };
         var configuration = this.commonConfiguration;
         configuration['modeBarButtonsToRemove'] = ['sendDataToCloud'];
+        console.log('data: ' + JSON.stringify(data));
+        console.log('layout: ' + JSON.stringify(layout));
         Plotly.newPlot(this.gd, data, layout, configuration);
+        //this.resize(); // TODO: debug!
 }
     
     this.setData = function (data) {

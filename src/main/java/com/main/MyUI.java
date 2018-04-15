@@ -26,12 +26,16 @@ public class MyUI extends UI {
         highLevelComponents.put("landing page", landingPage);
         main = new Main(highLevelComponents);
         highLevelComponents.put("main", main);
-        // 0
-//        setContent(landingPage.getComponent());
-        // -1
-        main.execute(Main.MenuOption.NEW_SNP_PLOT);
-        setContent(main.getComponent());
-        // 1
+        
+        boolean showLandingPage = false;
+        
+        if (showLandingPage) {
+             setContent(landingPage.getComponent());
+        }
+        else {
+            main.execute(Main.MenuOption.NEW_SNP_PLOT);
+            setContent(main.getComponent());
+        }
     }
     
     public void enter(boolean firstLanding, Main.MenuOption viewOption) {

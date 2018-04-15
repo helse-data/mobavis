@@ -3,14 +3,14 @@ package com.plotly;
 import elemental.json.JsonObject;
 
 public class SNPPlotState extends PlotlyJsState {
-    private JsonObject showStatus;   
+    private JsonObject plotOptions;   
    
-    public void setShowStatus(JsonObject showStatus) {
-        this.showStatus = showStatus;
+    public void setPlotOptions(JsonObject plotOptions) {
+        this.plotOptions = plotOptions;
     }
     
-    public JsonObject getShowStatus() {
-        return showStatus;
+    public JsonObject getPlotOptions() {
+        return plotOptions;
     }
     
 }

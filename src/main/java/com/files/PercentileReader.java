@@ -1,4 +1,4 @@
-package com.plotting;
+package com.files;
 
 import com.utils.Age;
 import com.utils.Alphanumerical;
@@ -50,7 +50,8 @@ public class PercentileReader {
     Map <String, Map <String, List <String[]>>> nonLongitudinalData;
     Map <String, Map <String, Map <String, List <String[]>>>> longitudinalData;
     
-    Map <String, String> sexMap = constants.getTextToNumberSexMap();
+    Map <String, String> textToNumberSexMap = constants.getTextToNumberSexMap();
+    Map <String, String> numberToTextSexMap = constants.getNumberToTextSexMap();
     
     List <Alphanumerical> percentileList;
     List <Alphanumerical> percentileTextList;
@@ -141,8 +142,8 @@ public class PercentileReader {
         }
     }    
     
-    public JsonObject getNonConditionalPhenotypeData(Variable phenotype, String sex) {
-        sex = sexMap.get(sex);
+    public JsonObject getNonConditionalPhenotypeData(Variable phenotype, String sexAsText) {
+        String sexAsNumber = textToNumberSexMap.get(sexAsText);
         if (longitudinalData == null) {
             readWholePopulation();
         }
@@ -156,8 +157,8 @@ public class PercentileReader {
         object.put("phenotype", phenotype.getDisplayName());
         JsonObject dataObject = Json.createObject();
         if (phenotype.isLongitudinal()) {         
-            for (String percentile : longitudinalData.get(phenotype.getName()).get(sex).keySet()) {
-                List <String[]> rawData = longitudinalData.get(phenotype.getName()).get(sex).get(percentile);
+            for (String percentile : longitudinalData.get(phenotype.getName()).get(sexAsNumber).keySet()) {
+                List <String[]> rawData = longitudinalData.get(phenotype.getName()).get(sexAsNumber).get(percentile);
                 dataObject.put(percentile, Json.createObject());
                 for (String[] rawDataList : rawData) {
                     String age = rawDataList[0];
@@ -170,55 +171,132 @@ public class PercentileReader {
             object.put("data", dataObject);
         }
         else {            
-            List <String[]> rawData = nonLongitudinalData.get(phenotype.getName()).get(sex);
+            List <String[]> rawData = nonLongitudinalData.get(phenotype.getName()).get(sexAsNumber);
             
             for (String[] rawDataList : rawData) {
                 dataObject.put(rawDataList[0], rawDataList[1]);
             }            
             //dataObject = createNonLongitudinalPlotFriendlyObject(dataObject);
-        }        
+        }
         object.put("data", dataObject);
+        object.put("sex", sexAsText);
         return object;
     }
     
-    public JsonObject getConditionalPhenotypeData(Variable phenotype, String sex, Variable conditionCategory, Alphanumerical condition) {
-        sex = sexMap.get(sex);
+    public JsonObject getConditionalPhenotypeData(Variable phenotype, String sexAsText, Variable conditionCategory, Alphanumerical condition) {
+        String sexAsNumber = textToNumberSexMap.get(sexAsText);
         if (!conditionDataLists.containsKey(phenotype)) {
             ScanFile(CONDITIONAL_DATA_TEXT_FILE, phenotype);
         }
         
         
         System.out.println("conditional data");
-        System.out.println("sex: " + sex);
+        System.out.println("sex: " + sexAsNumber);
         System.out.println("phenotype: " + phenotype);
         JsonObject object = Json.createObject();
         object.put("phenotype", phenotype.getDisplayName());
+        object.put("sex", sexAsText);
         JsonObject dataObject;
         
         if (phenotype.isLongitudinal()) {
-            dataObject = extractLongitudinalConditionalData(phenotype, sex, conditionCategory, condition);
+            dataObject = extractLongitudinalConditionalData(phenotype, sexAsNumber, conditionCategory, condition);
         }
         else {
-            dataObject = extractNonLongitudinalConditionalData(phenotype, sex, conditionCategory, condition);
+            dataObject = extractNonLongitudinalConditionalData(phenotype, sexAsNumber, conditionCategory, condition);
         }       
         object.put("data", dataObject);
         return object;
     }
     
     private JsonObject extractLongitudinalConditionalData(Variable phenotype, String sex, Variable conditioncategory, Alphanumerical condition) {
-        JsonObject object = Json.createObject();
-        for (String line : conditionDataLists.get(phenotype)) {
+        Map <String, Map <String, String>> dataMap = new HashMap();
+        Set <String> percentileSet = new HashSet();
+        List <String> ageList = new ArrayList();
+        JsonArray N = Json.createArray();
+        for (String line : conditionDataLists.get(phenotype)) { // initial parsing of the data
             String [] splitLine = line.split(columnSeparator);
-            if (splitLine[1].equals(sex) && splitLine[2].equals(conditioncategory.getName()) && splitLine[3].equals(condition.getValue())) {
-                String percentile = splitLine[5];
-
-                if (!object.hasKey(percentile)) {
-                    object.put(percentile, Json.createArray());
+            if (splitLine[1].equals(sex) && splitLine[2].equals(conditioncategory.getName()) && splitLine[3].equals(condition.getValue())) {                
+                String age = splitLine[0].replace(phenotype.getName(), "");
+                if (!ageList.contains(age)) { // keep track of all ages with values
+                        ageList.add(age);
                 }
-                object.getArray(percentile).set(object.getArray(percentile).length(), splitLine[6]);
+                if (!dataMap.containsKey(age)) {
+                    dataMap.put(age, new HashMap());
+                }
+                if (splitLine[5].equals("N")) {
+                    //dataMap.get(age).put(splitLine[5], splitLine[6]);
+                    N.set(N.length(), splitLine[6]);
+                }
+                else {
+                    String percentile = splitLine[5];
+                    percentileSet.add(percentile); // keep track of all percentiles with values
+                    dataMap.get(age).put(percentile, splitLine[6]);
+                }
             }
         }
-        //System.out.println("object: " + object.toJson());
+        //System.out.println("ageList: " + ageList);
+        //System.out.println("dataMap: " + dataMap);
+        // go through the result of the initial parsing of the data and implicitly check for missing values
+        JsonObject object = Json.createObject();
+        JsonObject nullValues = null;
+        int i = 0;
+        
+        Map <String, Integer> nullIndexStart = new HashMap(); // the last index of a continuous line of null values from the beginning
+        Map <String, Integer> nullIndexEnd = new HashMap(); // the first index of a continuous line of null values to the end
+        for (String percentile : percentileSet) {
+            object.put(percentile, Json.createArray());
+            nullIndexStart.put(percentile, -2);
+            nullIndexEnd.put(percentile, -2);
+        }
+        
+        for (String age : ageList) {
+            //System.out.println("age: " + age);
+            
+            for (String percentile : percentileSet) {
+                //System.out.println("percentile: " + percentile);
+                if (dataMap.get(age).containsKey(percentile)) {
+                    object.getArray(percentile).set(object.getArray(percentile).length(), dataMap.get(age).get(percentile));
+                    nullIndexEnd.put(percentile, -2); // can be no continous line of null values to the end with containing index
+                }
+                else { // have no value for this combination
+                    if (i - nullIndexStart.get(percentile) == 1) {
+                        nullIndexStart.put(percentile, i);                        
+                    }
+                    else if (nullIndexEnd.get(percentile) < 0) { // first null value found that does not form a continuous line from the start
+                        nullIndexEnd.put(percentile, i);
+                    }
+                    object.getArray(percentile).set(object.getArray(percentile).length(), Json.createNull());
+                    if (nullValues == null) {
+                        nullValues = Json.createObject();
+                    }
+                }
+            }
+            i++;
+        }
+        object.put("N", N);
+        
+        
+        for (String percentile : percentileSet) {
+            if (nullIndexStart.get(percentile) > 0 || nullIndexEnd.get(percentile) > 0) {
+                if (nullValues == null) {
+                    nullValues = Json.createObject();
+                }
+                JsonArray array = Json.createArray();
+                array.set(0, nullIndexStart.get(percentile));
+                array.set(1, nullIndexEnd.get(percentile));
+                nullValues.put(percentile, array);
+            }
+        }
+        
+        if (nullValues == null) {
+            object.put("null values", Json.createNull());
+        }
+        else {
+            object.put("null values", nullValues);
+        }
+        System.out.println("null values: " + nullValues);
+        //System.out.println("N: " + N.toJson());
+        object.put("sex", numberToTextSexMap.get(sex));
         return object;
     }
     private JsonObject extractNonLongitudinalConditionalData(Variable phenotype, String sex, Variable conditioncategory, Alphanumerical condition) {
@@ -230,6 +308,7 @@ public class PercentileReader {
                 object.put(splitLine[5], splitLine[6]);
             }
         }
+        object.put("sex", numberToTextSexMap.get(sex));
         //System.out.println("object: " + object.toJson());
         return object;
     }

@@ -1,5 +1,3 @@
-// book-examples/src/com/vaadin/book/examples/client/js/mycomponent-connector.js
-
 var i = 0; // div IDs for separate plots must be different
 
 window.com_plotly_SNPPlot =
@@ -11,35 +9,35 @@ window.com_plotly_SNPPlot =
                 
             var booleanVersions = {
                     data            : true,
-                    'show status'   : true
+                    'plot options'   : true
                 };
 
             var SNPPlotComponent =
                     new SNPPlot.Component(this.getElement(), i);			
 
-
+            
             // Pass on information sent from the Java code 
             this.onStateChange = function() {
-
                 var data = this.getState().data;
-                var showStatus = this.getState().showStatus;
+                var plotOptions = this.getState().plotOptions;
                 
-                //console.log('data: ' + JSON.stringify(data));
+                //console.log('plot options: ' + JSON.stringify(plot options));
 
                 if (data != null) {
                     //console.log("Data sent to connector: " + JSON.stringify(data));
                     if (firstData || booleanVersions['data'] != data['boolean version']) {
                         console.log('New data provided.')
                         SNPPlotComponent.updateData(data);
-                        booleanVersions['data'] = !booleanVersions['data'];
+                        booleanVersions['data'] = data['boolean version'];
                     };
                 };
-                if (showStatus != null) {
-                    //console.log("Show status sent to connector: " + JSON.stringify(showStatus));
-                    if (firstData || booleanVersions['show status'] != showStatus['boolean version']) {
-                        console.log('New show status provided.')
-                        SNPPlotComponent.setShowStatus(showStatus);
-                        booleanVersions['show status'] = !booleanVersions['show status'];
+                if (plotOptions != null) {
+                    //console.log("Show status sent to connector: " + JSON.stringify(plot options));
+                    if (firstData || booleanVersions['plot options'] != plotOptions['boolean version']) {
+                        console.log('New plot options provided.')
+                        //SNPPlotComponent.setPlotOptions(plotOptions);
+                        SNPPlotComponent.setPlotOptions(plotOptions);
+                        booleanVersions['plot options'] = plotOptions['boolean version'];
                     };
                 };
                 firstData = false;
@@ -196,6 +194,25 @@ window.com_plotly_BarPlot =
                         barPlotComponent.setSize(size);
                         booleanVersions['size'] = !booleanVersions['size'];
                     };
+                };
+            };
+        };
+window.com_plotly_ScatterPlot =               
+	function() {            
+            i = i + 1;
+            
+            var scatterPlotComponent = null;
+
+            this.onStateChange = function() {
+                var setupData = this.getState().setupData;
+                var data = this.getState().data;
+                //console.log('Data provided:' + JSON.stringify(data));
+                if (setupData != null && scatterPlotComponent == null) {
+                    scatterPlotComponent = new scatterPlot.Component(this.getElement(), i, setupData);
+                };
+                if (scatterPlotComponent != null && data != null) {
+                    console.log('New data provided');//:' + JSON.stringify(data));
+                    scatterPlotComponent.setData(data);
                 };
             };
         };

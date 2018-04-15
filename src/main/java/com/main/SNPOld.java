@@ -77,6 +77,7 @@ public class SNPOld {
         catch (SQLException e) {
             System.out.println(e.getMessage());
         }
+        //System.out.println("genotypes: " + genotypes);
     }
     
     public boolean hasData() {

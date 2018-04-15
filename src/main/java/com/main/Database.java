@@ -46,7 +46,7 @@ public class Database {
     
     public Database() {
         sharedPath = VaadinService.getCurrent().getBaseDirectory().getAbsolutePath();
-        System.out.println("sharedPath: " + sharedPath);
+        //System.out.println("sharedPath: " + sharedPath);
         sharedPath = sharedPath + "/../../../../server/data";
         
         readMasterIndex();

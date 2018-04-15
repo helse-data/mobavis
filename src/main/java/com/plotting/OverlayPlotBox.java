@@ -1,5 +1,6 @@
 package com.plotting;
 
+import com.files.PercentileReader;
 import com.plotly.BarPlot;
 import com.plotly.OverlayPlot;
 import com.plotly.PlotlyJs;
@@ -66,7 +67,7 @@ public class OverlayPlotBox {
     HorizontalLayout topBox = new HorizontalLayout();
     GridLayout optionsBox = new GridLayout(1, 1);
     GridLayout optionsGrid = new GridLayout(100, 100);
-    HorizontalLayout formGrid = new HorizontalLayout();
+    HorizontalLayout formBox = new HorizontalLayout();
     
     Map <String, Label> formLabelsSideBar = new HashMap();
     Map <String, Label> formLabelsTabSheet = new HashMap();
@@ -150,7 +151,7 @@ public class OverlayPlotBox {
 
         // select phenotype, data presentation etc.
         dataPresentationOptions.addAll(Arrays.asList(new String[]{
-            "one plot", "two plots", "parameterisation"}));
+            "one plot", "two plots"}));//, "parameterisation"}));
         dataPresentationSelector = new NativeSelect("Data presentation");
         dataPresentationSelector.setIcon(VaadinIcons.DESKTOP);
         dataPresentationSelector.setItems(dataPresentationOptions);
@@ -175,7 +176,7 @@ public class OverlayPlotBox {
         
         for (String plotNumber : conditionCategorySelectors.keySet()) {
             NativeSelect conditionCategorySelector = conditionCategorySelectors.get(plotNumber);
-            conditionCategorySelector.setSizeFull();
+            conditionCategorySelector.setWidth(100, Sizeable.Unit.PERCENTAGE);;
             conditionCategorySelector.setIcon(VaadinIcons.CHART_LINE);
             //conditionSelector.setItems(Arrays.asList(new String[] {"none"}));
             conditionCategorySelector.setEmptySelectionAllowed(false);
@@ -189,7 +190,7 @@ public class OverlayPlotBox {
         for (String plotNumber : conditionSelectors.keySet()) {
             //topBox.addComponent(conditionCategorySelectors.get(plotNumber));
             NativeSelect conditionSelector = conditionSelectors.get(plotNumber);
-            conditionSelector.setSizeFull();
+            conditionSelector.setWidth(100, Sizeable.Unit.PERCENTAGE);;
             //conditionSelector.setIcon(VaadinIcons.CHART_LINE);
             //conditionSelector.setItems(Arrays.asList(new String[] {"none"}));
             conditionSelector.setEmptySelectionAllowed(false);
@@ -220,7 +221,7 @@ public class OverlayPlotBox {
         
         for (String plotNumber : phenotypeSelectors.keySet()) {
             NativeSelect phenotypeSelector = phenotypeSelectors.get(plotNumber);
-            phenotypeSelector.setSizeFull();
+            phenotypeSelector.setWidth(100, Sizeable.Unit.PERCENTAGE);
             phenotypeSelector.setItems(phenotypeOptions);            
             phenotypeSelector.setIcon(VaadinIcons.CLIPBOARD_PULSE);
             phenotypeSelector.setEmptySelectionAllowed(false);
@@ -251,14 +252,14 @@ public class OverlayPlotBox {
         showOptionsSelector.addSelectionListener(event -> changeShowSettings(event));
         
         // input        
-        formGrid = new HorizontalLayout();
+        formBox = new HorizontalLayout();
 
         Panel formPanel = new Panel();
-        formPanel.setContent(formGrid);
+        formPanel.setContent(formBox);
         
         optionsGrid.addComponent(showOptionsSelector, 0, 0, 99, 5);
-        optionsGrid.addComponent(formPanel, 0, 6, 97, 97);
-        optionsGrid.setComponentAlignment(formPanel, Alignment.TOP_CENTER); 
+        //optionsGrid.addComponent(formPanel, 0, 6, 97, 97);
+        //optionsGrid.setComponentAlignment(formPanel, Alignment.TOP_CENTER); 
         
         optionsBox.addComponent(optionsGrid);
         
@@ -266,7 +267,7 @@ public class OverlayPlotBox {
         FormLayout formAge = createAgeForm(inputFieldsAgeSideBar);
         
         //formAgeLabel.setSizeFull();
-        formGrid.addComponent(formAge);
+        formBox.addComponent(formAge);
         
         for (String plotNumber : new String[] {"1", "2"}) {
             Label formLabel = new Label();
@@ -274,7 +275,7 @@ public class OverlayPlotBox {
             inputFieldsSideBar.put(plotNumber, new HashMap());
             FormLayout phenotypeForm = createPhenotypeForm(plotNumber, formLabel, inputFieldsSideBar);
             phenotypeForm.setSizeFull();
-            formGrid.addComponent(phenotypeForm);       
+            formBox.addComponent(phenotypeForm);       
         }
 
         jsonHelper.putAlphanumerical(metaData, "percentiles", percentiles);
@@ -313,7 +314,7 @@ public class OverlayPlotBox {
         optionsGrid.setSizeFull();
         optionsBox.setSizeFull();
         showOptionsSelector.setSizeFull();
-        formGrid.setSizeFull();
+        formBox.setSizeFull();
         formPanel.setSizeFull();
         plotBox.setSizeFull();
 
@@ -452,50 +453,50 @@ public class OverlayPlotBox {
         
     }
     
-    public void setPhenotype(String plotNumber, Variable phenotype) {
+    public void setPhenotype(String setPlotNumber, Variable phenotype) {
         if (phenotype == null) {// || (dataPresentationSelector.getValue().equals(dataPresentationOptions.get(0)) && plotNumber.equals("2"))) {
             return;
         }
         
         if (storedUserData.containsKey(phenotype)) {
-            setFormData(plotNumber, storedUserData.get(phenotype), inputFieldsSideBar);
+            //setFormData(plotNumber, storedUserData.get(phenotype), inputFieldsSideBar);
             if (inputFieldsTabSheet != null) {
-                setFormData(plotNumber, storedUserData.get(phenotype), inputFieldsTabSheet);
+                setFormData(setPlotNumber, storedUserData.get(phenotype), inputFieldsTabSheet);
             }
-            setUserData(plotNumber, phenotype, storedUserData.get(phenotype));
+            setUserData(setPlotNumber, phenotype, storedUserData.get(phenotype));
         }
         else {
             List <String> nullList = createNullList(storedAges.size());
-            setFormData(plotNumber, nullList, inputFieldsSideBar);
+            setFormData(setPlotNumber, nullList, inputFieldsSideBar);
             if (inputFieldsTabSheet != null) {
-                setFormData(plotNumber, nullList, inputFieldsTabSheet);
+                setFormData(setPlotNumber, nullList, inputFieldsTabSheet);
             }
-            setUserData(plotNumber, phenotype, nullList);
+            setUserData(setPlotNumber, phenotype, nullList);
         }
         
-        formLabelsSideBar.get(plotNumber).setValue(phenotype.getDisplayName());
+        formLabelsSideBar.get(setPlotNumber).setValue(phenotype.getDisplayName());
         if (dataTabSheet != null) {// update tab captions
-            dataTabSheet.getTab(Integer.parseInt(plotNumber)-1).setCaption(phenotype.getDisplayName()); 
-            formLabelsTabSheet.get(plotNumber).setValue(phenotype.getDisplayName());
+            dataTabSheet.getTab(Integer.parseInt(setPlotNumber)-1).setCaption(phenotype.getDisplayName()); 
+            formLabelsTabSheet.get(setPlotNumber).setValue(phenotype.getDisplayName());
         }        
-        phenotypeMap.put(plotNumber, phenotype);
+        phenotypeMap.put(setPlotNumber, phenotype);
         
         
         // conditions start        
-        Variable currentConditionCategory = conditionCategorySelectors.get(plotNumber).getValue();        
+        Variable currentConditionCategory = conditionCategorySelectors.get(setPlotNumber).getValue();        
         Set <Variable> conditionCategories = percentileReader.getConditionCategories(phenotype);
         if (conditionCategories != null) {
             List <Variable> conditionCategoryList = new ArrayList();
             conditionCategoryList.addAll(conditionCategories);
             Collections.sort(conditionCategoryList);
             conditionCategoryList.add(0, NULL_VARIABLE);
-            conditionCategorySelectors.get(plotNumber).setItems(conditionCategoryList);
+            conditionCategorySelectors.get(setPlotNumber).setItems(conditionCategoryList);
             System.out.println("current condition category: " + currentConditionCategory + ", retained: " + conditionCategoryList.contains(currentConditionCategory));
             if (conditionCategoryList.contains(currentConditionCategory)) { // retain the condition category if possible
-                conditionCategorySelectors.get(plotNumber).setValue(currentConditionCategory);
+                conditionCategorySelectors.get(setPlotNumber).setValue(currentConditionCategory);
             }
             else {
-                conditionCategorySelectors.get(plotNumber).setValue(NULL_VARIABLE);
+                conditionCategorySelectors.get(setPlotNumber).setValue(NULL_VARIABLE);
             }
         }
         //System.out.println("condition categories: " + conditionCategories);
@@ -672,7 +673,10 @@ public class OverlayPlotBox {
     private void setFormData(String plotNumber, List <String> data, Map <String, Map <String, TextField>> inputFieldMap) {
         for (int i = 0; i < data.size(); i++) {
             String dataPoint = data.get(i);
-            if (dataPoint != null) {            
+            
+            if (dataPoint != null) {
+                //System.out.println("dataPoint: " + dataPoint);
+                //System.out.println("inputFieldMap.get(plotNumber): " + inputFieldMap.get(plotNumber));
                 inputFieldMap.get(plotNumber).get(Integer.toString(i)).setValue(dataPoint);
             }
             else {
@@ -686,9 +690,9 @@ public class OverlayPlotBox {
             hiddenComponent = plotBox.getComponent(1);
             plotBox.removeComponent(hiddenComponent);
             PlotlyJs chart = (PlotlyJs) plotBox.getComponent(0);
-            JsonObject sizeObject = Json.createObject();
-            sizeObject.put("width", Integer.toString(FULL_PLOT_WIDTH));
-            chart.setSize(sizeObject);
+            //JsonObject sizeObject = Json.createObject();
+            //sizeObject.put("width", Integer.toString(FULL_PLOT_WIDTH));
+            //chart.setSize(sizeObject);
         }
         else if (option.equals(dataPresentationOptions.get(1))) {
             if (hiddenComponent != null) {
@@ -862,21 +866,28 @@ public class OverlayPlotBox {
         if (dataTabSheet == null) {
             dataTabSheet = new TabSheet();
             inputFieldsTabSheet = new HashMap();
-            for (String thisPlotNumber : phenotypeMap.keySet()) {            
-                Variable phenotype = phenotypeMap.get(thisPlotNumber);
+            for (String plotKey : phenotypeMap.keySet()) {            
+                Variable phenotype = phenotypeMap.get(plotKey);
                 //dataTabSheet.addTab(dataForms.get(thisPlotNumber), phenotypeMap.get(thisPlotNumber).getDisplayName());
                 HorizontalLayout tab = new HorizontalLayout();
                 inputFieldsAgeTabSheet = new HashMap();
                 FormLayout ageForm = createAgeForm(inputFieldsAgeTabSheet); 
-                inputFieldsTabSheet.put(thisPlotNumber, new HashMap());
+                inputFieldsTabSheet.put(plotKey, new HashMap());
                 Label phenotypeLabel = new Label(phenotype.getDisplayName());
-                formLabelsTabSheet.put(thisPlotNumber, phenotypeLabel);
-                FormLayout phenotypeForm = createPhenotypeForm(thisPlotNumber, phenotypeLabel, inputFieldsTabSheet);
+                formLabelsTabSheet.put(plotKey, phenotypeLabel);
+                FormLayout phenotypeForm = createPhenotypeForm(plotKey, phenotypeLabel, inputFieldsTabSheet);
                 tab.addComponent(ageForm);
                 tab.addComponent(phenotypeForm);
                 tab.setCaption(phenotype.getDisplayName());
                 dataTabSheet.addTab(tab);
             }
+            
+            for (String plotKey : phenotypeMap.keySet()) {
+                Variable phenotype = phenotypeMap.get(plotKey);
+                //System.out.println("storedUserData.get(phenotype): " + storedUserData.get(phenotype) + ", plot number: " + thisPlotNumber);
+                setFormData(plotKey, storedUserData.get(phenotype), inputFieldsTabSheet);                
+            }
+            
             inputFormWindow = new Window("Enter own data");
             inputFormWindow.setContent(dataTabSheet);
             inputFormWindow.setWidth(Math.round(phenotypeMap.keySet().size()*250), Sizeable.Unit.PIXELS);

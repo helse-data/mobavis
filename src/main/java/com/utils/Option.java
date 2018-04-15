@@ -2,26 +2,26 @@ package com.utils;
 
 /**
  * 
- * Simple class for e.g. show options.
+ * Simple class for e.g. check boxes.
  *
  * @author Christoffer Hjeltnes Støle
  */
-public class Option {    
+public class Option <T> {    
     String name;
     String displayName;
-    boolean visible;
+    T value;
 
-    public Option(String name, String displayName, boolean visibleByDefault) {
+    public Option(String name, String displayName, T defaultValue) {
         this.name = name;
         this.displayName = displayName;
-        visible = visibleByDefault;
+        value = defaultValue;
     }
     
-    public boolean isVisible() {
-        return visible;
+    public T getValue() {
+        return value;
     }
-    public void setVisible(boolean visible) {
-        this.visible = visible;
+    public void setValue(T value) {
+        this.value = value;
     }
     public String getName() {
         return name;

@@ -26,14 +26,14 @@ public class SNPPlot extends PlotlyJs {
         return getState().getData();
     }
     
-    public void sendShowStatus(JsonObject showStatus) {
+    public void sendPlotOptions(JsonObject showStatus) {
         showStatus.put("boolean version", booleanShowStatusVersion);
         booleanShowStatusVersion = !booleanShowStatusVersion;
-        getState().setShowStatus(showStatus);       
+        getState().setPlotOptions(showStatus);       
     }
     
-    public JsonObject getShowStatus() {
-        return getState().getShowStatus();       
+    public JsonObject getPlotOptions() {
+        return getState().getPlotOptions();       
     }
     
     @Override
