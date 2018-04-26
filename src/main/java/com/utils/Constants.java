@@ -1,14 +1,15 @@
 package com.utils;
 
+import com.vaadin.server.VaadinService;
 import java.util.HashMap;
 import java.util.Map;
 
 
 /**
  *
- * @author ChristofferHjeltnes
+ * @author Christoffer Hjeltnes Støle
  */
-public class Constants {    
+public class Constants {
     public String[] getAges() {
         return new String[] {"birth", "6 weeks", "3 months", "6 months", "8 months", "1 year",
             "15-18 months", "2 years", "3 years", "5 years", "7 years", "8 years"};
@@ -56,13 +57,17 @@ public class Constants {
     public String getGenomeBuild() {
         return "GRCh37.p13";
     }
-    
+    public String getServerPath() {
+        return getVaadinPath() + "\"/../../../../server/";
+    }
+    public String getVaadinPath() {
+        return VaadinService.getCurrent().getBaseDirectory().getAbsolutePath();
+    }    
     public String[] getDatabaseList() {
         return new String[] {"1_db", "2_db", "3_db", "4_db", "5_db", "6_db", "7_db", "8_db",
             "9_db", "10_db", "11_db", "12_db","13_db", "14_db", "15_db", "16_db", "17_db",
             "18_db", "19_db", "20_db", "21_db", "22_db"};
     }
-    
     public int getTableLength() {
         return 20000;
     }
