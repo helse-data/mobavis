@@ -216,3 +216,43 @@ window.com_plotly_ScatterPlot =
                 };
             };
         };
+        
+window.com_plotly_NonLongitudinalPercentiles =               
+	function() {            
+            i = i + 1;
+            
+            var nonLongitudinalPercentilesComponent = null;
+
+            this.onStateChange = function() {
+                var setupData = this.getState().setupData;
+                var data = this.getState().data;
+                //console.log('Data provided:' + JSON.stringify(data));
+                if (setupData != null && nonLongitudinalPercentilesComponent == null) {
+                    nonLongitudinalPercentilesComponent = new nonLongitudinalPercentiles.Component(this.getElement(), i, setupData);
+                };
+                if (nonLongitudinalPercentilesComponent != null && data != null) {
+                    console.log('New data provided');//:' + JSON.stringify(data));
+                    nonLongitudinalPercentilesComponent.setData(data);
+                };
+            };
+        };
+        
+window.com_plotly_SNP3DPlot =               
+	function() {            
+            i = i + 1;
+            
+            var SNP3DPlotComponent = null;
+
+            this.onStateChange = function() {
+                var setupData = this.getState().setupData;
+                var data = this.getState().data;
+                //console.log('Data provided:' + JSON.stringify(data));
+                if (SNP3DPlotComponent == null) {
+                    SNP3DPlotComponent = new SNP3DPlot.Component(this.getElement(), i, {});
+                };
+                //if (SNP3DPlotComponent != null && data != null) {
+                //    console.log('New data provided');//:' + JSON.stringify(data));
+                //    SNP3DPlotComponent.setData(data);
+                //};
+            };
+        };

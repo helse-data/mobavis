@@ -1,7 +1,7 @@
 package com.main;
 
 import com.components.ClickMenu;
-import com.plotting.OverlayPlotBox;
+import com.plotting.SummaryStatistcsBox;
 import com.plotting.ParameterisedPlotComponent;
 import com.plotting.SNPPlotBox;
 import com.utils.Constants;
@@ -35,7 +35,7 @@ public class Main {
     GridLayout percentilePlotGrid;    
     SNPPlotBoxOld snpPlotBoxOld;
     SNPPlotBox snpPlotBox;
-    OverlayPlotBox overlayPlotBox;
+    SummaryStatistcsBox overlayPlotBox;
     
     ParameterisedPlotComponent parameterisedPlotComponent;
 
@@ -56,38 +56,10 @@ public class Main {
 
     public Main(Map <String, Object> independentComponents) {
         this.highLevelComponents = independentComponents;
-    }
-    
-    public enum MenuOption {
-        SNP_PLOT("phenotype by SNP genotype"),
-        SNP_STATISTICS("SNP statistics"),
-        SUMMARY_STATISTICS("summary MoBa statistics"),
-        NEW_SNP_PLOT("new SNP genotype page"),
-        MANHATTAN("Manhattan plots");
-        private final String displayName;
-     
-        MenuOption(String displayName) {
-            this.displayName = displayName;
-        }
-        
-        @Override
-        public String toString() {
-            return displayName;
-        }
-    }
-     
-       
-    
-    public void execute(MenuOption viewOption) {        
         
         // top row
         // view selection        
-        viewOptions.addAll(Arrays.asList(new MenuOption[] {
-            MenuOption.SNP_PLOT,
-            MenuOption.SNP_STATISTICS,
-            MenuOption.SUMMARY_STATISTICS,
-            MenuOption.NEW_SNP_PLOT,
-            MenuOption.MANHATTAN}));      
+        viewOptions.addAll(Arrays.asList(Main.MenuOption.values()));      
         
         viewSelector = new ClickMenu("Select data to visualise");
         //viewSelector.setTextInputAllowed(false);
@@ -112,7 +84,7 @@ public class Main {
         mainGrid.addComponent(title, 4*n10, 0, 6*n10, 0);
         //mainGrid.setComponentAlignment(title, Alignment.MIDDLE_CENTER);
 //        mainGrid.addComponent(homeLink, 0, 0, 5, 5);
-//        //mainGrid.addComponent(viewSelector, 1, 0, 2*n10, 30);
+//        mainGrid.addComponent(viewSelector, 1, 0, 2*n10, 30);
 //        mainGrid.addComponent(viewSelectorPopup, 7, 0, 2*n10, 8);
 //        mainGrid.setComponentAlignment(viewSelectorPopup, Alignment.MIDDLE_CENTER);
         
@@ -123,20 +95,28 @@ public class Main {
         viewSelector.setSizeFull();
         homeLink.setSizeFull();
         leftCornerBox.setSizeFull();
-        mainGrid.setSizeFull(); 
-        
-        // done
-        
-        // set default views and go
-//        if (userVersion) {
-//            viewSelector.setValue(viewOptions.get(0));
-//        }
-//        else {
-//            viewSelector.setValue(viewOptions.get(2));
-//        }
-        viewSelector.setValue(viewOption);
-        setupOngoing = false;
+        mainGrid.setSizeFull();
     }
+    
+    public enum MenuOption {
+        SNP_PLOT("phenotype by SNP genotype"),
+        SNP_STATISTICS("SNP statistics"),
+        SUMMARY_STATISTICS("summary MoBa statistics"),
+        NEW_SNP_PLOT("new SNP genotype page"),
+        MANHATTAN("Manhattan plots");
+        private final String displayName;
+     
+        MenuOption(String displayName) {
+            this.displayName = displayName;
+        }
+        
+        @Override
+        public String toString() {
+            return displayName;
+        }
+    }
+     
+      
     
     public Component getComponent() {
         return mainGrid;
@@ -148,10 +128,7 @@ public class Main {
         currentContentBox = middleBox;
     }
     
-    private void changeView(HasValue.ValueChangeEvent event) {        
-        MenuOption option = (MenuOption) event.getValue();
-        
-        //if (option.equals("null") || option.equals(currentView)){
+    public void setView(Main.MenuOption option) {
         if (option == currentView ){
             return;
         }
@@ -170,7 +147,7 @@ public class Main {
         }
         else if (option == MenuOption.SUMMARY_STATISTICS) {
             if (overlayPlotBox == null) {
-                overlayPlotBox = new OverlayPlotBox();
+                overlayPlotBox = new SummaryStatistcsBox();
             }
             setMiddleBox(overlayPlotBox.getComponent());
         }
@@ -197,7 +174,19 @@ public class Main {
             
             setMiddleBox(panel); // replace the panel with the actual content component
         }
-        currentView = option;      
+        currentView = option;
+        if (viewSelector.getValue() == null) {
+            viewSelector.setValue(option);
+        }
+    }
+    
+    private void changeView(HasValue.ValueChangeEvent <MenuOption> event) {        
+        MenuOption option = event.getValue();
+        
+        if (option == currentView ){
+            return;
+        }
+        setView(option);
     }
 
     private void goHome() {

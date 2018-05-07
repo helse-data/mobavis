@@ -58,7 +58,7 @@ public class Constants {
         return "GRCh37.p13";
     }
     public String getServerPath() {
-        return getVaadinPath() + "\"/../../../../server/";
+        return getVaadinPath() + "/../../../../server/";
     }
     public String getVaadinPath() {
         return VaadinService.getCurrent().getBaseDirectory().getAbsolutePath();

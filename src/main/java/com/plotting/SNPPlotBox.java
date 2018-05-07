@@ -1,10 +1,11 @@
 package com.plotting;
 
+import com.litemol.LiteMol;
 import com.locuszoom.LocusZoom;
 import com.plotly.SNPPlot;
 import com.main.Database;
 import com.main.SNP;
-import com.plotly.ScatterPlot;
+import com.plotly.SNPPlot;
 import com.utils.Alphanumerical;
 import com.utils.Constants;
 import com.utils.UtilFunctions;
@@ -12,6 +13,8 @@ import com.utils.HtmlHelper;
 import com.utils.JsonHelper;
 import com.utils.Option;
 import com.vaadin.data.HasValue.ValueChangeEvent;
+import com.vaadin.event.ShortcutAction;
+import com.vaadin.event.ShortcutListener;
 import com.vaadin.event.selection.SelectionEvent;
 import com.vaadin.event.selection.SingleSelectionEvent;
 import com.vaadin.icons.VaadinIcons;
@@ -28,6 +31,7 @@ import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.NativeSelect;
 import com.vaadin.ui.RadioButtonGroup;
+import com.vaadin.ui.TextField;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.Window;
 import com.vaadin.ui.themes.ValoTheme;
@@ -56,14 +60,12 @@ public class SNPPlotBox {
     HorizontalLayout plotBox = new HorizontalLayout();
     
     SNPPlot femaleChart;
-    VerticalLayout femalePlotBox = new VerticalLayout();
     SNPPlot maleChart;
-    VerticalLayout malePlotBox = new VerticalLayout();
     PlotDataWindow plotDataWindow = new PlotDataWindow();
     GridLayout rightGrid = new GridLayout(10, 10);
     VerticalLayout showOptionsSelectorBox = new VerticalLayout();
-    Button moreShowOptionsButton = new Button("More options");
-    Window moreShowOptionsWindow;
+    Button morePlotOptionsButton = new Button("More options");
+    Window morePlotOptionsWindow;
     HorizontalLayout topBox = new HorizontalLayout();
     CheckBoxGroup <Option <Boolean>> showOptionsSelector;
     Map <String, Option <Boolean>> booleanOptions = new HashMap();
@@ -87,6 +89,10 @@ public class SNPPlotBox {
     Button locusZoomButton = new Button("Show LocusZoom plot");
     Window locusZoomWindow;
     LocusZoom locusZoom;
+    
+    Button liteMolButton = new Button("Protein 3D structure");
+    Window liteMolWindow;
+    LiteMol liteMol;
     
     Database database = new Database();
     
@@ -125,6 +131,7 @@ public class SNPPlotBox {
         phenotypeSelector.setEmptySelectionAllowed(false);
         
         locusZoomButton.addClickListener(event -> openLocusZoomWindow());
+        liteMolButton.addClickListener(event -> openLiteMolWindow());
         
         Button viewPlotDataButton = new Button("View plot data");
         viewPlotDataButton.addClickListener(event -> viewPlotData());
@@ -154,7 +161,7 @@ public class SNPPlotBox {
         showOptionsSelector = new CheckBoxGroup("Show");
         showOptionsSelector.setItems(showOptionList);
 
-        moreShowOptionsButton.addClickListener(event -> openMoreShowOptionsWindow());
+        morePlotOptionsButton.addClickListener(event -> openMoreShowOptionsWindow());
         
         SNPInput = new ComboBox("SNP");
 
@@ -192,7 +199,7 @@ public class SNPPlotBox {
         showOptionsSelector.addSelectionListener(event -> changeShowSettings(event));
         
         showOptionsSelectorBox.addComponent(showOptionsSelector);
-        showOptionsSelectorBox.addComponent(moreShowOptionsButton);
+        showOptionsSelectorBox.addComponent(morePlotOptionsButton);
         
         rightGrid.addComponent(showOptionsSelectorBox, 1, 0, 9, 4);
         
@@ -200,14 +207,14 @@ public class SNPPlotBox {
         topBox.addComponent(phenotypeSelector);
         topBox.addComponent(locusZoomButton);
         topBox.setComponentAlignment(locusZoomButton, Alignment.BOTTOM_CENTER);
+        topBox.addComponent(liteMolButton);
+        topBox.setComponentAlignment(liteMolButton, Alignment.BOTTOM_CENTER);
         topBox.addComponent(viewPlotDataButton);
         topBox.setComponentAlignment(viewPlotDataButton, Alignment.BOTTOM_CENTER);
         
         box.setSizeFull();
         topBox.setSizeFull();
         plotBox.setSizeFull();
-        femalePlotBox.setSizeFull();
-        malePlotBox.setSizeFull();
         femaleChart.setSizeFull();
         maleChart.setSizeFull();
         rightGrid.setSizeFull();
@@ -221,7 +228,9 @@ public class SNPPlotBox {
         double overallMaxSEM = 0;
         double overallMinSEM = -1;
         double overallMaxPercentile = 0;
-        double overallMinPercentile = -1;        
+        double overallMinPercentile = -1;
+        double overallMaxMedian = 0;
+        double overallMinMedian = -1;
 
         JsonObject snpDataObject = snp.getDataObject();
         
@@ -244,6 +253,18 @@ public class SNPPlotBox {
                     List <String> nData = converter.jsonArrayToList(genotypeObject.get("N"));
                     String nMin = converter.minInteger(nData);
                     String nMax = converter.maxInteger(nData);
+                    
+                    if (genotypeObject.hasKey("median")) {
+                        List <String> medianData = converter.jsonArrayToList(genotypeObject.get("median"));
+                        double medianMax = Double.parseDouble(converter.maxDouble(medianData));                        
+                        if (medianMax > overallMaxMedian) {
+                            overallMaxMedian = medianMax;
+                        }
+                        double medianMin = Double.parseDouble(converter.minDouble(medianData));
+                        if (medianMin < overallMinMedian || overallMinMedian < 0) {
+                            overallMinMedian = medianMin;
+                        }                        
+                    }
                     
                     if (genotypeObject.hasKey("upper SEM")) {
                         List <String> upperSEMData = converter.jsonArrayToList(genotypeObject.get("upper SEM"));
@@ -307,6 +328,20 @@ public class SNPPlotBox {
                 numberObject.put(genotype, dataObject.getObject(genotype).getArray("N"));
             }
             //numberPlot.sendData(numberObject);
+        }
+        
+        // when SEM or percentile data is missing, medians might provide the extreme values
+        if (overallMinSEM > overallMinMedian) {
+            overallMinSEM = overallMinMedian;
+        }
+        if (overallMinPercentile > overallMinMedian) {
+            overallMinPercentile = overallMinMedian;
+        }
+        if (overallMaxSEM < overallMaxMedian) {
+            overallMaxSEM = overallMaxMedian;
+        }
+        if (overallMaxPercentile < overallMaxMedian) {
+            overallMaxPercentile = overallMaxMedian;
         }
         
         // enter extreme values and send
@@ -394,6 +429,7 @@ public class SNPPlotBox {
         if (snp != null) {
             currentSNP = snp; 
             locusZoomButton.setEnabled(true);
+            liteMolButton.setEnabled(true);
 
             if (locusZoom != null) {
                 JsonObject region = Json.createObject();
@@ -408,12 +444,18 @@ public class SNPPlotBox {
                 locusZoomWindow.close();
             }
             locusZoomButton.setEnabled(false);
+            
+            if (liteMolWindow != null) {
+                liteMolWindow.close();
+            }
+            liteMolButton.setEnabled(false);
         }
         
         if (snp == null || !snp.hasData()) {          
             plotBox.removeAllComponents();
             
-            showOptionsSelectorBox.removeComponent(showOptionsSelector);            
+            showOptionsSelectorBox.removeComponent(showOptionsSelector);        
+            showOptionsSelectorBox.removeComponent(morePlotOptionsButton);
             phenotypeSelector.setEnabled(false);
             //currentSNP = null;
 
@@ -449,7 +491,8 @@ public class SNPPlotBox {
                 plotBox.addComponents(femaleChart, maleChart);
             }
             phenotypeSelector.setEnabled(true);
-            showOptionsSelectorBox.addComponent(showOptionsSelector);     
+            showOptionsSelectorBox.addComponent(showOptionsSelector);
+            showOptionsSelectorBox.addComponent(morePlotOptionsButton);
             SNPInputActive = false;
             return true;   
         }
@@ -590,8 +633,67 @@ public class SNPPlotBox {
         toggleWindowVisibility(locusZoomWindow);
     }
     
+    private void openLiteMolWindow() {
+        if (currentSNP == null) {
+            return;
+        }
+        if (liteMolWindow == null) {
+            GridLayout window = new GridLayout(100, 100);
+            window.setSizeFull();
+            liteMol = new LiteMol();
+            
+            
+            TextField entryIDInputField = new TextField("PDB entry ID");
+            //entryIDInputField.addValueChangeListener(event -> setPDBEntryID(event));
+            Button submitButton = new Button("Submit");
+            submitButton.addClickListener(event -> submitEntryID(entryIDInputField));
+            submitButton.addShortcutListener(new ShortcutListener("Enter", ShortcutAction.KeyCode.ENTER, null) {
+                    @Override
+                    public void handleAction(Object sender, Object target) {
+                        submitEntryID(entryIDInputField);
+                    }
+                    });
+            
+            String exampleEntryID = "1aoi"; // "1a4y"
+            entryIDInputField.setValue(exampleEntryID);
+            setEntryID(exampleEntryID);
+            
+            window.addComponent(entryIDInputField, 47, 0, 49, 2);
+            window.addComponent(submitButton, 50, 0, 52, 2);
+            window.setComponentAlignment(submitButton, Alignment.BOTTOM_CENTER);
+            window.setComponentAlignment(entryIDInputField, Alignment.BOTTOM_CENTER);
+            window.addComponent(liteMol, 0, 4, 99, 99);
+            liteMolWindow = new Window("LiteMol visualisation", window);
+            liteMolWindow.setWidth(60, Sizeable.Unit.PERCENTAGE);
+            liteMolWindow.setHeight(90, Sizeable.Unit.PERCENTAGE);
+            liteMolWindow.center();
+        }        
+        //JsonObject region = Json.createObject();
+        //region.put("position", currentSNP.getPosition());
+        //region.put("chromosome", currentSNP.getChromosome());
+        //locusZoom.setRegion(region);
+        //getComponent().getUI().getUI().addWindow(locusZoomWindow);
+        toggleWindowVisibility(liteMolWindow);
+    }
+    
+    
+    private void setEntryID(String entryID) {
+        JsonObject entryIDObject = Json.createObject();
+        entryIDObject.put("ID", entryID);
+        liteMol.setEntryID(entryIDObject);
+    }
+    
+    
+    private void submitEntryID(TextField inputField) {
+        setEntryID(inputField.getValue());
+    }
+    
+    private void enterEntryID(ValueChangeEvent <String> event) {
+        setEntryID(event.getValue());
+    }
+    
     private void openMoreShowOptionsWindow() {
-        if (moreShowOptionsWindow == null) {            
+        if (morePlotOptionsWindow == null) {            
             // age spacing
             List <String> ageListSpacingOptions = Arrays.asList(new String [] {"to scale", "equal"});
             RadioButtonGroup <String> ageSpacingSelector = new RadioButtonGroup("Spacing between ages", ageListSpacingOptions);
@@ -608,14 +710,14 @@ public class SNPPlotBox {
             content.addComponent(ageSpacingSelector);
             content.addComponent(new Label("<b>Miscellaneous</b>", ContentMode.HTML));
             content.addComponent(yAxisToZeroBox);
-            moreShowOptionsWindow = new Window("Addtional plot options", content);
-            moreShowOptionsWindow.setWidth(30, Sizeable.Unit.PERCENTAGE);
-            moreShowOptionsWindow.setHeight(70, Sizeable.Unit.PERCENTAGE);
-            moreShowOptionsWindow.center();
+            morePlotOptionsWindow = new Window("Addtional plot options", content);
+            morePlotOptionsWindow.setWidth(30, Sizeable.Unit.PERCENTAGE);
+            morePlotOptionsWindow.setHeight(70, Sizeable.Unit.PERCENTAGE);
+            morePlotOptionsWindow.center();
         }
-        toggleWindowVisibility(moreShowOptionsWindow);
+        toggleWindowVisibility(morePlotOptionsWindow);
         
-        //getComponent().getUI().getUI().addWindow(moreShowOptionsWindow);
+        //getComponent().getUI().getUI().addWindow(morePlotOptionsWindow);
     }
     
     private void toggleWindowVisibility(Window window) {

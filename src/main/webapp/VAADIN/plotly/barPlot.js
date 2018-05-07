@@ -32,7 +32,7 @@ barPlot.Component = function (element, number) {
         };
         
         var initialValues = {};
-        const initialValueNames = ['x', 'y', 'title', 'colour', 'colour2', 'x-axis', 'y-axis'];
+        const initialValueNames = ['x', 'y', 'title', 'colour', 'x-axis', 'y-axis'];
         
         for (var i = 0; i < initialValueNames.length; i++) {
             var name = initialValueNames[i];
@@ -42,41 +42,40 @@ barPlot.Component = function (element, number) {
        
         //console.log('x: ' + x);
         
-        var data;
+        var barChart;
         
         if (setupData.barmode == 'stack') {
-            data = [];
+            barChart = [];
             var i = 1;
-            var colourKey;
             
-            while (setupData['y' + i] != null) {
-                var nameData = setupData['name' + i];
+            while (setupData['data ' + i] != null) {
+                var receivedData = setupData['data ' + i];
                 var name = '';
                 var showlegend = false;
-                if (nameData != null) {
-                    name = nameData;
+                if (receivedData['name'] != null) {
+                    name = receivedData['name'];
                     showlegend = true;
                 }
-                var dataObject = {
+                var data = {
                     x: initialValues.x,
-                    y: setupData['y' + i],
+                    y: receivedData['y'],
                     name: name,
                     type: 'bar',
                     marker: {
-                        color : initialValues['colour' + i]
+                        color : receivedData['colour']
                     },
                     showlegend: showlegend
                 };
-                data.push(dataObject);
+                barChart.push(data);
                 i++;
             }
-            console.log('data: ' + JSON.stringify(data));
+            //console.log('data: ' + JSON.stringify(data));
             
         }
         else {
             x = initialValues.x;
             y = initialValues.y;
-            data = [{
+            barChart = [{
                 x: x,
                 y: y,
                 type: 'bar',
@@ -110,10 +109,10 @@ barPlot.Component = function (element, number) {
         };
         var configuration = this.commonConfiguration;
         configuration['modeBarButtonsToRemove'] = ['sendDataToCloud'];
-        console.log('data: ' + JSON.stringify(data));
+        console.log('data: ' + JSON.stringify(barChart));
         console.log('layout: ' + JSON.stringify(layout));
-        Plotly.newPlot(this.gd, data, layout, configuration);
-        //this.resize(); // TODO: debug!
+        Plotly.newPlot(this.gd, barChart, layout, configuration);
+        this.resize();
 }
     
     this.setData = function (data) {

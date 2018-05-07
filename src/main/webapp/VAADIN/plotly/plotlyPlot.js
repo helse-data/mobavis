@@ -29,7 +29,7 @@ function plotlyPlot (element, number, type, style) {
     d3 = Plotly.d3;
 //    this.gd3 = d3.select('#' + this.divID);
 
-    console.log('style: ' + (style['width']   || '98vw') + ' |-| ' +  (style['height'] || '96vh'));
+    //console.log('style: ' + (style['width']   || '98vw') + ' |-| ' +  (style['height'] || '96vh'));
 
     this.gd3 = d3.select('#' + this.divID).style({
             width: style['width']   || '100%',
@@ -44,6 +44,8 @@ function plotlyPlot (element, number, type, style) {
 //     });
     
     this.gd = this.gd3.node();
+    
+    this.plot = document.getElementById(this.divID);
     
     // cf. jQuery
     this.elementIsVisible = function() {

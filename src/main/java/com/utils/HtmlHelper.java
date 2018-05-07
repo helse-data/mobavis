@@ -19,9 +19,16 @@ public class HtmlHelper {
         return "<a href=\"" + URL + "\">" + description + "</a>";
     }
     
+    public String listStart() {
+        return "<ul>";
+    }    
     public String listElement(String element) {
         return "<li>" + element + "</li>";
     }
+    public String listEnd() {
+        return "</ul>";
+    }
+    
     
     public String floatRight(String string) {
         return "<span style=\"float:right;\">" + string + "</span>";
@@ -34,13 +41,13 @@ public class HtmlHelper {
     }
     
     public String createList(List <String> list) {
-        String listString = "<ul>";
+        StringBuilder listString = new StringBuilder("<ul>");
         
         for (String element : list) {
-            listString += listElement(element);
+            listString.append(listElement(element));
         }
-        listString += "</ul>";
-        return listString;
+        listString.append("</ul>");
+        return listString.toString();
     }
     
     public String colour(String string, String rgb) {

@@ -203,7 +203,8 @@ overlayPlot.Component = function (element, number) {
         configuration['modeBarButtonsToRemove'] = ['sendDataToCloud', 'select2d', 'lasso2d'];
         
         Plotly.newPlot(this.gd, data, layout, configuration);
-        console.log("set up");
+        this.resize();
+        //console.log("set up");
     }
     
     this.setAges = function (newAgeData) {

@@ -4,6 +4,7 @@ import com.files.PercentileReader;
 import com.plotly.BarPlot;
 import com.plotly.OverlayPlot;
 import com.plotly.PlotlyJs;
+import com.plotly.NonLongitudinalPercentiles;
 import com.utils.Age;
 import com.utils.Alphanumerical;
 import com.utils.Constants;
@@ -49,7 +50,9 @@ import java.util.Set;
  *
  * @author Christoffer Hjeltnes Støle
  */
-public class OverlayPlotBox {
+public class SummaryStatistcsBox {
+    int numberOfPlots = 2;
+    
     JsonObject userData;
     Map <String, JsonObject> currentDataObjects = new HashMap();
     JsonBoolean active;
@@ -57,7 +60,7 @@ public class OverlayPlotBox {
     boolean percentilesShown = false;
     
     Map <String, OverlayPlot> longitudinalChartMap;
-    Map <String, BarPlot> nonLongitudinalChartMap;
+    Map <String, NonLongitudinalPercentiles> nonLongitudinalChartMap;
     
     JsonHelper jsonHelper;
     
@@ -75,8 +78,8 @@ public class OverlayPlotBox {
     NativeSelect <String> dataPresentationSelector;
     List <String> dataPresentationOptions = new ArrayList();
     
-    NativeSelect <String> sexSelector;
-    String sex;
+    Map <String, NativeSelect <String>> sexSelectors = new HashMap();
+    Map <String, String> sexMap = new HashMap();
     
     Map <String, NativeSelect <Variable>> conditionCategorySelectors = new HashMap();
     Map <String, NativeSelect <Alphanumerical>> conditionSelectors = new HashMap();
@@ -88,9 +91,9 @@ public class OverlayPlotBox {
     
     boolean selectionRebound = false;
     
-    Map <String, TextField> inputFieldsAgeSideBar = new HashMap();
+    //Map <String, TextField> inputFieldsAgeSideBar = new HashMap();
     Map <String, Map <String, TextField>> inputFieldsSideBar = new HashMap();
-    Map <String, TextField> inputFieldsAgeTabSheet;
+    Map <String, Map <String, TextField>> inputFieldsAgeTabSheet;
     Map <String, Map <String, TextField>> inputFieldsTabSheet;
     
     TabSheet dataTabSheet;
@@ -128,7 +131,7 @@ public class OverlayPlotBox {
     int FULL_PLOT_HEIGHT = 83;
     int FULL_PLOT_WIDTH = 83;
     
-    public OverlayPlotBox() {
+    public SummaryStatistcsBox() {
         jsonHelper = new JsonHelper();
         
         for (String ageString : constants.getAges()) {
@@ -146,8 +149,8 @@ public class OverlayPlotBox {
         
         int plotStartY = 6;
         box.addComponent(topBox, 1, 0, 90, plotStartY-1);
-        box.addComponent(plotBox, 1, plotStartY, 70, 99);
-        box.addComponent(optionsBox, 72, plotStartY+1, 99, 99);
+        box.addComponent(plotBox, 1, plotStartY, 80, 99);
+        box.addComponent(optionsBox, 82, plotStartY+1, 99, 99);
 
         // select phenotype, data presentation etc.
         dataPresentationOptions.addAll(Arrays.asList(new String[]{
@@ -158,46 +161,42 @@ public class OverlayPlotBox {
         dataPresentationSelector.setEmptySelectionAllowed(false);
         //dataPresentationSelector.setEnabled(false);
         dataPresentationSelector.addValueChangeListener(event -> selectDataPresentation(String.valueOf(event.getValue())));
-        topBox.addComponent(dataPresentationSelector);  
-        
-        sexSelector = new NativeSelect("Sex");
-        //sexSelector = new NativeSelect(VaadinIcons.FEMALE.getHtml() + VaadinIcons.MALE.getHtml() + "Sex");
-        //sexSelector.setCaptionAsHtml(true);
-        sexSelector.setItems(Arrays.asList(new String[] {"female", "male"}));
-        sexSelector.setEmptySelectionAllowed(false);
-        sexSelector.addValueChangeListener(event -> selectSex(String.valueOf(event.getValue())));
-        topBox.addComponent(sexSelector);
+        //topBox.addComponent(dataPresentationSelector);  
+
+        // sex selectors
+        for (int i = 1; i < numberOfPlots + 1; i++) {
+            String plotNumber = Integer.toString(i);
+            NativeSelect sexSelector = new NativeSelect("Sex");;
+            
+            //sexSelector = new NativeSelect(VaadinIcons.FEMALE.getHtml() + VaadinIcons.MALE.getHtml() + "Sex");
+            //sexSelector.setCaptionAsHtml(true);
+            sexSelector.setItems(Arrays.asList(new String[] {"female", "male"}));
+            sexSelector.setEmptySelectionAllowed(false);
+            sexSelector.addValueChangeListener(event -> selectSex(plotNumber, event));
+            sexSelectors.put(plotNumber, sexSelector);
+            sexSelector.setValue("female");
+        }  
         
         
         // conditions start
-        
-        conditionCategorySelectors.put("1", new NativeSelect("Condition category"));
-        conditionCategorySelectors.put("2", new NativeSelect("Condition category"));
-        
-        for (String plotNumber : conditionCategorySelectors.keySet()) {
-            NativeSelect conditionCategorySelector = conditionCategorySelectors.get(plotNumber);
+        for (int i = 1; i < numberOfPlots + 1; i++) {
+            String plotNumber = Integer.toString(i);
+            NativeSelect conditionCategorySelector = new NativeSelect("Condition category");
+           
             conditionCategorySelector.setWidth(100, Sizeable.Unit.PERCENTAGE);;
             conditionCategorySelector.setIcon(VaadinIcons.CHART_LINE);
-            //conditionSelector.setItems(Arrays.asList(new String[] {"none"}));
             conditionCategorySelector.setEmptySelectionAllowed(false);
             conditionCategorySelector.addValueChangeListener(event -> selectConditionCategory(plotNumber, event));
-            //topBox.addComponent(conditionCategorySelector);
-        }
-        
-        conditionSelectors.put("1", new NativeSelect("Condition"));
-        conditionSelectors.put("2", new NativeSelect("Condition"));
-        
-        for (String plotNumber : conditionSelectors.keySet()) {
-            //topBox.addComponent(conditionCategorySelectors.get(plotNumber));
-            NativeSelect conditionSelector = conditionSelectors.get(plotNumber);
+            conditionCategorySelectors.put(plotNumber, conditionCategorySelector);
+        }        
+        for (int i = 1; i < numberOfPlots + 1; i++) {
+            String plotNumber = Integer.toString(i);
+            NativeSelect conditionSelector = new NativeSelect("Condition");
             conditionSelector.setWidth(100, Sizeable.Unit.PERCENTAGE);;
-            //conditionSelector.setIcon(VaadinIcons.CHART_LINE);
-            //conditionSelector.setItems(Arrays.asList(new String[] {"none"}));
             conditionSelector.setEmptySelectionAllowed(false);
             conditionSelector.addValueChangeListener(event -> selectCondition(plotNumber, event));
-            //topBox.addComponent(conditionSelector);
+            conditionSelectors.put(plotNumber, conditionSelector);
         }
-        
         // conditions end
         
         
@@ -215,12 +214,10 @@ public class OverlayPlotBox {
         Collections.sort(nonLongitudinalPhenotypeList);
         phenotypeOptions.addAll(nonLongitudinalPhenotypeList);
         
-        // phenotype selector
-        phenotypeSelectors.put("1", new NativeSelect("Phenotype"));
-        phenotypeSelectors.put("2", new NativeSelect("Phenotype"));
-        
-        for (String plotNumber : phenotypeSelectors.keySet()) {
-            NativeSelect phenotypeSelector = phenotypeSelectors.get(plotNumber);
+        // phenotype selectors        
+        for (int i = 1; i < numberOfPlots + 1; i++) {
+            String plotNumber = Integer.toString(i);
+            NativeSelect phenotypeSelector = new NativeSelect("Phenotype");
             phenotypeSelector.setWidth(100, Sizeable.Unit.PERCENTAGE);
             phenotypeSelector.setItems(phenotypeOptions);            
             phenotypeSelector.setIcon(VaadinIcons.CLIPBOARD_PULSE);
@@ -231,13 +228,15 @@ public class OverlayPlotBox {
             enterDataButton.addStyleName("highlight-blue");
             enterDataButton.addClickListener(event -> showDataFormWindow(plotNumber));
             enterDataButtons.put(plotNumber, enterDataButton);
+            topBox.addComponent(sexSelectors.get(plotNumber));
             topBox.addComponent(phenotypeSelector);  
             topBox.addComponent(conditionCategorySelectors.get(plotNumber));
             topBox.addComponent(conditionSelectors.get(plotNumber));
             if (plotNumber.equals("2")) {
                 topBox.addComponent(enterDataButton);
                 topBox.setComponentAlignment(enterDataButton, Alignment.BOTTOM_CENTER);
-            }            
+            }
+            phenotypeSelectors.put(plotNumber, phenotypeSelector);
         }
         
         Button viewPlotDataButton = new Button("View plot data");
@@ -264,13 +263,14 @@ public class OverlayPlotBox {
         optionsBox.addComponent(optionsGrid);
         
         
-        FormLayout formAge = createAgeForm(inputFieldsAgeSideBar);
+        //FormLayout formAge = createAgeForm(inputFieldsAgeSideBar);
         
         //formAgeLabel.setSizeFull();
-        formBox.addComponent(formAge);
+        //formBox.addComponent(formAge);
         
-        for (String plotNumber : new String[] {"1", "2"}) {
-            Label formLabel = new Label();
+        for (int i = 1; i < numberOfPlots + 1; i++) {
+            String plotNumber = Integer.toString(i);
+            Label formLabel = new Label();            
             formLabelsSideBar.put(plotNumber, formLabel);
             inputFieldsSideBar.put(plotNumber, new HashMap());
             FormLayout phenotypeForm = createPhenotypeForm(plotNumber, formLabel, inputFieldsSideBar);
@@ -296,8 +296,7 @@ public class OverlayPlotBox {
         
         // set default values
         dataPresentationSelector.setValue(dataPresentationOptions.get(1));
-        sexSelector.setValue("female");
-        phenotypeSelectors.get("1").setValue(new Variable("height", true));
+        phenotypeSelectors.get("1").setValue(new Variable("fatherBmi", false));
         updatePhenotypeData("1", "phenotype");
         phenotypeSelectors.get("2").setValue(new Variable("weight", true));
         updatePhenotypeData("2", "phenotype");
@@ -318,15 +317,17 @@ public class OverlayPlotBox {
         formPanel.setSizeFull();
         plotBox.setSizeFull();
 
-        formAge.setSizeFull();
+        //formAge.setSizeFull();
     }
           
-    private FormLayout createAgeForm(Map inputFieldsMap) {
+    private FormLayout createAgeForm(String plotNumber, Map inputFieldsMap) {
         FormLayout ageForm = new FormLayout();
         
         Label formAgeLabel = new Label("age");
         ageForm.addComponent(formAgeLabel);
         ageForm.setComponentAlignment(formAgeLabel, Alignment.MIDDLE_CENTER);
+        
+        Map <String, TextField> plotMap = new HashMap();
         
         for (int i = 0; i < storedAges.size(); i++) {
             final String index = Integer.toString(i);
@@ -335,8 +336,10 @@ public class OverlayPlotBox {
             currentAgeInputField.addValueChangeListener(event -> updateAge(index, event));
             currentAgeInputField.setSizeFull();
             ageForm.addComponent(currentAgeInputField);
-            inputFieldsMap.put(index, currentAgeInputField);
+            plotMap.put(index, currentAgeInputField);
         }
+        
+        inputFieldsMap.put(plotNumber, plotMap);
         
         Button clearingButtonAge = new Button("Clear");
         clearingButtonAge.addClickListener(event -> clearDataPoints("age"));
@@ -414,10 +417,10 @@ public class OverlayPlotBox {
             System.out.println("percentile data: " + dataObject);
         }
         else {
-            BarPlot chart;
+            NonLongitudinalPercentiles chart;
             String yAxisLabel = phenotype.getDisplayName().substring(phenotype.getDisplayName().indexOf(": ") + 1);
             if (nonLongitudinalChartMap.get(plotNumber) == null) { // TODO: awaiting bug fix
-                chart = new BarPlot();
+                chart = new NonLongitudinalPercentiles();
                 nonLongitudinalChartMap.put(plotNumber, chart);
                 JsonObject setupData = Json.createObject();
                 jsonHelper.put(setupData, "x", percentileReader.getPercentileTextList());
@@ -429,14 +432,14 @@ public class OverlayPlotBox {
                 JsonObject sizeObject = Json.createObject();
                 sizeObject.put("height", "83vh");
                 sizeObject.put("width", "35vw");                
-                chart.setSize(sizeObject);
+                //chart.setSize(sizeObject);
             }
             chart = nonLongitudinalChartMap.get(plotNumber);
             chart.setSizeFull();
             chartRef = chart;
             JsonObject layout = Json.createObject();
             layout.put("y-axis", yAxisLabel);
-            layout.put("title", phenotype + " [n = " + dataObject.getObject("data").getString("N") + "]");
+            layout.put("title", phenotype + " (" + sexMap.get(plotNumber) + " offspring)" + " [n = " + dataObject.getObject("data").getString("N") + "]");
             dataObject.put("layout", layout);
             chart.sendData(dataObject);
         }
@@ -521,10 +524,10 @@ public class OverlayPlotBox {
         JsonObject dataObject = null;
         
         if (currentCondition != null && !currentCondition.equals(NONE_ALPHANUMERICAL)) {
-            dataObject = percentileReader.getConditionalPhenotypeData(currentPhenotype, sex, currentConditionCategory, currentCondition);
+            dataObject = percentileReader.getConditionalPhenotypeData(currentPhenotype, sexMap.get(plotNumber), currentConditionCategory, currentCondition);
         }
         else {
-            dataObject = percentileReader.getNonConditionalPhenotypeData(currentPhenotype, sex);
+            dataObject = percentileReader.getNonConditionalPhenotypeData(currentPhenotype, sexMap.get(plotNumber));
         }
 //        if (updatedOption.equals("condition")) {
 //            if (!(currentCondition == null || currentCondition.equals(NONE_ALPHANUMERICAL))) {
@@ -564,6 +567,7 @@ public class OverlayPlotBox {
         else if (updatedOption.equals("phenotype")){
             setPhenotype(plotNumber, currentPhenotype);
         }
+        //System.out.println("phenotypeMap: " + phenotypeMap + " (" + plotNumber +")");
     }
     
     private void selectPhenotype(String plotNumber, ValueChangeEvent event) {
@@ -704,10 +708,10 @@ public class OverlayPlotBox {
         }
     }
     
-    private void setSex(String sex) {
-        this.sex = sex;
-        updatePhenotypeData("1", "sex");
-        updatePhenotypeData("2", "sex");
+    private void setSex(String plotNumber, String sex) {
+        sexMap.put(plotNumber, sex);
+        if (phenotypeSelectors.containsKey(plotNumber))
+        updatePhenotypeData(plotNumber, sex);
         //if (longitudinalPhenotypes.contains(phenotypeMap.get("1"))) {
             //setPhenotype("1", phenotypeMap.get("1"));
         //}
@@ -716,9 +720,10 @@ public class OverlayPlotBox {
         //}
     }
     
-    private void selectSex(String option) {
-        setSex(option);
-        sexSelector.setIcon(VaadinIcons.valueOf(option.toUpperCase()));
+    private void selectSex(String plotNumber, ValueChangeEvent <String> event) {
+        String sex = event.getValue();
+        setSex(plotNumber, sex);
+        sexSelectors.get(plotNumber).setIcon(VaadinIcons.valueOf(sex.toUpperCase()));
     }
         
     public void show(String statistic, boolean show) {
@@ -752,22 +757,24 @@ public class OverlayPlotBox {
         previousShowOptions = showOptionsSelector.getValue();
     }
     
-    private void clearDataPoints(String attribute) {        
-        if (attribute.equals("age")) {
-            inputFieldsAgeSideBar.values().forEach(inputField -> {
-                inputField.clear();
-                inputField.removeStyleName("problem");
-            });
+    private void clearDataPoints(String plotNumber) {
+        if (plotNumber.equals("age")) {
+            for (String plotKey : inputFieldsAgeTabSheet.keySet()) {
+                inputFieldsAgeTabSheet.get(plotKey).values().forEach(inputField -> {
+                    inputField.clear();
+                    inputField.removeStyleName("problem");
+                });
+            }
             setElementsToNull(storedAges);
             setAges(storedAges);
         }
-        else if (attribute.equals("1") || attribute.equals("2")) {
-            Variable phenotype = phenotypeMap.get(attribute);
-            inputFieldsSideBar.values().forEach(inputField -> {
+        else if (plotNumber.equals("1") || plotNumber.equals("2")) {
+            Variable phenotype = phenotypeMap.get(plotNumber);
+            inputFieldsTabSheet.get(plotNumber).values().forEach(inputField -> {
                 inputField.clear();
             });
             setElementsToNull(storedUserData.get(phenotype));
-            setUserData(attribute, phenotype, storedUserData.get(phenotype));      
+            setUserData(plotNumber, phenotype, storedUserData.get(phenotype));      
             //parameterisedPlotComponent.setUserData(userDataList.get(0), userDataList.get(1));        
         }      
     }
@@ -800,9 +807,19 @@ public class OverlayPlotBox {
         
         List <String> ageDescriptions = new ArrayList();
         List <String> ageValues = new ArrayList();
-        
-        ages.forEach((age) -> ageDescriptions.add(age.getDescription()));
-        ages.forEach((age) -> ageValues.add(age.getAgeInDays()));
+        System.out.println("ages: " + ages);
+        for (Age age : ages) {
+            if (age != null) {
+                ageDescriptions.add(age.getDescription());
+                ageValues.add(age.getAgeInDays());
+            }
+            else {
+                ageDescriptions.add("");
+                ageValues.add("");
+            }
+        }
+        //ages.forEach((age) -> ageDescriptions.add(age.getDescription()));
+        //ages.forEach((age) -> ageValues.add(age.getAgeInDays()));
         
         jsonHelper.put(dataObject, "descriptions", ageDescriptions);
         jsonHelper.put(dataObject, "values", ageValues);
@@ -817,10 +834,13 @@ public class OverlayPlotBox {
     
     private void setAgeFieldToTroubled(String fieldIndex) {
         storedAges.set(Integer.parseInt(fieldIndex), null);
-        inputFieldsAgeSideBar.get(fieldIndex).addStyleName("problem");
+        inputFieldsAgeTabSheet.values().forEach(map -> {
+            map.get(fieldIndex).addStyleName("problem");
+        });
+        
     }
     
-    private void updateAge(String index, HasValue.ValueChangeEvent<String> event) {
+    private void updateAge(String index, HasValue.ValueChangeEvent <String> event) {
         String ageString = event.getValue();
         String oldValue = event.getOldValue();
 
@@ -841,8 +861,11 @@ public class OverlayPlotBox {
             }        
             storedAges.set(Integer.parseInt(index), age);
             setAges(storedAges);
-            inputFieldsAgeSideBar.get(index).removeStyleName("problem");
-            inputFieldsAgeSideBar.get(index).setValue(age.getDescription());   
+            inputFieldsAgeTabSheet.values().forEach(map -> {
+                map.get(index).removeStyleName("problem");
+                map.get(index).setValue(age.getDescription()); 
+             });
+              
         }
         else {
             Notification notification = new Notification("Valid age formats: birth|x-y day(s)|week(s)|month(s)|year(s)", Notification.Type.HUMANIZED_MESSAGE);
@@ -866,12 +889,13 @@ public class OverlayPlotBox {
         if (dataTabSheet == null) {
             dataTabSheet = new TabSheet();
             inputFieldsTabSheet = new HashMap();
-            for (String plotKey : phenotypeMap.keySet()) {            
+            inputFieldsAgeTabSheet = new HashMap();
+            for (int i = 1; i < numberOfPlots + 1; i++) {
+                String plotKey = Integer.toString(i);            
                 Variable phenotype = phenotypeMap.get(plotKey);
                 //dataTabSheet.addTab(dataForms.get(thisPlotNumber), phenotypeMap.get(thisPlotNumber).getDisplayName());
                 HorizontalLayout tab = new HorizontalLayout();
-                inputFieldsAgeTabSheet = new HashMap();
-                FormLayout ageForm = createAgeForm(inputFieldsAgeTabSheet); 
+                FormLayout ageForm = createAgeForm(plotKey, inputFieldsAgeTabSheet); 
                 inputFieldsTabSheet.put(plotKey, new HashMap());
                 Label phenotypeLabel = new Label(phenotype.getDisplayName());
                 formLabelsTabSheet.put(plotKey, phenotypeLabel);

@@ -10,18 +10,18 @@ SNPPlot.Component = function (element, number) {
 
     const transparentGray = 'rgba(0, 0, 0, 0.1)';
     const transparentBlue = 'rgba(0, 0, 255, 0.1)';
-    const transparentRed = 'rgba(255, 0, 0, 0.1)';
-    
+    const transparentRed = 'rgba(255, 0, 0, 0.1)';    
     
     const transparentColourMap = {
-        AA : transparentGray,
-        AB : transparentBlue,
-        BB : transparentRed};
+        AA: transparentGray,
+        AB: transparentBlue,
+        BB: transparentRed};
 
     const colourMap = {
-        AA : 'black',
-        AB : 'blue',
-        BB : 'red'};
+        AA: 'black',
+        AB: 'blue',
+        BB: 'red'
+    };
     
     const MEDIANS = 'medians';
     const SEM = 'SEM';
@@ -46,9 +46,9 @@ SNPPlot.Component = function (element, number) {
     }    
     
     const statisticIndexMap = {
-        medians                  : {AA : [], AB : [], BB : []},
-        SEM                      : {AA : [], AB : [], BB : []},
-        percentiles              : {AA : [], AB : [], BB : []}
+        medians:                {AA : [], AB : [], BB : []},
+        SEM:                    {AA : [], AB : [], BB : []},
+        percentiles:            {AA : [], AB : [], BB : []}
     };
     
     const genotypes = ['AA', 'AB', 'BB'];
@@ -64,9 +64,9 @@ SNPPlot.Component = function (element, number) {
     //var fillingIndices = {SEM : [], percentiles : []};
     
     var genotypeStatuses = {
-        AA : true,
-        AB : true,
-        BB : true 
+        AA: true,
+        AB: true,
+        BB: true 
     };
     
     var oldLegendGroupStatuses = genotypeStatuses;
@@ -108,6 +108,7 @@ SNPPlot.Component = function (element, number) {
             trace['y'] = [];
             trace['type'] = 'scatter';
             trace['legendgroup'] = genotype;
+            trace['connectgaps'] = true;
             //trace['showlegend'] = false;
             genotypeIndices[genotype].push(index);
             if (dataType.substr(-3) == 'SEM' ) {
@@ -249,8 +250,8 @@ SNPPlot.Component = function (element, number) {
         yaxis2: {
             domain: yAxisDomains['number plot'],
             fixedrange: true,
-            anchor: 'x2'//,
-//            categoryorder : 'category descending'
+            anchor: 'x2',
+            categoryorder : 'category descending'
         }
     };
 
@@ -583,6 +584,7 @@ SNPPlot.Component = function (element, number) {
     configuration['modeBarButtonsToRemove'] = ['sendDataToCloud'];
     
     Plotly.newPlot(this.gd, traceList, defaultLayout, configuration);
+    this.resize(); // TODO: make redundant
     
     this.traceIsVisible = function(status) {
         return !(status == false || status == 'legendonly');

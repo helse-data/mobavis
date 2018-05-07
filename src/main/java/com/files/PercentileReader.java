@@ -53,13 +53,13 @@ public class PercentileReader {
     Map <String, String> textToNumberSexMap = constants.getTextToNumberSexMap();
     Map <String, String> numberToTextSexMap = constants.getNumberToTextSexMap();
     
-    List <Alphanumerical> percentileList;
+    List <Alphanumerical> percentileList; // sorted list of percentiles
     List <Alphanumerical> percentileTextList;
     
     final String CONDITIONAL_DATA_TEXT_FILE = "population_conditioned.txt";
     
     public PercentileReader() {
-        ages = new String[] {"birth", "6w", "3m", "6m", "8m", "1y", "15-18m", "2y", "3y", "5y", "7y", "8y"}; // constants.getAgesShort(); 
+        ages = constants.getAgesShort(); 
        
         sharedPath = VaadinService.getCurrent().getBaseDirectory().getAbsolutePath();
         sharedPath = sharedPath + "/../../../../server/data";
@@ -167,16 +167,17 @@ public class PercentileReader {
                     //object.put(rawDataList[0], rawDataList[1]);
                 }
             }
-            dataObject = createLongitudinalPlotFriendlyObject(dataObject);
+            dataObject = convertLongitudinalDataToXYArrays(dataObject);
             object.put("data", dataObject);
         }
-        else {            
+        else {
+            //System.out.println("nonLongitudinalData: " + nonLongitudinalData);
             List <String[]> rawData = nonLongitudinalData.get(phenotype.getName()).get(sexAsNumber);
             
             for (String[] rawDataList : rawData) {
                 dataObject.put(rawDataList[0], rawDataList[1]);
             }            
-            //dataObject = createNonLongitudinalPlotFriendlyObject(dataObject);
+            dataObject = convertNonLongitudinalDataToXYArrays(dataObject);
         }
         object.put("data", dataObject);
         object.put("sex", sexAsText);
@@ -203,6 +204,8 @@ public class PercentileReader {
         }
         else {
             dataObject = extractNonLongitudinalConditionalData(phenotype, sexAsNumber, conditionCategory, condition);
+            System.out.println("dataObject: " + dataObject);
+            dataObject = convertNonLongitudinalDataToXYArrays(dataObject);
         }       
         object.put("data", dataObject);
         return object;
@@ -313,17 +316,36 @@ public class PercentileReader {
         return object;
     }
     
+    private JsonObject convertNonLongitudinalDataToXYArrays (JsonObject oldObject) {
+        //System.out.println("object: " + oldObject.toJson());
+        JsonObject newObject = Json.createObject();
+        
+        JsonArray xArray = Json.createArray();
+        JsonArray yArray = Json.createArray();
+        
+        for (int i = 0; i < percentileList.size(); i++) {
+            String percentile = percentileList.get(i).toString() + "%";
+            xArray.set(i, percentile);
+            yArray.set(i, oldObject.getString(percentile));
+        }
+        newObject.put("N", oldObject.getString("N"));
+        newObject.put("x", xArray);
+        newObject.put("y", yArray);
+        //System.out.println("newObject: " + newObject.toJson());
+        return newObject;
+    }
     
-    private JsonObject createLongitudinalPlotFriendlyObject (JsonObject object) {
+    
+    private JsonObject convertLongitudinalDataToXYArrays (JsonObject oldObject) {
         JsonObject newObject = Json.createObject();
 
-        for (String percentile : object.keys()) {
+        for (String percentile : oldObject.keys()) {
             JsonArray array = Json.createArray();
 
             int i = 0;            
             for (String age : ages) {
                 //System.out.println(age + " " + percentile);
-                array.set(i, object.getObject(percentile).getString(age));
+                array.set(i, oldObject.getObject(percentile).getString(age));
                 i++;
             }
             newObject.put(percentile, array);

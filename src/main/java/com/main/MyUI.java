@@ -22,25 +22,27 @@ public class MyUI extends UI {
        
     @Override    
     protected void init(VaadinRequest vaadinRequest) {
-        landingPage = new LandingPage(highLevelComponents);
-        highLevelComponents.put("landing page", landingPage);
         main = new Main(highLevelComponents);
         highLevelComponents.put("main", main);
+        landingPage = new LandingPage(highLevelComponents);
+        highLevelComponents.put("landing page", landingPage);
         
-        boolean showLandingPage = false;
+        
+        boolean showLandingPage = true;
         
         if (showLandingPage) {
-             setContent(landingPage.getComponent());
+            //setContent(new NewLandingPage(highLevelComponents).getComponent());
+            setContent(landingPage.getComponent());
         }
         else {
-            main.execute(Main.MenuOption.NEW_SNP_PLOT);
+            main.setView(Main.MenuOption.SNP_STATISTICS);
             setContent(main.getComponent());
         }
     }
     
     public void enter(boolean firstLanding, Main.MenuOption viewOption) {
         if (firstLanding) {
-            main.execute(viewOption);
+            main.setView(viewOption);
         }        
         setContent(main.getComponent());
     }

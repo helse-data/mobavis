@@ -1,9 +1,11 @@
-@import "locuszoom.css"; // should be at the top
+@import "locuszoom.css"; // css imports should come first
+@import "../../LiteMolTheme/css/LiteMol-plugin-blue.min.css";
+@import "../../LiteMolTheme/css/LiteMol-plugin-light.min.css";
+@import "../../LiteMolTheme/css/LiteMol-plugin.min.css";
 @import "mobatheme.scss";
 @import "addons.scss";
 
 .mobatheme {
   @include addons;
   @include mobatheme;
-
 }

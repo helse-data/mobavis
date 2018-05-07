@@ -50,6 +50,10 @@ public class ClickMenu <T> extends CustomComponent {
         selector.setValue(value);
     }
     
+    public T getValue() {
+        return selector.getValue();
+    }
+    
     public void addValueChangeListener(ValueChangeListener listener) {
         selector.addValueChangeListener(listener);
     }
