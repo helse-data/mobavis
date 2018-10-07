@@ -56,7 +56,7 @@ public class ManhattanPlotBox extends GenoView {
     public ManhattanPlotBox (Controller controller) {
         super(controller);
 
-        box.addComponent(getController().getSNPInputField());
+        //box.addComponent(getController().getSNPInputField());
         
         PValueReader pValueReader = new PValueReader();
         JsonObject pValueDataObject = pValueReader.read();

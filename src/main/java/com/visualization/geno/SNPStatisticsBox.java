@@ -67,7 +67,6 @@ public class SNPStatisticsBox extends GenoView {
     
     public SNPStatisticsBox(Controller controller) {
         super(controller);
-        box.addComponent(getController().getSNPInputField());
         topBox.addComponent(optionsSelector);
         //topBox.addComponent(chromosomeSelector);
         

@@ -123,7 +123,7 @@ public class SNPPlotBox extends GenoView {
     public SNPPlotBox(Controller controller) {
         super(controller);
         // phenotype selector
-        box.addComponent(getController().getSNPInputField());
+        //box.addComponent(getController().getSNPInputField());
         phenotypeOptions.addAll(Arrays.asList(new String[]{
             "height", "weight", "BMI"}));
         //phenotypeSelector = new NativeSelect("Phenotype");
