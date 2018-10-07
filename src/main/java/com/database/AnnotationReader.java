@@ -1,4 +1,4 @@
-package com.files;
+package com.database;
 
 import com.vaadin.server.VaadinService;
 import elemental.json.Json;
@@ -21,7 +21,12 @@ import java.util.zip.GZIPInputStream;
  * @author Christoffer Hjeltnes Støle
  */
 public class AnnotationReader {
-    final String basePath = VaadinService.getCurrent().getBaseDirectory().getAbsolutePath() + "\"/../../../../server/data/new_annotation/";
+    final String folderPath = VaadinService.getCurrent().getBaseDirectory().getAbsolutePath() + "/../../../../server/data/new_annotation/";
+    
+    
+    private String getAnnotationFilePath(String chromosome) {
+        return folderPath + "snp_annotation_" + chromosome + ".gz";
+    }
     
     // reads the given columns of the annotation file for the given chromosome
     public Map <String, JsonArray> readAnnotationFile(String chromosome, int [] columns) {
@@ -40,7 +45,7 @@ public class AnnotationReader {
         //System.out.println("result: " + result.toJson());
         //System.out.println("result2: " + result2.toJson());
         try {
-            InputStream inputStream = new FileInputStream(basePath + "snp_annotation_" + chromosome + ".gz");
+            InputStream inputStream = new FileInputStream(getAnnotationFilePath(chromosome));
             InputStream gzipStream = new GZIPInputStream(inputStream);
             Reader reader = new InputStreamReader(gzipStream);
            
@@ -68,6 +73,46 @@ public class AnnotationReader {
         }
         //System.out.println("testArray: " + Arrays.toString(testArray));
         return columnData;
+    }
+    
+    
+    public Map <String, String> getAnnotation(String chromosome, String databaseSNPID) {
+        Map <String, String> annotation = null;
+
+        System.out.println("getting annotation for SNP with database ID " + databaseSNPID + " on chromosome " + chromosome);
+        
+        try {
+            InputStream inputStream = new FileInputStream(getAnnotationFilePath(chromosome));
+            InputStream gzipStream = new GZIPInputStream(inputStream);
+            Reader reader = new InputStreamReader(gzipStream);
+           
+            BufferedReader bufferedReader = new BufferedReader(reader);
+            
+            
+            
+            String [] header = bufferedReader.readLine().split("\t"); // read the header
+            String line = bufferedReader.readLine();
+            
+            boolean SNPfound = false;
+            
+            while (line != null && !SNPfound) {
+                String [] splitLine = line.split("\t");
+                if (splitLine[2].equals(databaseSNPID)) {
+                    annotation = new HashMap();
+                    for (int i = 0; i < header.length; i++) {
+                        annotation.put(header[i], splitLine[i]);
+                    }
+                }
+                
+                line = bufferedReader.readLine();
+                //System.out.println("line: " + line);
+            }
+
+        }
+        catch (Exception e) {
+            System.out.println(e);
+        }
+        return annotation;
     }
     
 }

@@ -2,7 +2,7 @@ window.com_locuszoom_LocusZoom =
 	function() {
 		// Create the component
 		var component =
-			new main.Component(this.getElement());
+			new main.Component(this.getElement(), this);
 	
                 var booleanVersions = {
                     region            : true
@@ -18,9 +18,14 @@ window.com_locuszoom_LocusZoom =
                             component.setRegion(region);
                             console.log('New region provided.');
                             booleanVersions['region'] = region['boolean version'];
-
                         }
                     };
                     firstData = false;
+                };
+                
+                var self = this;
+                this.registerSNPclick = function (data) {
+                    console.log('SNP click registered in connector: ' + data);
+                    self.onSNPclick(data['assoc:position']);
                 };
 	};

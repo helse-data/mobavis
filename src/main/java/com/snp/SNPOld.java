@@ -1,4 +1,4 @@
-package com.main;
+package com.snp;
 
 import com.utils.Constants;
 import java.sql.ResultSet;

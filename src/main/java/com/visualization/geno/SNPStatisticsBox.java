@@ -1,18 +1,23 @@
-package com.main;
+package com.visualization.geno;
 
-import com.files.AnnotationReader;
+import com.database.AnnotationReader;
+import com.main.Controller;
 import com.plotly.BarPlot;
 import com.plotly.ScatterPlot;
 import com.utils.Constants;
 import com.utils.JsonHelper;
 import com.utils.MoBaChromosome;
 import com.vaadin.data.HasValue.ValueChangeEvent;
+import com.vaadin.ui.AbstractComponent;
 import com.vaadin.ui.Component;
 import com.vaadin.ui.Grid;
 import com.vaadin.ui.GridLayout;
 import com.vaadin.ui.HorizontalLayout;
+import com.vaadin.ui.Label;
 import com.vaadin.ui.NativeSelect;
 import com.vaadin.ui.RadioButtonGroup;
+import com.vaadin.ui.VerticalLayout;
+import com.visualization.MoBaVisualization;
 import elemental.json.Json;
 import elemental.json.JsonArray;
 import elemental.json.JsonObject;
@@ -23,17 +28,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import com.visualization.State;
+import com.visualization.MoBaVisualizationInterface;
 
 /**
  *
  * @author ChristofferHjeltnes
  */
-public class SummaryPage {
-    GridLayout box = new GridLayout(100, 100);
-    NativeSelect <MenuOptionSummary> optionsSelector = new NativeSelect("Show");
+public class SNPStatisticsBox extends GenoView {
+    //GridLayout box = new GridLayout(100, 100);
+    VerticalLayout box = new VerticalLayout();
+    NativeSelect <VisualizationSummary> optionsSelector = new NativeSelect("Show");
     NativeSelect <String> chromosomeSelector = new NativeSelect("Chromosome");
     AnnotationReader annotationReader = new AnnotationReader();
-    GridLayout contentBox = new GridLayout(100, 100);
+    //GridLayout contentBox = new GridLayout(100, 100);
+    HorizontalLayout contentBox = new HorizontalLayout();
+    HorizontalLayout plotContainer = new HorizontalLayout();
+    VerticalLayout rightContentSubBox = new VerticalLayout();
     ScatterPlot positionPlot;
     HorizontalLayout topBox = new HorizontalLayout();
     JsonObject snpsPerChromosomeObject;
@@ -54,25 +65,32 @@ public class SummaryPage {
     String ABSOLUTE_NUMBERS = "absolute numbers";
     String FRACTIONS = "fractions";
     
-    public SummaryPage() {
+    public SNPStatisticsBox(Controller controller) {
+        super(controller);
+        box.addComponent(getController().getSNPInputField());
         topBox.addComponent(optionsSelector);
         //topBox.addComponent(chromosomeSelector);
         
-        int plotStartY = 6;
-        box.addComponent(topBox, 1, 0, 99, plotStartY-1);
-        box.addComponent(contentBox, 1, plotStartY+2, 99, 99-2);
+        //int plotStartY = 6;
+        //box.addComponent(topBox, 1, 0, 99, plotStartY-1);
+        //box.addComponent(contentBox, 1, plotStartY+2, 99, 99-2);
         
-        List <MenuOptionSummary> options = new ArrayList();
+        box.addComponent(topBox);
+        box.setExpandRatio(topBox, 1);
+        box.addComponent(contentBox);
+        box.setExpandRatio(contentBox, 10);
+        
+        List <VisualizationSummary> options = new ArrayList();
 
-        for (MenuOptionSummary option : MenuOptionSummary.values()) {
-            if (!option.equals(MenuOptionSummary.SNP_POSITION)) {
+        for (VisualizationSummary option : VisualizationSummary.values()) {
+            if (!option.equals(VisualizationSummary.SNP_POSITION)) {
                 options.add(option);
             }            
         }
         
         optionsSelector.setItems(options);
         optionsSelector.setEmptySelectionAllowed(false);
-        //optionsSelector.setValue(MenuOptionSummary.SNP_POSITION);        
+        //optionsSelector.setValue(VisualizationSummary.SNP_POSITION);        
         optionsSelector.addValueChangeListener(event -> selectOption(event));
         
         chromosomeSelector.setItems(constants.getChromosomeList());
@@ -92,21 +110,22 @@ public class SummaryPage {
         
         columnMap.put(1, "position");
         columnMap.put(2, "ID");
-        columnMap.put(6, "RefMAF");
+        columnMap.put(6, "RefMAF");        
         
-        contentBox.setSizeFull();
         box.setSizeFull();
         topBox.setSizeFull();
+        contentBox.setSizeFull();
+        plotContainer.setSizeFull();
         // default option
-        optionsSelector.setValue(MenuOptionSummary.SNPS_PER_CHROMOSOME);
+        optionsSelector.setValue(VisualizationSummary.SNPS_PER_CHROMOSOME);
     }
     
-    public enum MenuOptionSummary {
+    public enum VisualizationSummary {
         SNPS_PER_CHROMOSOME("SNPs per chromosome"),
         SNP_POSITION("SNP position plot");
         private final String displayName;
      
-        MenuOptionSummary(String displayName) {
+        VisualizationSummary(String displayName) {
             this.displayName = displayName;
         }
         
@@ -129,7 +148,7 @@ public class SummaryPage {
         table.addColumn(MoBaChromosome::getNumberOfSNPs).setCaption("Registered SNPs");
     }    
     
-    public Component getComponent() {
+    public AbstractComponent getComponent() {
         return box;
     }
     
@@ -170,7 +189,7 @@ public class SummaryPage {
     }
     
     private void selectOption(ValueChangeEvent event) {
-        MenuOptionSummary eventValue = (MenuOptionSummary) event.getValue();
+        VisualizationSummary eventValue = (VisualizationSummary) event.getValue();
         System.out.println("choice: " + eventValue);
         
         if (snpsPerChromosomeObject == null) {
@@ -179,7 +198,7 @@ public class SummaryPage {
             //table.setSizeFull();
         }
         
-        if (eventValue == MenuOptionSummary.SNP_POSITION) {
+        if (eventValue == VisualizationSummary.SNP_POSITION) {
             if (positionPlot == null) {
                 positionPlot = new ScatterPlot();
                 positionPlot.setSizeFull();
@@ -189,9 +208,10 @@ public class SummaryPage {
                 //chromosomeSelector.setValue("2");
             }
             contentBox.removeAllComponents();
-            contentBox.addComponent(positionPlot, 0, 0, 99, 99);
+            //contentBox.addComponent(positionPlot, 0, 0, 99, 99);
+            contentBox.addComponent(positionPlot);
         }
-        else if (eventValue == MenuOptionSummary.SNPS_PER_CHROMOSOME) {
+        else if (eventValue == VisualizationSummary.SNPS_PER_CHROMOSOME) {
             if (!snpsPerChromosomeSelector.getSelectedItem().isPresent()) {
                 // default values
                 snpsPerChromosomeSelector.setSelectedItem(GENOTYPE);
@@ -199,10 +219,18 @@ public class SummaryPage {
             }
 
             contentBox.removeAllComponents();
-            contentBox.addComponent(getChart(), 0, 0, 80, 99);
-            contentBox.addComponent(snpsPerChromosomeSelector, 93, 0, 95, 99);            
-            contentBox.addComponent(numberTypeSelector, 96, 0, 98, 99);
-            //contentBox.addComponent(table);            
+            //contentBox.addComponent(getChart(), 0, 0, 80, 99);
+            //contentBox.addComponent(snpsPerChromosomeSelector, 93, 0, 95, 99);            
+            //contentBox.addComponent(numberTypeSelector, 96, 0, 98, 99);
+           
+            rightContentSubBox.addComponent(snpsPerChromosomeSelector);
+            rightContentSubBox.addComponent(numberTypeSelector);
+            plotContainer.addComponent(getChart());
+            contentBox.addComponent(plotContainer);
+            contentBox.setExpandRatio(plotContainer, 7);
+            contentBox.addComponent(rightContentSubBox);
+            contentBox.setExpandRatio(rightContentSubBox, 1);
+            
         }
     }
     
@@ -449,7 +477,18 @@ public class SummaryPage {
         chart.setUp(setupData);
         chart.setSizeFull();
         // TODO: await #2144
-        contentBox.removeComponent(currentChart);
-        contentBox.addComponent(getChart(), 0, 0, 80, 99);
+        if (currentChart != null) {
+            plotContainer.removeComponent(currentChart);
+        }
+        plotContainer.addComponent(getChart());
     }
+    
+    @Override
+    public void SNPChanged() {} // no functionality yet
+    
+    @Override
+    public void resizePlots() {
+        chart.resize();
+    }
+    
 }

@@ -1,4 +1,4 @@
-package com.plotting;
+package com.utils.vaadin;
 
 import com.vaadin.server.Sizeable;
 import com.vaadin.ui.Component;

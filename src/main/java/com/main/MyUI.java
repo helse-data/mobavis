@@ -1,55 +1,54 @@
 package com.main;
 
+import com.demo.DemoCoverPage;
+import com.main.Controller.ContentType;
+import com.main.Controller.Visualization;
 import javax.servlet.annotation.WebServlet;
-
 import com.vaadin.annotations.Theme;
 import com.vaadin.annotations.Title;
 import com.vaadin.annotations.VaadinServletConfiguration;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServlet;
-import com.vaadin.ui.Component;
 import com.vaadin.ui.UI;
-import java.util.HashMap;
-import java.util.Map;
 
 @Theme("mobatheme")
 @Title("Mobavis")
 public class MyUI extends UI {
-    
-    Main main;
-    Map <String, Object> highLevelComponents = new HashMap();
     LandingPage landingPage;
        
     @Override    
     protected void init(VaadinRequest vaadinRequest) {
-        main = new Main(highLevelComponents);
-        highLevelComponents.put("main", main);
-        landingPage = new LandingPage(highLevelComponents);
-        highLevelComponents.put("landing page", landingPage);
+        boolean showLandingPage = false;
+        boolean demo = false;
         
+        if (demo) {
+            DemoCoverPage demoCoverPage = new DemoCoverPage();
+            setContent(demoCoverPage.getComponent());
+            return;
+        }        
         
-        boolean showLandingPage = true;
+        Controller controller = new Controller(this);
+        landingPage = new LandingPage(controller);
         
         if (showLandingPage) {
-            //setContent(new NewLandingPage(highLevelComponents).getComponent());
-            setContent(landingPage.getComponent());
+            controller.setContentType(ContentType.LANDING_PAGE);
         }
         else {
-            main.setView(Main.MenuOption.SNP_STATISTICS);
-            setContent(main.getComponent());
+            //controller.setVisualization(Visualization.MOTHER);
+            controller.setContentType(ContentType.VISUALIZATION);
         }
     }
     
-    public void enter(boolean firstLanding, Main.MenuOption viewOption) {
-        if (firstLanding) {
-            main.setView(viewOption);
-        }        
-        setContent(main.getComponent());
-    }
+//    public void enter(boolean firstLanding, Controller.Visualization viewOption) {
+//        if (firstLanding) {
+//            //main.setView(viewOption);
+//        }        
+//        setContent(main.getComponent());
+//    }
    
-    public Component getLandingPage() {
-        return landingPage.getComponent();
-    }
+//    public Component getLandingPage() {
+//        return landingPage.getComponent();
+//    }
     
     @WebServlet(urlPatterns = "/*", name = "MyUIServlet", asyncSupported = true)
     @VaadinServletConfiguration(ui = MyUI.class, productionMode = false)

@@ -1,5 +1,15 @@
-var i = 0; // div IDs for separate plots must be different
+/** 
+ * 
+ * Connectors allow the Java code to communicate with the JavaScript code. * 
+ *
+ */
 
+
+var i = 0; // div IDs for separate plots must be different, this number is passed on to plotlyPlot for this purpose
+
+/** 
+ * Connector function for the SNP plot
+ */
 window.com_plotly_SNPPlot =
         
 	function() {
@@ -9,38 +19,64 @@ window.com_plotly_SNPPlot =
                 
             var booleanVersions = {
                     data            : true,
-                    'plot options'   : true
+                    'plot options'  : true,
+                    'active plot'   : true
                 };
 
             var SNPPlotComponent =
-                    new SNPPlot.Component(this.getElement(), i);			
+                    //new SNPPlot.Component(this.getElement(), i);
+                    new SNPPlot.Component(this.getElement(), i);
 
+            
+            var isSetUp = false; // whether or not the plot has been set up
             
             // Pass on information sent from the Java code 
             this.onStateChange = function() {
+                var setup = this.getState().setup;
                 var data = this.getState().data;
                 var plotOptions = this.getState().plotOptions;
+                var activePlot = this.getState().activePlot;
                 
                 //console.log('plot options: ' + JSON.stringify(plot options));
+                
+                if (!isSetUp) {
+                    if (setup != null) {
+                        SNPPlotComponent.setUp(setup)
+                        isSetUp = true;                                                
+                    }
+                    
+                }
+                if (isSetUp) {
 
-                if (data != null) {
-                    //console.log("Data sent to connector: " + JSON.stringify(data));
-                    if (firstData || booleanVersions['data'] != data['boolean version']) {
-                        console.log('New data provided.')
-                        SNPPlotComponent.updateData(data);
-                        booleanVersions['data'] = data['boolean version'];
+                    if (data != null) {
+                        //console.log("Data sent to connector: " + JSON.stringify(data));
+                        if (firstData || booleanVersions['data'] != data['boolean version']) {
+                            console.log('New data provided.')
+                            //SNPPlotComponent.updateData(data);
+                            SNPPlotComponent.setData(data);
+                            booleanVersions['data'] = data['boolean version'];
+                        };
                     };
-                };
-                if (plotOptions != null) {
-                    //console.log("Show status sent to connector: " + JSON.stringify(plot options));
-                    if (firstData || booleanVersions['plot options'] != plotOptions['boolean version']) {
-                        console.log('New plot options provided.')
-                        //SNPPlotComponent.setPlotOptions(plotOptions);
-                        SNPPlotComponent.setPlotOptions(plotOptions);
-                        booleanVersions['plot options'] = plotOptions['boolean version'];
+                    if (plotOptions != null) {
+                        //console.log("Show status sent to connector: " + JSON.stringify(plot options));
+                        if (firstData || booleanVersions['plot options'] != plotOptions['boolean version']) {
+                            console.log('New plot options provided.')
+                            //SNPPlotComponent.setPlotOptions(plotOptions);
+                            SNPPlotComponent.setPlotOptions(plotOptions);
+                            booleanVersions['plot options'] = plotOptions['boolean version'];
+                        };
                     };
+                    if (activePlot != null) {
+                        console.log('Active plot sent to connector: ' + JSON.stringify(activePlot));
+                        if (firstData || booleanVersions['active plot'] != plotOptions['active plot']) {
+                            console.log('New active plot set.')
+                            //SNPPlotComponent.setPlotOptions(plotOptions);
+                            SNPPlotComponent.setActivePlot(activePlot);
+                            booleanVersions['active plot'] = activePlot['boolean version'];
+                        };
+                    }
+                    firstData = false;
                 };
-                firstData = false;
             };
 	};
         
@@ -133,7 +169,9 @@ window.com_plotly_ParameterisedPlot =
             };
         };
 
-
+/** 
+ * Connector function for the whole-population summary plot
+ */
 window.com_plotly_OverlayPlot =            
 	function() {           
             i = i + 1;
@@ -157,6 +195,9 @@ window.com_plotly_OverlayPlot =
             };
         };
 
+/** 
+ * Connector function for bar charts
+ */
 window.com_plotly_BarPlot =               
 	function() {            
             i = i + 1;
@@ -197,6 +238,10 @@ window.com_plotly_BarPlot =
                 };
             };
         };
+        
+/** 
+ * Connector function for scatter plots
+ */
 window.com_plotly_ScatterPlot =               
 	function() {            
             i = i + 1;
@@ -256,3 +301,88 @@ window.com_plotly_SNP3DPlot =
                 //};
             };
         };
+window.com_plotly_ManhattanPlot =               
+	function() {            
+            i = i + 1;
+            
+            var manhattanPlotComponent = null;
+            
+            const variables = ['data', 'options', 'resize'];
+            
+            var dataManager = new DataManager(this, variables);            
+
+            this.onStateChange = function() {
+                var data = this.getState().data;
+                var options = this.getState().options;
+                var variableChanged = dataManager.manageData();
+                
+                //console.log('Data provided:' + JSON.stringify(data));
+                if (manhattanPlotComponent == null) {
+                    manhattanPlotComponent = new manhattanPlot.Component(this.getElement(), i, this);
+                };
+//                if (manhattanPlotComponent != null && data != null) {
+//                    
+//                };
+                
+                if (variableChanged["data"]) {
+                    console.log('new data provided, including ' + data["1"].names.length + ' p-values for chromosome 1.');
+                    manhattanPlotComponent.setData(data);                    
+                }
+                if (variableChanged["options"]) {
+                    manhattanPlotComponent.setOptions(options);
+                }
+                if (variableChanged["resize"]) {
+                    console.log('resize requested');
+                }
+            };
+            
+            var self = this;
+            this.registerSNPclick = function (data) {
+                console.log('SNP click registered in connector: ' + data);
+                self.onSNPclick(data);
+            };
+        };
+        
+/**
+ * Constructor for an object to manage the versions of incoming data.
+ * 
+ * @param {type} connectorObject
+ * @param {type} variables
+ * @returns {DataManager}
+ */   
+function DataManager(connectorObject, variables) {
+    var firstData = true;
+    const initialBooleanVersion = true;
+    
+     var booleanVersions = {};
+    
+    for (var i = 0; i < variables.length; i++) {
+        booleanVersions[variables[i]] = initialBooleanVersion;
+    }
+    
+    this.manageData = function() {
+        
+        var variableChanged = {};
+        
+        for (var i = 0; i < variables.length; i++) {
+            var variable = variables[i];
+            var variableData = connectorObject.getState()[variable];
+            if (variableData != null){
+                if (firstData || booleanVersions[variable] != variableData['boolean version']) {
+                    console.log('New data provided for variable "' + variable + '"' + '.');//: ' + JSON.stringify(userData))
+                    booleanVersions[variable] = variableData['boolean version'];
+                    variableChanged[variable] = true;
+                };                
+            }
+            else {
+                variableChanged[variable] = false;
+            }
+        }
+        
+        firstData = false;
+        
+        return variableChanged;
+        
+    };
+    
+}

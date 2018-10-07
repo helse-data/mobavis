@@ -1,6 +1,10 @@
-package com.plotting;
+package com.visualization.summary;
 
+import com.utils.vaadin.PlotDataWindow;
+import com.files.UploadForm;
 import com.files.PercentileReader;
+import com.main.Controller;
+import com.mobaextraction.Extractor;
 import com.plotly.BarPlot;
 import com.plotly.OverlayPlot;
 import com.plotly.PlotlyJs;
@@ -17,6 +21,7 @@ import com.vaadin.event.selection.SelectionEvent;
 import com.vaadin.icons.VaadinIcons;
 import com.vaadin.server.Page;
 import com.vaadin.server.Sizeable;
+import com.vaadin.ui.AbstractComponent;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.CheckBoxGroup;
@@ -31,8 +36,10 @@ import com.vaadin.ui.Notification;
 import com.vaadin.ui.Panel;
 import com.vaadin.ui.TabSheet;
 import com.vaadin.ui.TextField;
+import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.Window;
 import com.vaadin.ui.themes.ValoTheme;
+import com.visualization.MoBaVisualization;
 import elemental.json.Json;
 import elemental.json.JsonBoolean;
 import elemental.json.JsonObject;
@@ -44,14 +51,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import com.visualization.State;
+import com.visualization.MoBaVisualizationInterface;
 
 
 /**
  *
  * @author Christoffer Hjeltnes Støle
  */
-public class SummaryStatistcsBox {
-    int numberOfPlots = 2;
+public class SummaryStatisticsBox extends MoBaVisualization {
+    int numberOfPlots = 1;
+    
+     //GridLayout box = new GridLayout(100, 100);
+    VerticalLayout box = new VerticalLayout();
     
     JsonObject userData;
     Map <String, JsonObject> currentDataObjects = new HashMap();
@@ -63,11 +75,16 @@ public class SummaryStatistcsBox {
     Map <String, NonLongitudinalPercentiles> nonLongitudinalChartMap;
     
     JsonHelper jsonHelper;
+    UtilFunctions utilityFunctions = new UtilFunctions();
+    
+    Extractor extractor;
     
     PercentileReader percentileReader;
     
-    GridLayout box = new GridLayout(100, 100);
+   
     HorizontalLayout topBox = new HorizontalLayout();
+    HorizontalLayout settingsBox = new HorizontalLayout();
+    HorizontalLayout middleBox = new HorizontalLayout(); 
     GridLayout optionsBox = new GridLayout(1, 1);
     GridLayout optionsGrid = new GridLayout(100, 100);
     HorizontalLayout formBox = new HorizontalLayout();
@@ -88,6 +105,7 @@ public class SummaryStatistcsBox {
     List <Variable> phenotypeOptions = new ArrayList();
     
     Map <String, Button> enterDataButtons = new HashMap();
+    UploadForm uploadForm = new UploadForm();
     
     boolean selectionRebound = false;
     
@@ -128,10 +146,13 @@ public class SummaryStatistcsBox {
     Alphanumerical NONE_ALPHANUMERICAL = new Alphanumerical("[none]");
     Variable NULL_VARIABLE = new Variable(null);
     
-    int FULL_PLOT_HEIGHT = 83;
-    int FULL_PLOT_WIDTH = 83;
-    
-    public SummaryStatistcsBox() {
+    public SummaryStatisticsBox(Controller controller) {
+        super(controller);
+        extractor = new Extractor();
+        
+        String [] tables = extractor.getTables();
+
+        
         jsonHelper = new JsonHelper();
         
         for (String ageString : constants.getAges()) {
@@ -147,10 +168,20 @@ public class SummaryStatistcsBox {
         nonLongitudinalChartMap.put("1", null);
         nonLongitudinalChartMap.put("2", null);
         
-        int plotStartY = 6;
-        box.addComponent(topBox, 1, 0, 90, plotStartY-1);
-        box.addComponent(plotBox, 1, plotStartY, 80, 99);
-        box.addComponent(optionsBox, 82, plotStartY+1, 99, 99);
+        //int plotStartY = 6;
+        //box.addComponent(topBox, 1, 0, 90, plotStartY-1);
+        //box.addComponent(plotBox, 1, plotStartY, 80, 99);
+        //box.addComponent(optionsBox, 82, plotStartY+1, 99, 99);
+        
+        middleBox.addComponent(plotBox);
+        middleBox.setExpandRatio(plotBox, 10);
+        middleBox.addComponent(optionsBox);
+        middleBox.setExpandRatio(optionsBox, 1);
+        
+        box.addComponent(topBox);
+        box.setExpandRatio(topBox, 1);
+        box.addComponent(middleBox);
+        box.setExpandRatio(middleBox, 10);
 
         // select phenotype, data presentation etc.
         dataPresentationOptions.addAll(Arrays.asList(new String[]{
@@ -218,6 +249,12 @@ public class SummaryStatistcsBox {
         for (int i = 1; i < numberOfPlots + 1; i++) {
             String plotNumber = Integer.toString(i);
             NativeSelect phenotypeSelector = new NativeSelect("Phenotype");
+            NativeSelect phenotypeSelectorNEW = new NativeSelect("Phenotype [NEW]");
+            phenotypeSelectorNEW.setWidth(100, Sizeable.Unit.PERCENTAGE);
+            phenotypeSelectorNEW.setItems(Arrays.asList(tables));
+            phenotypeSelectorNEW.addValueChangeListener(event -> selectPhenotypeNEW(plotNumber, event));
+            
+            
             phenotypeSelector.setWidth(100, Sizeable.Unit.PERCENTAGE);
             phenotypeSelector.setItems(phenotypeOptions);            
             phenotypeSelector.setIcon(VaadinIcons.CLIPBOARD_PULSE);
@@ -229,10 +266,16 @@ public class SummaryStatistcsBox {
             enterDataButton.addClickListener(event -> showDataFormWindow(plotNumber));
             enterDataButtons.put(plotNumber, enterDataButton);
             topBox.addComponent(sexSelectors.get(plotNumber));
-            topBox.addComponent(phenotypeSelector);  
+            topBox.setComponentAlignment(sexSelectors.get(plotNumber), Alignment.BOTTOM_CENTER);
+            topBox.addComponent(phenotypeSelectorNEW);
+            topBox.setComponentAlignment(phenotypeSelectorNEW, Alignment.BOTTOM_CENTER);
+            topBox.addComponent(phenotypeSelector);
+            topBox.setComponentAlignment(phenotypeSelector, Alignment.BOTTOM_CENTER);
             topBox.addComponent(conditionCategorySelectors.get(plotNumber));
+            topBox.setComponentAlignment(conditionCategorySelectors.get(plotNumber), Alignment.BOTTOM_CENTER);
             topBox.addComponent(conditionSelectors.get(plotNumber));
-            if (plotNumber.equals("2")) {
+            topBox.setComponentAlignment(conditionSelectors.get(plotNumber), Alignment.BOTTOM_CENTER);
+            if (plotNumber.equals("1")) {
                 topBox.addComponent(enterDataButton);
                 topBox.setComponentAlignment(enterDataButton, Alignment.BOTTOM_CENTER);
             }
@@ -296,12 +339,12 @@ public class SummaryStatistcsBox {
         
         // set default values
         dataPresentationSelector.setValue(dataPresentationOptions.get(1));
-        phenotypeSelectors.get("1").setValue(new Variable("fatherBmi", false));
+        //phenotypeSelectors.get("2").setValue(new Variable("fatherBmi", false));
+        //updatePhenotypeData("2", "phenotype");
+        phenotypeSelectors.get("1").setValue(new Variable("weight", true));
         updatePhenotypeData("1", "phenotype");
-        phenotypeSelectors.get("2").setValue(new Variable("weight", true));
-        updatePhenotypeData("2", "phenotype");
         conditionCategorySelectors.get("1").setValue(NULL_VARIABLE);
-        conditionCategorySelectors.get("2").setValue(NULL_VARIABLE);
+        //conditionCategorySelectors.get("2").setValue(NULL_VARIABLE);
                
         
         showOptionsSelector.setItems(showOptions);
@@ -311,13 +354,14 @@ public class SummaryStatistcsBox {
         box.setSizeFull();
         topBox.setSizeFull();
         optionsGrid.setSizeFull();
+        middleBox.setSizeFull();
         optionsBox.setSizeFull();
         showOptionsSelector.setSizeFull();
         formBox.setSizeFull();
         formPanel.setSizeFull();
         plotBox.setSizeFull();
-
-        //formAge.setSizeFull();
+        
+        //enterDataButtons.get("2").click();
     }
           
     private FormLayout createAgeForm(String plotNumber, Map inputFieldsMap) {
@@ -414,7 +458,7 @@ public class SummaryStatistcsBox {
             chart = longitudinalChartMap.get(plotNumber);
             chartRef = chart;
             chart.sendPercentileData(dataObject);
-            System.out.println("percentile data: " + dataObject);
+            //System.out.println("percentile data: " + dataObject);
         }
         else {
             NonLongitudinalPercentiles chart;
@@ -558,7 +602,7 @@ public class SummaryStatistcsBox {
 //        }
         
         if (dataObject != null) {
-            System.out.println("data object: " + dataObject.toJson());
+            //System.out.println("data object: " + dataObject.toJson());
             setPlotData(plotNumber, currentPhenotype, dataObject);
         }
         if (updatedOption.equals("category")) {
@@ -568,6 +612,19 @@ public class SummaryStatistcsBox {
             setPhenotype(plotNumber, currentPhenotype);
         }
         //System.out.println("phenotypeMap: " + phenotypeMap + " (" + plotNumber +")");
+    }
+    
+    
+    private void selectPhenotypeNEW(String plotNumber, ValueChangeEvent event) {
+        String selectedPhenotype = (String) event.getValue();
+        
+        System.out.println("selected new phenotype: " + selectedPhenotype);
+        
+        int [] tableData = extractor.getTableData(selectedPhenotype);
+        
+        System.out.println("data for this phenotype: " + Arrays.toString(tableData));
+        System.out.println("Labels for this phenotype: " + extractor.getTableLabels(selectedPhenotype));
+        
     }
     
     private void selectPhenotype(String plotNumber, ValueChangeEvent event) {
@@ -875,14 +932,6 @@ public class SummaryStatistcsBox {
         }
     }
     
-    private void toggleWindowVisibility(Window window) {
-        if (!window.isAttached()) { // is the window already open?
-            getComponent().getUI().getUI().addWindow(window);
-        }
-        else{
-            window.close();
-        }
-    }
     
     private void showDataFormWindow(String plotNumber) {
         System.out.println("phenotypeMap: " + phenotypeMap);
@@ -914,22 +963,34 @@ public class SummaryStatistcsBox {
             
             inputFormWindow = new Window("Enter own data");
             inputFormWindow.setContent(dataTabSheet);
-            inputFormWindow.setWidth(Math.round(phenotypeMap.keySet().size()*250), Sizeable.Unit.PIXELS);
+            //inputFormWindow.setWidth(Math.round(phenotypeMap.keySet().size()*250), Sizeable.Unit.PIXELS);
+            inputFormWindow.setWidth(500, Sizeable.Unit.PIXELS);
             inputFormWindow.setHeight(90, Sizeable.Unit.PERCENTAGE);
             inputFormWindow.center();
         }
-        toggleWindowVisibility(inputFormWindow);        
+        utilFunctions.toggleWindowVisibility(inputFormWindow, getComponent().getUI().getUI());        
 
         System.out.println("Show data form for plot number " + plotNumber);
     }
     
     private void viewPlotData() {
         Window window = (Window) plotDataWindow.getComponent();
-        toggleWindowVisibility(window);
+        utilFunctions.toggleWindowVisibility(window, getComponent().getUI().getUI());
     }
     
-    public Component getComponent() {
+    @Override
+    public AbstractComponent getComponent() {
         return box;
+    }
+
+    @Override
+    public void resizePlots() {
+        for (OverlayPlot chart : longitudinalChartMap.values()) {
+            chart.resize();
+        }
+        for (NonLongitudinalPercentiles chart : nonLongitudinalChartMap.values()) {
+            chart.resize();
+        }
     }
     
 }

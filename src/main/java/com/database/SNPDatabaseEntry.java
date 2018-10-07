@@ -1,13 +1,11 @@
-package com.main;
+package com.database;
 
 import com.utils.Constants;
-import com.utils.JsonHelper;
-import com.utils.UtilFunctions;
 import com.utils.Variable;
 import elemental.json.Json;
 import elemental.json.JsonObject;
-import java.util.Arrays;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -15,38 +13,37 @@ import java.util.regex.Pattern;
  *
  * @author Christoffer Hjeltnes Støle
  */
-public class SNP {    
-    String ID;
+public class SNPDatabaseEntry {
     Constants constants = new Constants();
-    String[] ageVariables = constants.getAgeVariables();
+    Map <String, String> annotation;
     String chromosome;
     String position;
-    Map <String, String> sexMap = constants.getNumberToTextSexMap();
-    UtilFunctions utilFunctions = new UtilFunctions();
-    
+    Map <String, String> numberToSexMap = constants.getNumberToTextSexMap();
     JsonObject dataObject;
     
-    public SNP(String ID, String chromosome, String position, String data) {
-        if (ID.contains(":")) {
-            this.ID = "?";
-        }
-        else {
-            this.ID = ID;
-        }        
-        this.chromosome = chromosome;
-        this.position = position;
-        
-        if (data != null) {
-            handleData(data);
-        }        
-    }
     
-    private void handleData(String data) {
+//     public SNPDatabaseEntry() {
+//         
+//     }
+//    
+//    public SNPDatabaseEntry(Map <String, String> annotation) {
+//        this.annotation = annotation;
+//    }
+    
+    public SNPDatabaseEntry(String rawDataString, Map <String, String> annotation) {
+        System.out.println("annotation: " + annotation);
+        this.annotation = annotation;
         dataObject = Json.createObject();
         
         //System.out.println("handleData(): " + data);
         
-        String [] lines = data.split("\n");
+        if (rawDataString != null) {
+            parseRawData(rawDataString);
+        }        
+    }
+    
+    private void parseRawData(String rawDataString) {
+        String [] lines = rawDataString.split("\n");
         
         //System.out.println("lines: " + Arrays.toString(lines));
         
@@ -54,7 +51,7 @@ public class SNP {
             String [] columns = line.split("\t");
             //System.out.println("columns: " + Arrays.toString(columns));
             String rawPhenotype = columns[0];
-            String sex = sexMap.get(columns[1]);
+            String sex = numberToSexMap.get(columns[1]);
             String genotype = columns[2];
             String statistic = columns[3];
             String value = columns[4];
@@ -108,15 +105,7 @@ public class SNP {
         }
         //System.out.println("data object: " + dataObject.toJson()); // TODO: await
         //System.out.println("data object: " + new JsonHelper().stringify(dataObject));
-    }
-
-    
-    public boolean hasData() {
-        return dataObject != null;
-    }
-    
-    public JsonObject getDataObject() {
-        return dataObject;
+        
     }
     
     public Json queryData(String query) {
@@ -129,13 +118,28 @@ public class SNP {
         return dataObject.getObject(args[0]).getObject(args[1]).getObject(args[2]).get(args[3]);
     }
     
-    public String getID() {
-        return ID;
+    public  Map <String, String> getDatabaseSNPID () {
+        return annotation;
     }
-    public String getChromosome() {
-        return chromosome;
+    
+    public Optional <String> getChromosome() {
+        return Optional.ofNullable(chromosome);
     }
-    public String getPosition() {
-        return position;
-    }    
+    public Optional <String> getPosition() {
+        return Optional.ofNullable(position);
+    }
+    
+    public JsonObject getDataObject() {
+        return dataObject;
+    }
+    public boolean hasData() {
+        return dataObject != null;
+    }
+    public boolean hasAnnotation() {
+        return annotation != null;
+    }
+    public Map <String, String> getAnnotation() {
+        return annotation;
+    }
+    
 }

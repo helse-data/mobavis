@@ -1,21 +1,26 @@
 package com.main;
 
+import com.main.Controller.ContentType;
+import com.main.Controller.Visualization;
+import com.visualization.VisualizationBox;
 import com.utils.Constants;
 import com.utils.HtmlHelper;
 import com.vaadin.event.ShortcutAction;
 import com.vaadin.event.ShortcutListener;
 import com.vaadin.icons.VaadinIcons;
+import com.vaadin.server.Page;
 import com.vaadin.shared.ui.ContentMode;
+import com.vaadin.shared.ui.MarginInfo;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Component;
-import com.vaadin.ui.GridLayout;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.Notification;
 import com.vaadin.ui.Notification.Type;
 import com.vaadin.ui.PasswordField;
 import com.vaadin.ui.UI;
+import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.themes.ValoTheme;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -23,7 +28,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -31,17 +35,16 @@ import java.util.Map;
  * @author ChristofferHjeltnes
  */
 public class LandingPage {
-    GridLayout page = new GridLayout(100, 100);
+    //GridLayout page = new GridLayout(100, 100);
+    VerticalLayout page = new VerticalLayout();
+    Controller controller;
     HorizontalLayout quickMenu;
-    Button snpButton;
-    Button summaryButton;
-    Button newLandingPageButton;
+    Button enterApplicationButton;
+    Button enterDemoButton;
     Button returnButton;
     PasswordField keyInputField;
     boolean firstLanding = true;
     private boolean keyFits = false; // for class-internal double check
-    Map <String, Object> highLevelComponents;
-    Main main;
     
     String NEW_LANDING_PAGE = "new landing page";
     
@@ -52,117 +55,122 @@ public class LandingPage {
     
     private String accessKey;
        
-    public LandingPage(Map <String, Object> independentComponents) {
-        this.highLevelComponents = independentComponents;
-        main = (Main) highLevelComponents.get("main");
+    public LandingPage(Controller controller) {
+        this.controller = controller;
+        page.addStyleName("white");
+
         
         htmlHelper = new HtmlHelper();
         Label welcomeMessage = new Label();
-        //welcomeMessage.setWidth(null);
-        //welcomeMessage.setHeight(null);
         
         welcomeMessage.setContentMode(ContentMode.HTML);
 
         String welcomeMessageText = "";
-        welcomeMessageText += "<p style=\"text-align:center;font-size: 2em\">MoBa visualisation prototype</p><br><br>";
+        welcomeMessageText += "<p style=\"text-align:center;font-size: 2em\">MoBa visualization prototype</p><br><br>";
         
         welcomeMessageText += "<br>This prototype application allows basic user interactions with and queries for various data from the "
                 + htmlHelper.link("https://www.fhi.no/en/studies/moba/", "Norwegian Mother and Child Cohort Study") + " (MoBa). ";
         
-        welcomeMessageText += "<br><br>" + htmlHelper.bold("Current features");
-        welcomeMessageText += htmlHelper.createList(Arrays.asList(new String[]{"SNP search for chromosomes 1-22 (the autosomes)", 
-            "Superimposition of user data on statistics of the MoBa survey"}));
-        welcomeMessageText += "<br>" + htmlHelper.bold("Known issues");
-        welcomeMessageText += htmlHelper.createList(Arrays.asList(new String[]{
-            "If a chromosome hasn't been queried for a while, the next query might take about 15-30 seconds. Subsequent queries to the chromosome are near-instant.",
-        }));
+        welcomeMessage.setValue(welcomeMessageText);
         
-        newLandingPageButton = new Button("new landing page");
-        newLandingPageButton.addClickListener(event -> checkKey(NEW_LANDING_PAGE));
+        page.addComponent(welcomeMessage);        
         
+        enterApplicationButton = new Button("Enter application");
+        enterApplicationButton.addClickListener(event -> checkKey(null));
         
         keyInputField = new PasswordField("Password:");
-        keyInputField.setMaxLength(25);
+        keyInputField.setMaxLength(30);
         keyInputField.addShortcutListener(new ShortcutListener("Enter", ShortcutAction.KeyCode.ENTER, null) {
                     @Override
                     public void handleAction(Object sender, Object target) {
-                        checkKey(NEW_LANDING_PAGE);
+                        checkKey(null);
                     }
                     });
  
-        //keyInputField.addValueChangeListener(event -> checkKey());
+        VerticalLayout applicationEntranceContainer = new VerticalLayout();
+        applicationEntranceContainer.setWidthUndefined();
+        applicationEntranceContainer.addStyleName(ValoTheme.LAYOUT_CARD);
+        applicationEntranceContainer.addComponent(keyInputField);
+        applicationEntranceContainer.addComponent(enterApplicationButton);
+        applicationEntranceContainer.setComponentAlignment(keyInputField, Alignment.MIDDLE_CENTER);
+        applicationEntranceContainer.setComponentAlignment(enterApplicationButton, Alignment.MIDDLE_CENTER);
+        //applicationEntranceContainer.setSizeFull();
         
-        //page.addComponent(new HorizontalLayout());
-        welcomeMessage.setValue(welcomeMessageText);
-        //welcomeMessage.setSizeFull();
-        //message.setHeight(100, Sizeable.Unit.PERCENTAGE);
-        //snpButton.setSizeFull();
-        //summaryButton.setSizeFull();
-        //keyInputField.setSizeFull();
+        page.addComponent(applicationEntranceContainer);
+        page.setComponentAlignment(applicationEntranceContainer, Alignment.BOTTOM_CENTER);
+        
+        
+        enterDemoButton = new Button("DEMO version");
+        enterDemoButton.addClickListener(event -> enterDemo());
+        enterDemoButton.addStyleName("demo");
+        page.addComponent(enterDemoButton);
+        page.setComponentAlignment(enterDemoButton, Alignment.BOTTOM_CENTER);
         
         page.setSizeFull();
-//        buttonBox.setRowExpandRatio(0, (float) 0.7);
-//        buttonBox.setRowExpandRatio(1, (float) 0.1);
-//        buttonBox.setRowExpandRatio(2, (float) 0.1);
-        page.addComponent(welcomeMessage, 0, 0, 99, 30);
-        page.addComponent(keyInputField, 0, 31, 99, 35);
-        page.addComponent(newLandingPageButton, 0, 40, 99, 45);
+        // top, right, bottom, left
+        page.setMargin(new MarginInfo(true, false, false, false));
+
         
         page.setComponentAlignment(welcomeMessage, Alignment.TOP_CENTER);
-        page.setComponentAlignment(keyInputField, Alignment.TOP_CENTER);
-        page.setComponentAlignment(newLandingPageButton, Alignment.MIDDLE_CENTER);
+        //page.setComponentAlignment(keyInputField, Alignment.TOP_CENTER);
+        //page.setComponentAlignment(enterApplicationButton, Alignment.MIDDLE_CENTER);
         
         createSponsorNotice();
+        //sponsorNotice.setWidthUndefined();
+        sponsorNotice.setSizeUndefined();
+        HorizontalLayout sponsorContainer = new HorizontalLayout();
+        sponsorContainer.addComponent(sponsorNotice);
+        sponsorContainer.setMargin(new MarginInfo(false, false, false, true));
         createQuickMenu();
-        page.addComponent(sponsorNotice, 1, 50, 5, 55);
-        page.setComponentAlignment(sponsorNotice, Alignment.BOTTOM_LEFT);
+        //page.addComponent(sponsorNotice, 1, 50, 5, 55);
+        page.addComponent(sponsorContainer);
+        
+        page.setComponentAlignment(sponsorContainer, Alignment.BOTTOM_LEFT);
+        
         Label quickMenuTitle = new Label(htmlHelper.bold("Quick menu"), ContentMode.HTML);
-        page.addComponent(quickMenuTitle, 0, 60, 99, 64);
-        page.setComponentAlignment(quickMenuTitle, Alignment.BOTTOM_CENTER);
-        page.addComponent(quickMenu, 0, 66, 99, 99);
-    }
-    
-    private void enter(Main.MenuOption viewOption) {
-        if (!keyFits) { // double check
-            return;
-        }
-
-        //upper.enter(firstLanding, viewOption);
+        //page.addComponent(quickMenuTitle, 0, 60, 99, 64);
         
-        UI ui = getComponent().getUI();
-        System.out.println("main: " + main);
-        System.out.println("ui: " + ui);
-        main.setView(viewOption);
-
-        ui.setContent(main.getComponent());
+        VerticalLayout quickMenuContainer = new VerticalLayout();        
+        quickMenuContainer.setSizeFull();
         
-        if (firstLanding) {
-            firstLanding();
-        }
+        quickMenuContainer.addComponent(quickMenuTitle);
+        quickMenuContainer.setComponentAlignment(quickMenuTitle, Alignment.BOTTOM_CENTER);
+        quickMenuContainer.addComponent(quickMenu);
         
-    }
-    
-    private void firstLanding() {
-        firstLanding = false;
-        returnButton = new Button("return", VaadinIcons.ARROW_RIGHT);
-        returnButton.addStyleName(ValoTheme.BUTTON_ICON_ALIGN_RIGHT);
-        returnButton.addClickListener(event -> getComponent().getUI().setContent(main.getComponent()));
-        page.removeComponent(keyInputField);
-        page.removeComponent(newLandingPageButton);
-        page.addComponent(returnButton, 40, 40, 60, 45);
-        page.setComponentAlignment(returnButton, Alignment.TOP_LEFT);
+        // top, right, bottom, left
+        quickMenuContainer.setMargin(new MarginInfo(false, false, false, false));
+        
+        
+        //page.addComponent(quickMenu, 0, 66, 99, 99);
+        page.addComponent(quickMenuContainer);
+        page.setComponentAlignment(quickMenuContainer, Alignment.BOTTOM_CENTER);
+        
+        // expand ratios
+        page.setExpandRatio(welcomeMessage, 6);
+        page.setExpandRatio(applicationEntranceContainer, 5);
+        page.setExpandRatio(enterDemoButton, 2);
+        page.setExpandRatio(sponsorContainer, 5);        
+        page.setExpandRatio(quickMenuContainer, 4);
     }
     
     private void createQuickMenu() {
         quickMenu = new HorizontalLayout();
         quickMenu.setSizeFull();
         quickMenu.addStyleName(ValoTheme.LAYOUT_WELL);
+        
         //quickMenu.addComponent(sponsorNotice);
-        for (Main.MenuOption option : Main.MenuOption.values()) {
-            Button quickMenuButton = new Button(option.toString());
+        for (Visualization visualization : Visualization.values()) {
+            Button quickMenuButton;
+            // TODO: should probably be removed
+            if (visualization.toString().startsWith("Summary statistics")) {
+                quickMenuButton = new Button("Summary statistics");
+            }
+            else {
+                quickMenuButton = new Button(visualization.toString());
+            }
             quickMenu.addComponent(quickMenuButton);
             quickMenu.setComponentAlignment(quickMenuButton, Alignment.MIDDLE_CENTER);
-            quickMenuButton.addClickListener(event -> checkKey(option));
+            quickMenuButton.addClickListener(event -> checkKey(visualization));
             //System.out.println("option: " + option);
         }
     }
@@ -201,30 +209,22 @@ public class LandingPage {
         }
     }
     
-    //private void checkKey(Main.MenuOption viewOption) {
-    private void checkKey(Object viewOption) {
+    private void enterDemo() {
+        Page.getCurrent().open("https://helse-data.no/demo", null);
+    }
+    
+    private void checkKey(Visualization visualization) {
         if (accessKey == null) {
             loadAccessKey();
         }
         String key = keyInputField.getValue();
         
-        
         if (key.equals(accessKey)) {
-            
             keyFits = true;
-            
-            if (viewOption.toString().equals(NEW_LANDING_PAGE)) {
-                NewLandingPage newLandingPage = new NewLandingPage(highLevelComponents);
-                getComponent().getUI().setContent(newLandingPage.getComponent());
-                firstLanding();
-                firstLanding = false;
+            if (visualization != null) {
+                controller.setVisualization(visualization);
             }
-            else {
-                enter((Main.MenuOption) viewOption);
-            }
-            
-            
-            
+            controller.setContentType(ContentType.VISUALIZATION);
         }
         else {    
             Notification.show("Access denied.", Type.WARNING_MESSAGE);

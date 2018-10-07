@@ -112,7 +112,7 @@ barPlot.Component = function (element, number) {
         console.log('data: ' + JSON.stringify(barChart));
         console.log('layout: ' + JSON.stringify(layout));
         Plotly.newPlot(this.gd, barChart, layout, configuration);
-        this.resize();
+        //this.resize();
 }
     
     this.setData = function (data) {

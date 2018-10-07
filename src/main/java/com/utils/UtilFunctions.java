@@ -1,5 +1,7 @@
 package com.utils;
 
+import com.vaadin.ui.UI;
+import com.vaadin.ui.Window;
 import elemental.json.JsonArray;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -123,6 +125,15 @@ public class UtilFunctions {
             variableList.add(new Variable(string));
         }
         return variableList;
+    }
+    
+    public void toggleWindowVisibility(Window window, UI ui) {
+        if (!window.isAttached()) { // is the window already open?
+            ui.addWindow(window);
+        }
+        else{
+            window.close();
+        }
     }
     
     

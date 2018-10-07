@@ -48,10 +48,23 @@ public class Constants {
                 "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "X", "Y"};
     }
     
+    // cf. https://www.ncbi.nlm.nih.gov/grc/human/data?asm=GRCh37
     public int[] getChromosomeSizes() {
         return new int[] {249250621, 243199373, 198022430, 191154276, 180915260, 171115067, 159138663, 146364022,
         141213431, 135534747, 135006516, 133851895, 115169878, 107349540, 102531392, 90354753, 81195210, 78077248,
-        59128983, 63025520, 48129895, 51304566};
+        59128983, 63025520, 48129895, 51304566, 155270560, 59373566};
+    }
+    
+    public Map <String, Integer> getChromosomeSizeMap() {
+        int[] chromosomeSizes = getChromosomeSizes();
+        Map <String, Integer> chromosomeSizeMap = new HashMap();
+        
+        for (int i = 0; i < 22; i++) {
+            chromosomeSizeMap.put(Integer.toString(i + 1), chromosomeSizes[i]);
+        }
+        chromosomeSizeMap.put("X", chromosomeSizes[22]);
+        chromosomeSizeMap.put("Y", chromosomeSizes[23]);
+        return chromosomeSizeMap;
     }
     
     public String getGenomeBuild() {

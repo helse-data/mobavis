@@ -1,10 +1,12 @@
-package com.plotting;
+package com.visualization.geno;
 
+import com.utils.vaadin.PlotDataWindow;
+import com.components.LoadingIndicator;
 import com.litemol.LiteMol;
 import com.locuszoom.LocusZoom;
-import com.plotly.SNPPlot;
-import com.main.Database;
-import com.main.SNP;
+import com.database.Database;
+import com.database.SNPDatabaseEntry;
+import com.snp.SNP;
 import com.plotly.SNPPlot;
 import com.utils.Alphanumerical;
 import com.utils.Constants;
@@ -20,6 +22,7 @@ import com.vaadin.event.selection.SingleSelectionEvent;
 import com.vaadin.icons.VaadinIcons;
 import com.vaadin.server.Sizeable;
 import com.vaadin.shared.ui.ContentMode;
+import com.vaadin.ui.AbstractComponent;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.CheckBox;
@@ -35,6 +38,12 @@ import com.vaadin.ui.TextField;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.Window;
 import com.vaadin.ui.themes.ValoTheme;
+import com.visualization.MoBaVisualization;
+import com.database.web.DbSNPentry;
+import com.main.Controller;
+import com.snp.SNPIDParser;
+import com.snp.SNPIDParser.SNPIDFormat;
+import com.utils.vaadin.CaptionLeft;
 import elemental.json.Json;
 import elemental.json.JsonObject;
 import java.util.ArrayList;
@@ -44,35 +53,42 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import com.visualization.State;
+import com.visualization.MoBaVisualizationInterface;
 
 /**
  *
  * @author Christoffer Hjeltnes Støle
  */
-public class SNPPlotBox {
+public class SNPPlotBox extends GenoView {
     HtmlHelper html = new HtmlHelper();
     
     JsonObject dataObject;
-    JsonHelper jsonHelper = new JsonHelper();
-    JsonObject plotOptionsObject;
+    JsonHelper jsonHelper = new JsonHelper();    
+    //JsonObject plotOptionsObject;
         
-    GridLayout box = new GridLayout(100, 100);
+    //GridLayout box = new GridLayout(100, 100);
+    VerticalLayout box = new VerticalLayout();
+    HorizontalLayout middleBox = new HorizontalLayout();
     HorizontalLayout plotBox = new HorizontalLayout();
     
     SNPPlot femaleChart;
     SNPPlot maleChart;
     PlotDataWindow plotDataWindow = new PlotDataWindow();
-    GridLayout rightGrid = new GridLayout(10, 10);
-    VerticalLayout showOptionsSelectorBox = new VerticalLayout();
+    //GridLayout rightGrid = new GridLayout(10, 10);
+    VerticalLayout rightBox = new VerticalLayout();
+    //VerticalLayout showOptionsSelectorBox = new VerticalLayout();
     Button morePlotOptionsButton = new Button("More options");
     Window morePlotOptionsWindow;
     HorizontalLayout topBox = new HorizontalLayout();
-    CheckBoxGroup <Option <Boolean>> showOptionsSelector;
+    CheckBoxGroup <ShowOption> showOptionsSelector;
     Map <String, Option <Boolean>> booleanOptions = new HashMap();
+    Map <ShowOption, Boolean> showOptions = new HashMap();
     Map <String, Option <String>> stringOptions = new HashMap();
-    Set <Option <Boolean>> previousShowOptions = new HashSet();
+    Set <ShowOption> previousShowOptions = new HashSet();
     Label message;
     Label SNPInformation = new Label();
+    HorizontalLayout SNPinformationContainer = new HorizontalLayout();
     
     List <String> phenotypeOptions = new ArrayList();
     
@@ -104,31 +120,21 @@ public class SNPPlotBox {
     boolean percentilesShown = false;
     
     
-    public SNPPlotBox() {        
-        femaleChart = new SNPPlot();
-        maleChart = new SNPPlot();
-        
-        //femalePlotBox.addComponents(femaleChart, numberPlotFemale);
-        //malePlotBox.addComponents(maleChart, numberPlotMale);
-        //plotBox.addComponents(femalePlotBox, malePlotBox);
-        plotBox.addComponents(femaleChart, maleChart);
-        
-        int n10 = (int) ((box.getColumns()-1)*0.1);
-        
-        int plotStartY = 7;
-        box.addComponent(topBox, 1, 0, 70, plotStartY-1);
-        box.addComponent(plotBox, 1, plotStartY, 82, 99);
-        box.addComponent(rightGrid, 83, plotStartY+1, 99, 99);
-        
+    public SNPPlotBox(Controller controller) {
+        super(controller);
         // phenotype selector
+        box.addComponent(getController().getSNPInputField());
         phenotypeOptions.addAll(Arrays.asList(new String[]{
             "height", "weight", "BMI"}));
-        phenotypeSelector = new NativeSelect("Phenotype");
+        //phenotypeSelector = new NativeSelect("Phenotype");
+        phenotypeSelector = new NativeSelect();
         phenotypeSelector.setItems(phenotypeOptions);        
         phenotypeSelector.addValueChangeListener(event -> selectPhenotype(String.valueOf(
                 event.getValue())));  
-        phenotypeSelector.setIcon(VaadinIcons.CLIPBOARD_PULSE);
+        //phenotypeSelector.setIcon(VaadinIcons.CLIPBOARD_PULSE);
         phenotypeSelector.setEmptySelectionAllowed(false);
+        
+        CaptionLeft phenotypeSelectorComponent = new CaptionLeft("Phenotype", phenotypeSelector, VaadinIcons.CLIPBOARD_PULSE);
         
         locusZoomButton.addClickListener(event -> openLocusZoomWindow());
         liteMolButton.addClickListener(event -> openLiteMolWindow());
@@ -136,24 +142,21 @@ public class SNPPlotBox {
         Button viewPlotDataButton = new Button("View plot data");
         viewPlotDataButton.addClickListener(event -> viewPlotData());
 
-        // sendPlotOptions options
+        // plot options      
         
-        Option <Boolean> medians = new Option("medians", "medians", true);
-        Option <Boolean> SEM = new Option("SEM", "SEM", true);
-        Option <Boolean> percentiles = new Option("percentiles", "2.5th and 97.5th percentiles", false);
-        Option <Boolean> n = new Option("n", "number of individuals", true);
         Option <String> ageSpacing = new Option("age spacing", "age spacing", "to scale");
         Option <Boolean> yaxisToZero = new Option("y to zero", "y-axis to zero", false);
         
-        List <Option <Boolean>> showOptionList = new ArrayList();
-        showOptionList.add(medians);
-        showOptionList.add(SEM);
-        showOptionList.add(percentiles);
-        showOptionList.add(n);
+        List <ShowOption> showOptionList = new ArrayList();
         
-        for (Option <Boolean> showOption : showOptionList) {
-            booleanOptions.put(showOption.getName(), showOption);
+        for (ShowOption showOption : ShowOption.values()) {
+            showOptionList.add(showOption);
+            showOptions.put(showOption, showOption.getDefaultValue());
         }
+        
+        //for (Option <Boolean> showOption : showOptionList) {
+        ///    booleanOptions.put(showOption.getName(), showOption);
+        //}
         booleanOptions.put(yaxisToZero.getName(), yaxisToZero);
         
         stringOptions.put(ageSpacing.getName(), ageSpacing);
@@ -163,8 +166,36 @@ public class SNPPlotBox {
 
         morePlotOptionsButton.addClickListener(event -> openMoreShowOptionsWindow());
         
-        SNPInput = new ComboBox("SNP");
+        // create the plots
+        JsonObject setup = getPlotOptions();
+        femaleChart = new SNPPlot(setup);
+        maleChart = new SNPPlot(setup);
+        
+        //femalePlotBox.addComponents(femaleChart, numberPlotFemale);
+        //malePlotBox.addComponents(maleChart, numberPlotMale);
+        //plotBox.addComponents(femalePlotBox, malePlotBox);
+        plotBox.addComponents(femaleChart, maleChart);
+        
+//        int n10 = (int) ((box.getColumns()-1)*0.1);        
+//        int plotStartY = 7;
+//        box.addComponent(topBox, 1, 0, 70, plotStartY-1);
+//        box.addComponent(plotBox, 1, plotStartY, 82, 99);
+//        box.addComponent(rightGrid, 83, plotStartY+1, 99, 99); 
 
+        box.addComponent(topBox);
+        box.setExpandRatio(topBox, 1);
+        
+        middleBox.addComponent(plotBox);
+        middleBox.setExpandRatio(plotBox, 5);
+        middleBox.addComponent(rightBox);
+        middleBox.setExpandRatio(rightBox, 1);
+        
+        box.addComponent(middleBox);
+        box.setExpandRatio(middleBox, 10);
+        
+        // default SNP input
+        
+        SNPInput = new ComboBox("SNP");
         SNPInput.addFocusListener(event -> clearSNPInput(true));
         SNPInput.addBlurListener(event -> clearSNPInput(false));
         
@@ -185,6 +216,7 @@ public class SNPPlotBox {
         SNPInput.setItems(SNPOptions);        
         SNPInput.addValueChangeListener(event -> searchSNP(String.valueOf(
                 event.getValue())));
+        SNPInput.addValueChangeListener(event -> controller.SNPIDinputChanged());
         SNPInput.setNewItemHandler(inputString -> addSNP(inputString));
         SNPInput.setIcon(VaadinIcons.CUBES);
         SNPInput.setEmptySelectionAllowed(false);
@@ -194,17 +226,38 @@ public class SNPPlotBox {
         
         SNPInput.setValue(SNPOptions.get(0));  
         
-        showOptionsSelector.select(medians, SEM, n);
+        for (ShowOption showOption : showOptionList) {
+            if (showOption.getDefaultValue()) {
+                showOptionsSelector.select(showOption);
+            }
+        }
+        
         previousShowOptions = showOptionsSelector.getValue();
         showOptionsSelector.addSelectionListener(event -> changeShowSettings(event));
         
-        showOptionsSelectorBox.addComponent(showOptionsSelector);
-        showOptionsSelectorBox.addComponent(morePlotOptionsButton);
+        rightBox.addComponent(showOptionsSelector);
+        rightBox.setExpandRatio(showOptionsSelector, 6);
+        //rightBox.setComponentAlignment(showOptionsSelector, Alignment.TOP_CENTER);
+        rightBox.addComponent(morePlotOptionsButton);
+        rightBox.setComponentAlignment(morePlotOptionsButton, Alignment.TOP_CENTER);
+        rightBox.setExpandRatio(morePlotOptionsButton, 1);
+        //showOptionsSelectorBox.addStyleName(ValoTheme.PANEL_WELL);
         
-        rightGrid.addComponent(showOptionsSelectorBox, 1, 0, 9, 4);
+        //
+        
+        //rightGrid.addComponent(showOptionsSelectorBox, 1, 0, 9, 4);      
+        //rightBox.addComponent(showOptionsSelectorBox, 0);
+        
+        
+        rightBox.addComponent(SNPinformationContainer);
+        rightBox.setComponentAlignment(SNPinformationContainer, Alignment.TOP_CENTER);
+        rightBox.setExpandRatio(SNPinformationContainer, 8);
+        rightBox.setComponentAlignment(SNPinformationContainer, Alignment.BOTTOM_CENTER);
+        //SNPinformationContainer.addStyleName(ValoTheme.PANEL_WELL);
         
         topBox.addComponent(SNPInput);
-        topBox.addComponent(phenotypeSelector);
+        //topBox.addComponent(phenotypeSelector);
+        topBox.addComponent(phenotypeSelectorComponent.getComponent());
         topBox.addComponent(locusZoomButton);
         topBox.setComponentAlignment(locusZoomButton, Alignment.BOTTOM_CENTER);
         topBox.addComponent(liteMolButton);
@@ -215,12 +268,46 @@ public class SNPPlotBox {
         box.setSizeFull();
         topBox.setSizeFull();
         plotBox.setSizeFull();
+        middleBox.setSizeFull();
         femaleChart.setSizeFull();
         maleChart.setSizeFull();
-        rightGrid.setSizeFull();
-        showOptionsSelectorBox.setSizeFull();        
+        rightBox.setSizeFull();
+        //showOptionsSelectorBox.setSizeFull();
+        SNPinformationContainer.setSizeFull();
         SNPInput.setSizeFull();
-        phenotypeSelector.setSizeFull();
+        //phenotypeSelector.setSizeFull();
+    }
+    
+    // enumerator of the show options; includes the default value for each option
+    public enum ShowOption {
+        MEDIANS("medians", "medians", true),
+        SEM("SEM", "SEM", true),
+        PERCENTILES("percentiles", "2.5th and 97.5th percentiles", false),
+        N("n", "number of individuals", true),
+        THREE_D("3D", "3D", false);
+
+        private final String shortName;
+        private final String displayName;
+        private final boolean defaultValue;
+     
+        ShowOption(String shortName, String displayName, boolean defaultValue) {
+            this.shortName = shortName;
+            this.displayName = displayName;
+            this.defaultValue = defaultValue;
+        }
+        
+        @Override
+        public String toString() {
+            return displayName;
+        }
+        
+        public String getShortName() {
+            return shortName;
+        }
+        
+        public boolean getDefaultValue () {
+            return defaultValue;
+        }
     }
        
     public void setDatasets(SNP snp, String phenotype) {
@@ -232,7 +319,9 @@ public class SNPPlotBox {
         double overallMaxMedian = 0;
         double overallMinMedian = -1;
 
-        JsonObject snpDataObject = snp.getDataObject();
+        JsonObject snpDataObject = snp.getDataBaseEntry().getDataObject();
+        
+        //System.out.println("snpDataObject: " + snpDataObject.toJson());
         
         Map <String, JsonObject> dataObjects = new HashMap();
         
@@ -241,7 +330,7 @@ public class SNPPlotBox {
             dataObjects.put(sex, dataObject);
             
             dataObject.put("sex", sex);
-            dataObject.put("SNP ID", snp.getID());
+            dataObject.put("SNP ID", snp.getDataBaseEntry().getAnnotation().get("Id"));
             dataObject.put("phenotype", phenotype);
             
             for (String genotype : new String[] {"AA", "AB", "BB"}) { 
@@ -344,6 +433,8 @@ public class SNPPlotBox {
             overallMaxPercentile = overallMaxMedian;
         }
         
+        //System.out.println("dataObjects: " + dataObjects);
+        
         // enter extreme values and send
         for (String sex : new String[] {"female", "male"}) {
             dataObjects.get(sex).put("SEM min", overallMinSEM);
@@ -358,20 +449,20 @@ public class SNPPlotBox {
         plotDataWindow.setTab("2", dataObjects.get("male").toJson(), "male");        
     }
     
-    private boolean searchSNP(String option) {
+    public boolean searchSNP(String searchString) {
         if (SNPInputActive) {
             return false;
         }
         //viewSelector.setEnabled(false); // TODO: check effects
         SNPInputActive = true;
         //SNPInformation.setCaption("");
-        System.out.println("searchSNP(): " + option);
+        System.out.println("searchSNP(): " + searchString);
         //System.out.println(currentSNP == null);
-        SNPInput.setValue(option.replaceFirst(" \\[your input\\]$", ""));
-        option = option.replaceFirst(" \\[.*?\\]$", "");
+        SNPInput.setValue(searchString.replaceFirst(" \\[your input\\]$", ""));
+        searchString = searchString.replaceFirst(" \\[.*?\\]$", "");
         
-        if (option.equals("null") || option.equals("") || (currentSNP != null && option.equals(currentSNP.getID()))
-                || option.contains("(not found)")) {
+        if (searchString.equals("null") || searchString.equals("") || (currentSNP != null && searchString.equals(currentSNP.getID()))
+                || searchString.contains("(not found)")) {
             SNPInputActive = false;
             //SNPRightGrid.removeComponent(SNPInformation);
             //SNPInformation = new Label("");
@@ -384,34 +475,59 @@ public class SNPPlotBox {
         phenotypeSelector.setEnabled(false);
         //System.out.println("disabled");
         //Notification.sendPlotOptions("disabled", Notification.Type.TRAY_NOTIFICATION);
-        currentSNPInputValue = option;
+        currentSNPInputValue = searchString;
         
         SNP snp = null;
-        if (option.contains(":")) {
-            String [] split = option.split(":");
-            String chromosome = split[0];
-            String position = split[1];
-            List <String> resultList = database.getNearestSNPs(chromosome, Integer.parseInt(position));
-            System.out.println("resultList: " + resultList);
+        
+        SNPIDParser snpIDParser = new SNPIDParser(searchString);
+        SNPIDFormat IDFormat = snpIDParser.getIDFormat();
+        
+        //System.out.println("format: " + snpIDParser.getIDFormat());
+        
+        if (IDFormat == SNPIDFormat.UNRECOGNIZED) {
+            snp = null;
+        }        
+        else if (IDFormat.equals(SNPIDFormat.CHROMOSOME_POSITION)) { // SNP entered in format chromosome:position
             
-            List <String> snpOptions = new ArrayList();
-            for (String snpID : resultList) {
-                snpOptions.add(snpID);
+            String chromosome = snpIDParser.getChromosome();
+            String position = snpIDParser.getPosition();
+            
+            snp = database.getSNP(chromosome, position);
+            
+            if (!snp.hasData() && !snp.hasAnnotation()) { // SNP is not found in the database system; try searching the neighbourhood
+                Map <String, String> result = database.getNearestSNPs(chromosome, Integer.parseInt(position));
+                System.out.println("result: " + result);
+                
+                if (result.get("result").equals("exact")) {
+                    snp = database.getSNP(new SNPIDParser(result.get("0")));
+                }
+                else {
+                    List <String> snpOptions = new ArrayList();
+
+                    if (result.containsKey("-1")) {
+                        snpOptions.add(result.get("-1"));
+                    }
+                    if (result.containsKey("1")) {
+                        snpOptions.add(result.get("1"));
+                    }
+
+                    RadioButtonGroup <String> selection = new RadioButtonGroup("Select SNP", snpOptions);
+                    selection.addValueChangeListener(event -> searchSNP(event.getValue()));
+                    String windowCaption = "SNPs nearest to position " + position + " on chromosome " + chromosome + ":";
+                    Window window = new Window(windowCaption);
+                    window.center();
+                    window.setContent(selection);
+                    window.setWidth(Math.round(windowCaption.length()*9.7), Sizeable.Unit.PIXELS);
+                    window.setHeight(10, Sizeable.Unit.PERCENTAGE);
+                    getComponent().getUI().addWindow(window);
+                }
+
             }
-            
-            RadioButtonGroup <String> selection = new RadioButtonGroup("Select SNP", snpOptions);
-            selection.addValueChangeListener(event -> searchSNP(event.getValue()));
-            String windowCaption = "SNPs nearest to position " + position + " on chromosome " + chromosome + ":";
-            Window window = new Window(windowCaption);
-            window.center();
-            window.setContent(selection);
-            window.setWidth(Math.round(windowCaption.length()*9.7), Sizeable.Unit.PIXELS);
-            window.setHeight(10, Sizeable.Unit.PERCENTAGE);
-            getComponent().getUI().getUI().addWindow(window);
         }
         else {
-            snp = database.getSNP(option);   
+            snp = database.getSNP(snpIDParser);
         }
+
         //viewSelector.setEnabled(true);
         phenotypeSelector.setEnabled(true);
         //Notification.sendPlotOptions("enabled", Notification.Type.TRAY_NOTIFICATION);
@@ -419,11 +535,29 @@ public class SNPPlotBox {
         
         String SNPinformationString = "";
         if (snp != null) {
+            
+            String locusString = "N/A";
+            String locus = snp.getLocus();
+            if (locus != null) {
+                locusString = html.hoverText(locus, snp.getLocusFullName());
+            }
+            DbSNPentry dbSNPentry = snp.getDbSNPentry();
+            String dbSNPreference = "";
+            if (dbSNPentry != null) {
+                dbSNPreference = html.floatRight(html.link(dbSNPentry.getEntryURL(), "<br>(dbSNP)"));
+            }
+            
+            //System.out.println("snp: " + snp);
+            //System.out.println("snp.getDataBaseEntry(): " + snp.getDataBaseEntry());
+            
+            
             SNPinformationString = 
-                "SNP: " + html.floatRight(html.bold(snp.getID())) + "<br>" +
-                "Chromosome: " +  html.floatRight(html.bold(snp.getChromosome()))+ "<br>" +
-                "Position: " +  html.floatRight(html.bold(new Alphanumerical(snp.getPosition()).toNonBreakingString())) + "<br>" +
-                html.floatRight(" (" + constants.getGenomeBuild() + ")");
+                "SNP: " + html.floatRight(html.bold(snp.getDataBaseEntry().getAnnotation().get("Id"))) + "<br>" +
+                "Chromosome: " +  html.floatRight(html.bold(snp.getDataBaseEntry().getAnnotation().get("Chromosome"))) + "<br>" +
+                "Position: " +  html.floatRight(html.bold(new Alphanumerical(snp.getDataBaseEntry().getAnnotation().get("Position")).toNonBreakingString())) + "<br>" +
+                html.floatRight(" (" + constants.getGenomeBuild() + ")") + "<br>" +
+                html.hoverText("Locus: ", "As defined by dbSNP") + html.floatRight(html.bold(locusString)) + 
+                dbSNPreference;
         }
 
         if (snp != null) {
@@ -451,22 +585,29 @@ public class SNPPlotBox {
             liteMolButton.setEnabled(false);
         }
         
-        if (snp == null || !snp.hasData()) {          
+        if (snp == null || !snp.hasData() || snp.getDataBaseEntry().getDataObject().keys().length == 0) {          
             plotBox.removeAllComponents();
             
-            showOptionsSelectorBox.removeComponent(showOptionsSelector);        
-            showOptionsSelectorBox.removeComponent(morePlotOptionsButton);
+            rightBox.removeComponent(showOptionsSelector);        
+            rightBox.removeComponent(morePlotOptionsButton);
             phenotypeSelector.setEnabled(false);
             //currentSNP = null;
 
             SNPInputActive = false;
-            rightGrid.removeComponent(SNPInformation);
+            SNPinformationContainer.removeComponent(SNPInformation);
             if (snp != null) {
                 SNPinformationString += "<br><br>" + html.bold("No phenotype data could be found.");
-                message = new Label(html.bold("No phenotype data could be found for the SNP " + html.italics(option) + "."), ContentMode.HTML);
+                message = new Label(html.bold("No phenotype data could be found for the SNP " + html.italics(searchString) + "."), ContentMode.HTML);
             }
             else {
-                message = new Label(html.bold("The SNP " + html.italics(option) + " could not be found."), ContentMode.HTML);
+                
+                String text = "The SNP " + html.italics(searchString) + " could not be found.";
+                if (IDFormat == SNPIDFormat.UNRECOGNIZED) {
+                    text += " The input format was not recognized.";
+                }                
+                
+                message = new Label(html.bold(text), ContentMode.HTML);
+                
             }
             
             message.setSizeFull();
@@ -475,15 +616,15 @@ public class SNPPlotBox {
             plotBox.setComponentAlignment(message, Alignment.MIDDLE_CENTER);
             SNPInformation = new Label(SNPinformationString, ContentMode.HTML);
 
-            rightGrid.addComponent(SNPInformation, 1, 5, 8, 9);
+            SNPinformationContainer.addComponent(SNPInformation);
             return false;
         }
         else {
             setDatasets(snp, currentPhenotype);
-            rightGrid.removeComponent(SNPInformation);
+            SNPinformationContainer.removeComponent(SNPInformation);
             SNPInformation = new Label(SNPinformationString, ContentMode.HTML);
             SNPInformation.setSizeFull();
-            rightGrid.addComponent(SNPInformation, 1, 5, 8, 9);
+            SNPinformationContainer.addComponent(SNPInformation);
 
             if (plotBox.getComponentCount() < 2) {
                 plotBox.removeAllComponents();
@@ -491,8 +632,8 @@ public class SNPPlotBox {
                 plotBox.addComponents(femaleChart, maleChart);
             }
             phenotypeSelector.setEnabled(true);
-            showOptionsSelectorBox.addComponent(showOptionsSelector);
-            showOptionsSelectorBox.addComponent(morePlotOptionsButton);
+            rightBox.addComponent(showOptionsSelector, 0);
+            rightBox.addComponent(morePlotOptionsButton, 0);
             SNPInputActive = false;
             return true;   
         }
@@ -540,22 +681,23 @@ public class SNPPlotBox {
     
     private void changeShowSettings(SelectionEvent event) {
         //System.out.println("Show settings shanged");
-        Set <Option <Boolean>> currentlySelected = event.getAllSelectedItems();
         
-        Set <Option <Boolean>> unselected = new HashSet();
+        Set <ShowOption> currentlySelected = event.getAllSelectedItems();
+        
+        Set <ShowOption> unselected = new HashSet();
         unselected.addAll(previousShowOptions);
         unselected.removeAll(currentlySelected);
         
-        Set <Option <Boolean>> newlySelected = new HashSet();
+        Set <ShowOption> newlySelected = new HashSet();
         newlySelected.addAll(currentlySelected);
         newlySelected.removeAll(previousShowOptions);
         
-        Set <Option <Boolean>> changed = new HashSet();
+        Set <ShowOption> changed = new HashSet();
         changed.addAll(newlySelected);
         changed.addAll(unselected);
         
-        for (Option <Boolean> option : changed) {
-            option.setValue(!option.getValue());
+        for (ShowOption showOption : changed) {
+            showOptions.put(showOption, !showOptions.get(showOption));
         }  
         
         
@@ -565,14 +707,29 @@ public class SNPPlotBox {
         //System.out.println("changed show options: " + changed);
  
         //changeShowStatus(changed);
+        
+        // TODO: try with JS feedback
+        //LoadingIndicator <String> loadingIndicator = new LoadingIndicator("Loading 3D views ...");
+        //getComponent().getUI().addWindow(loadingIndicator);
         sendPlotOptions();
+        //loadingIndicator.close();
+ 
+        // the option to show the bar chart is only enabled for the 2D view
+        if (showOptions.get(ShowOption.THREE_D)) {
+            showOptionsSelector.setItemEnabledProvider(item -> !item.equals(ShowOption.N));
+        }
+        else {
+            showOptionsSelector.setItemEnabledProvider(item -> true);
+        }
+        
         previousShowOptions = showOptionsSelector.getValue();
     }
-    
-    
-        
-    public void sendPlotOptions() {
-        plotOptionsObject = Json.createObject(); // create a new object each time
+
+    public JsonObject getPlotOptions() {
+        JsonObject plotOptionsObject = Json.createObject(); // create a new object each time
+        for (ShowOption showOption : ShowOption.values()) {
+            plotOptionsObject.put(showOption.getShortName(), showOptions.get(showOption));
+        }
         for (String optionKey : booleanOptions.keySet()) {
             Option <Boolean> option = booleanOptions.get(optionKey);
             plotOptionsObject.put(option.getName(), option.getValue());
@@ -581,9 +738,14 @@ public class SNPPlotBox {
             Option <String> option = stringOptions.get(optionKey);
             plotOptionsObject.put(option.getName(), option.getValue());
         }
+        return plotOptionsObject;
+    }
+        
+    public void sendPlotOptions() {
+        JsonObject plotOptions = getPlotOptions();
         //System.out.println("plotOptionsObject: " + plotOptionsObject.toJson());
         for (SNPPlot chart : new SNPPlot[] {femaleChart, maleChart}) {
-            chart.sendPlotOptions(plotOptionsObject);
+            chart.sendPlotOptions(plotOptions);
         }
     }
     
@@ -620,6 +782,14 @@ public class SNPPlotBox {
         }
         if (locusZoomWindow == null) {
             locusZoom = new LocusZoom();
+            locusZoom.addValueChangeListener(new LocusZoom.ValueChangeListener() {
+                @Override
+                public void valueChange() {
+                    String clickedPosition = locusZoom.getClickedSNP();
+                    System.out.println("Data received in SNP plot box: " + clickedPosition);
+                    searchSNP(currentSNP.getChromosome() + ":" + clickedPosition);
+                }
+            });
             locusZoomWindow = new Window("LocusZoom.js below - drag window here", locusZoom);
             locusZoomWindow.setWidth(85, Sizeable.Unit.PERCENTAGE);
             locusZoomWindow.setHeight(70, Sizeable.Unit.PERCENTAGE);
@@ -642,7 +812,6 @@ public class SNPPlotBox {
             window.setSizeFull();
             liteMol = new LiteMol();
             
-            
             TextField entryIDInputField = new TextField("PDB entry ID");
             //entryIDInputField.addValueChangeListener(event -> setPDBEntryID(event));
             Button submitButton = new Button("Submit");
@@ -654,7 +823,7 @@ public class SNPPlotBox {
                     }
                     });
             
-            String exampleEntryID = "1aoi"; // "1a4y"
+            String exampleEntryID = "1aoi"; // "1a4y", 3J6R
             entryIDInputField.setValue(exampleEntryID);
             setEntryID(exampleEntryID);
             
@@ -722,7 +891,7 @@ public class SNPPlotBox {
     
     private void toggleWindowVisibility(Window window) {
         if (!window.isAttached()) { // is the window already open?
-            getComponent().getUI().getUI().addWindow(window);
+            getComponent().getUI().addWindow(window);
         }
         else{
             window.close();
@@ -739,8 +908,25 @@ public class SNPPlotBox {
     }
     public SNPPlot getChart2() {
         return maleChart;
-    }    
-    public Component getComponent() {
+    }
+    public SNP getCurrentSNP() {
+        return currentSNP;
+    }
+    public void setSNP() {
+        //TODO: implement
+    }
+    @Override
+    public AbstractComponent getComponent() {
         return box;
+    }
+    @Override
+    public void SNPChanged() {
+        // TODO: implement
+    } 
+    
+    @Override
+    public void resizePlots() {
+        femaleChart.resize();
+        maleChart.resize();
     }
 }

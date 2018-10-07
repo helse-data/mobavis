@@ -28,7 +28,9 @@ public class HtmlHelper {
     public String listEnd() {
         return "</ul>";
     }
-    
+    public String hoverText(String mainText, String hoverText) {
+        return "<span title=\"" + hoverText + "\">" + mainText + "</span>";
+    }
     
     public String floatRight(String string) {
         return "<span style=\"float:right;\">" + string + "</span>";

@@ -1,5 +1,6 @@
-package com.main;
+package com.database;
 
+import com.snp.SNPOld;
 import com.utils.Alphanumerical;
 import com.utils.Constants;
 import com.vaadin.server.VaadinService;
