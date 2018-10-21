@@ -19,8 +19,8 @@ import java.util.Map;
 
 /**
  * 
- * Class to ensure smooth navigation between the different content of the application.
- * An instance of it is meant to be passed on to all higher-level content objects, such as the different visualizations.
+ * Class to ensure smooth navigation between the different contents of the application.
+ * An instance of it is meant to be passed on to the constructor of all higher-level content classes, such as the different visualizations.
  *
  * @author Christoffer Hjeltnes Støle
  */
@@ -82,6 +82,15 @@ public class Controller {
         return SNPInputField;
     }
     
+    
+    /**
+     * 
+     * The list of visualizations available in the application is defined here.
+     * 
+     * Each visualization must have its own class and implement the MobaVisualizationInterface or extentions of it.
+     * The classes must be extensions of the MoBaVisualization class or extensions of it.
+     * 
+     */
     public enum Visualization {
         MANHATTAN(ManhattanPlotBox.class, "Manhattan plot", true),
         LOCUS_ZOOM(LocusZoomBox.class, "Locus zoom plot", true),
@@ -92,15 +101,18 @@ public class Controller {
         CHILD(MotherVisBox.class, "Child", false),
         MOTHER(MotherVisBox.class, "Mother", false),
         FATHER(MotherVisBox.class, "Father", false);
-        //DEFAULT(Object.class, "Defaul visualization", false);
-        //OLD_SNP_PLOT("Old SNP genotype page");
-        private final Class viewClass;
+        private final Class visualizationClass;
         private final String displayName;
         private final boolean hasGeneticData;
         
-     
-        Visualization(Class viewClass, String displayName, boolean hasGeneticData) {
-            this.viewClass = viewClass;
+        /**
+         * 
+         * @param visualizationClass - the class of the visualization
+         * @param displayName - the name that the visualization will have in the menu
+         * @param hasGeneticData - whether or not the visualization visualizes data with genetic information
+         */
+        Visualization(Class visualizationClass, String displayName, boolean hasGeneticData) {
+            this.visualizationClass = visualizationClass;
             this.displayName = displayName;
             this.hasGeneticData = hasGeneticData;
         }
@@ -111,7 +123,7 @@ public class Controller {
         }
         
         public Class getViewClass() {
-            return viewClass;
+            return visualizationClass;
         }
         
         public boolean hasGeneticData() {
