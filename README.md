@@ -5,3 +5,7 @@
 Via `Controller.java`, `MyUI.java` calls on either `LandingPage.java` or directly on `VisualizationBox.java`.
 
 The visualizations available through the web application are defined in `Controller.java`.
+
+# Demo
+
+A publicly available demonstration of the web application can be found at https://helse-data.no/demo.
