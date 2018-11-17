@@ -1,3 +1,6 @@
+This is a prototype web application for the visualization of summary statistics from the Norwegian Mother and Child Cohort Study.
+
+
 # Normal order of code execution
 
 `MyUI.java` is executed first, specfically the `init` method. 
