@@ -2,7 +2,7 @@ package com.main;
 
 import com.main.Controller.Visualization;
 import com.snp.InputSNP;
-import com.snp.SNP;
+import com.snp.VerifiedSNP;
 import com.vaadin.data.HasValue;
 import com.vaadin.data.HasValue.ValueChangeEvent;
 import com.vaadin.ui.AbstractComponent;
@@ -16,16 +16,18 @@ import com.visualization.geno.SNPStatisticsBox;
 import com.visualization.summary.MotherVisBox;
 import com.visualization.summary.SummaryStatisticsBox;
 import java.util.Map;
+import com.snp.SNP;
 
 /**
  * 
- * Class to ensure smooth navigation between the different contents of the application.
- * An instance of it is meant to be passed on to the constructor of all higher-level content classes, such as the different visualizations.
+ * Controller ensures smooth navigation between the different contents of the application.
+ * An instance of this class is meant to be passed on to the constructor of all higher-level content classes, such as the different visualizations.
  *
  * @author Christoffer Hjeltnes Støle
  */
 public class Controller {
-    SNP SNP;
+    VerifiedSNP SNP;
+    SNP activeSNP;
     ComboBox SNPInputField;
     
     UI ui;
@@ -36,8 +38,14 @@ public class Controller {
     public Controller(UI ui) {
         this.ui = ui;
         SNPInputField = new ComboBox("SNP");
+        activeSNP = new InputSNP("rs13046557", "21", "16588359"); // default SNP
     }
     
+    /**
+     * Set which visualizatin tab to display to the user.
+     * 
+     * @param visualization 
+     */
     public void setVisualization(Visualization visualization) {
         if (visualizationBox == null) {
             visualizationBox = new VisualizationBox(this);
@@ -45,6 +53,11 @@ public class Controller {
         visualizationBox.setVisualization(visualization);
     }
     
+    /**
+     * Sets the content type.
+     * 
+     * @param contentType - landing page or visualization 
+     */
     public void setContentType(ContentType contentType) {
         if (contentType == ContentType.LANDING_PAGE) {
             if (landingPage == null) {
@@ -60,32 +73,26 @@ public class Controller {
         }
     }
     
-    public void SNPIDinputChanged() {
-        SNP = null;
-        System.out.println("SNP input change registered in controller.");
-        //componentMap.get("SNP input").getData()
+    /**
+     * Sets which SNP object is active.
+     * 
+     * @param snp 
+     */
+    public void setActiveSNP(SNP snp) {
+        activeSNP = snp;    
     }
     
-    public void setSNPObject(SNP snp) {
-        SNP = snp;    
-    }
-    public SNP getSNPObject() {
-        return SNP;
-    }
-    public void setInputSNP(InputSNP inputSNP) {
-        this.inputSNP = inputSNP;
-    }
-    public InputSNP getInputSNP() {
-        return inputSNP;
-    }
-    public ComboBox getSNPInputField() {
-        return SNPInputField;
-    }
-    
+    /**
+     * Returns the active SNP object.
+     * @return 
+     */
+    public SNP getActiveSNP() {
+        return activeSNP;
+    }    
     
     /**
      * 
-     * The list of visualizations available in the application is defined here.
+     * The visualizations available in the web application are listed here.
      * 
      * Each visualization must have its own class and implement the MobaVisualizationInterface or extentions of it.
      * The classes must be extensions of the MoBaVisualization class or extensions of it.
@@ -98,9 +105,9 @@ public class Controller {
         SNP_STATISTICS(SNPStatisticsBox.class, "SNP statistics", true),
         
         SUMMARY_STATISTICS(SummaryStatisticsBox.class, "Summary statistics for the MoBa cohort", false),
-        CHILD(MotherVisBox.class, "Child", false),
-        MOTHER(MotherVisBox.class, "Mother", false),
-        FATHER(MotherVisBox.class, "Father", false);
+        //CHILD(MotherVisBox.class, "Child", false),
+        MOTHER(MotherVisBox.class, "Mother", false);
+        //FATHER(MotherVisBox.class, "Father", false);
         private final Class visualizationClass;
         private final String displayName;
         private final boolean hasGeneticData;
@@ -122,7 +129,7 @@ public class Controller {
             return displayName;
         }
         
-        public Class getViewClass() {
+        public Class getVisualizationClass() {
             return visualizationClass;
         }
         
@@ -131,10 +138,11 @@ public class Controller {
         }
     }
     
-    public void SNPInputChanged (ValueChangeEvent event) {
-        
-    }
-    
+    /**
+     * 
+     * The content types available in the web application are listed here.
+     * 
+     */    
     public enum ContentType {
         LANDING_PAGE("Landing page"),
         VISUALIZATION("Visualization");
