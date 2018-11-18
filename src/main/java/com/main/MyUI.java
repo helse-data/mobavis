@@ -1,6 +1,6 @@
 package com.main;
 
-import com.demo.DemoCoverPage;
+import com.demo.temp.DemoCoverPage;
 import com.main.Controller.ContentType;
 import com.main.Controller.Visualization;
 import javax.servlet.annotation.WebServlet;
@@ -25,7 +25,7 @@ public class MyUI extends UI {
      */
     @Override    
     protected void init(VaadinRequest vaadinRequest) {
-        boolean showLandingPage = false;
+        boolean showLandingPage = true;
         boolean demo = false;
         
         HttpServletRequest httpServletRequest = ((VaadinServletRequest) vaadinRequest).getHttpServletRequest();

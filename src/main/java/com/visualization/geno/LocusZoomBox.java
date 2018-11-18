@@ -118,13 +118,16 @@ public class LocusZoomBox extends GenoView {
                 
         region.put("position", position);
         region.put("chromosome", chromosome);
-        chromosomeSelector.setSelectedItem(chromosome);
-        positionSpecifier.setValue(position);
         
-        locusZoom.setRegion(region); 
+        if (position != null && chromosome != null) {
+            chromosomeSelector.setSelectedItem(chromosome);
+            positionSpecifier.setValue(position);
+            locusZoom.setRegion(region);
+        }                
         
         SNP currentSNP = getController().getActiveSNP();
-        if (!currentSNP.getChromosome().equals(chromosome) || !currentSNP.getPosition().equals(position)) {
+        if (currentSNP == null || currentSNP.getChromosome() == null || currentSNP.getPosition() == null ||
+                !currentSNP.getChromosome().equals(chromosome) || !currentSNP.getPosition().equals(position)) {
             SNP activeSNP = new InputSNP(chromosome, position);
             getController().setActiveSNP(activeSNP);
         }
