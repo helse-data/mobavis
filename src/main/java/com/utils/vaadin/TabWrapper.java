@@ -5,10 +5,10 @@ import com.visualization.VisualizationBox;
 import com.vaadin.ui.AbstractComponent;
 import com.vaadin.ui.HorizontalLayout;
 import com.visualization.MoBaVisualization;
+import com.visualization.MoBaVisualizationInterface;
 import java.lang.reflect.InvocationTargetException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import com.visualization.State;
 
 /**
  *
@@ -19,6 +19,7 @@ public class TabWrapper {
     Class contentClass;
     Controller controller;
     Boolean loaded = false;
+    MoBaVisualizationInterface visualization;
     
     public TabWrapper (Class contentClass, Controller controller) {
         this.contentClass = contentClass;
@@ -31,16 +32,15 @@ public class TabWrapper {
     }
     
     public void loadContents() {
-        MoBaVisualization visualization = instantiateContentClass();
+        visualization = getVisualization();
         component.addComponent(visualization.getComponent());
         this.loaded = true;
     }
     
-    private MoBaVisualization instantiateContentClass() {
-        MoBaVisualization view = null;
+    private void instantiateContentClass() {
         try {
             //if (GenoView.class.isAssignableFrom(contentClass)) {
-            view = (MoBaVisualization) contentClass.getDeclaredConstructor(Controller.class).newInstance(controller);          
+            visualization = (MoBaVisualization) contentClass.getDeclaredConstructor(Controller.class).newInstance(controller);          
         } catch (InstantiationException ex) {
             Logger.getLogger(VisualizationBox.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
@@ -54,7 +54,14 @@ public class TabWrapper {
         } catch (InvocationTargetException ex) {
             Logger.getLogger(TabWrapper.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return view;
+    }
+    
+    public MoBaVisualizationInterface getVisualization() {
+        if (visualization == null) {
+            instantiateContentClass();
+        }
+        return visualization;
+        
     }
     
     public AbstractComponent getComponent() {

@@ -1,4 +1,4 @@
-package com.components;
+package com.components.archive;
 
 import com.vaadin.data.HasValue.ValueChangeListener;
 import com.vaadin.icons.VaadinIcons;

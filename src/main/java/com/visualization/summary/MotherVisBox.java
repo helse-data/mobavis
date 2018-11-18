@@ -34,48 +34,50 @@ public class MotherVisBox extends MoBaVisualization {
     Extractor extractor = new Extractor();
     //BarPlot chart;
     HorizontalLayout plotBox = new HorizontalLayout();
-    NativeSelect phenotypeSelector = new NativeSelect("Phenotype");
+    NativeSelect variableSelector = new NativeSelect("Variable");
     Label plotInfo;
 
     public MotherVisBox(Controller controller) {
         super(controller);
         
         String [] tables = extractor.getTables();        
-        phenotypeSelector.setItems(Arrays.asList(tables));
-        phenotypeSelector.addValueChangeListener(event -> selectPhenotype(event));
-        phenotypeSelector.setEmptySelectionAllowed(false);
+        variableSelector.setItems(Arrays.asList(tables));
+        variableSelector.addValueChangeListener(event -> selectVariable(event));
+        variableSelector.setEmptySelectionAllowed(false);
         
         plotInfo = new Label("", ContentMode.HTML);
         plotInfo.setSizeUndefined();
         
-        box.addComponent(phenotypeSelector);
+        box.addComponent(variableSelector);
         box.addComponent(plotInfo);
         box.setComponentAlignment(plotInfo, Alignment.MIDDLE_CENTER);       
         plotBox.setSizeFull();
         box.addComponent(plotBox);
-        box.setExpandRatio(phenotypeSelector, 1);
+        box.setExpandRatio(variableSelector, 1);
         box.setExpandRatio(plotBox, 7);  
         
-        phenotypeSelector.setValue("multiple_birth");
+        variableSelector.setValue("multiple_birth");
     }
         
-    private void selectPhenotype(HasValue.ValueChangeEvent event) {
-        String selectedPhenotype = (String) event.getValue();
+    private void selectVariable(HasValue.ValueChangeEvent event) {
+        String selectedVariable = (String) event.getValue();
+        
+        System.out.println("Selected variable: " + selectedVariable);
         
         plotBox.removeAllComponents();
         
         //int [] tableData = extractor.getTableData(selectedPhenotype);
-        Table table = extractor.getTable(selectedPhenotype);
+        Table table = extractor.getTable(selectedVariable);
         int [] tableData = table.getData();
         List <String> tableLabels = table.getLabels();
         
         
-        System.out.println("data for this phenotype: " + Arrays.toString(table.getData()));
-        System.out.println("Labels for this phenotype: " + extractor.getTableLabels(selectedPhenotype));
+        System.out.println("data for this variable: " + Arrays.toString(table.getData()));
+        System.out.println("Labels for this variable: " + extractor.getTableLabels(selectedVariable));
         
-        //List <String> tableLabels = extractor.getTableLabels(selectedPhenotype);
+        //List <String> tableLabels = extractor.getTableLabels(selectedVariable);
         
-        plotInfo.setValue(htmlHelper.bold(selectedPhenotype.replace("_", " ")));
+        plotInfo.setValue(htmlHelper.bold(selectedVariable.replace("_", " ")));
         
         if (table.isStratifiedBySex()) {            
             for (String sex : new String [] {"female", "male"}) {
@@ -132,6 +134,10 @@ public class MotherVisBox extends MoBaVisualization {
     @Override
     public void resizePlots() {
         
+    }
+
+    @Override
+    public void handOver() {
     }
     
 }

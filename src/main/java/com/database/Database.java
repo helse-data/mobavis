@@ -2,7 +2,7 @@ package com.database;
 
 import com.database.web.DbSNP;
 import com.database.web.DbSNPentry;
-import com.snp.SNP;
+import com.snp.VerifiedSNP;
 import com.utils.Alphanumerical;
 import com.utils.Constants;
 import com.snp.SNPIDParser;
@@ -28,10 +28,10 @@ import org.rocksdb.RocksDBException;
 
 /**
  * 
- * @author Christoffer Hjeltnes Støle
- *
  * 
- * Class for the management of the entirety of the database system, including auxiliary files.
+ * The main class the database system, requests for SNP data go through here.
+ * 
+ * @author Christoffer Hjeltnes Støle 
  * 
  */
 public class Database {
@@ -49,7 +49,7 @@ public class Database {
     
     Map <Integer, Map <String, String>> annotation = new HashMap();
     
-    Map <String, SNP> requestedSNPs = new HashMap();
+    Map <String, VerifiedSNP> requestedSNPs = new HashMap();
     
     public Database() {
         System.out.println("Database constructing ...");
@@ -60,7 +60,7 @@ public class Database {
         readMasterIndex();
     }
     
-    public SNP getSNP(SNPIDParser snpIDParser) {
+    public VerifiedSNP getSNP(SNPIDParser snpIDParser) {
         SNPIDFormat snpIDFormat = snpIDParser.getIDFormat();
         if (snpIDFormat == SNPIDFormat.RSID) {
             return getSNP(snpIDParser.getRsID());
@@ -74,7 +74,7 @@ public class Database {
     }
     
     // https://www.ncbi.nlm.nih.gov/books/NBK44417/#Content.what_is_a_reference_snp_or__rs_i
-    public SNP getSNP(String rsID) {
+    public VerifiedSNP getSNP(String rsID) {
         System.out.println("Fetching SNP \"" + rsID + "\" ...");
         if (requestedSNPs.containsKey(rsID)) { // don't query the database system more than necessary
             System.out.println("Using data stored in memory for SNP with database ID " + rsID);
@@ -92,30 +92,37 @@ public class Database {
         SNPDatabaseEntry databaseEntry = getEntry(chromosome, rsID);
         DbSNPentry dbSNPentry = dbSNP.getEntry(rsID.replace("rs", ""));
         
-        SNP snp = new SNP(databaseEntry, dbSNPentry);
+        VerifiedSNP snp = new VerifiedSNP(databaseEntry, dbSNPentry);
         requestedSNPs.put(rsID, snp);
         
         return snp;
         
     }
     
-    public SNP getSNP(String chromosome, String position) {   // TODO: implement
+    public VerifiedSNP getSNP(String chromosome, String position) {   // TODO: implement
         System.out.println("Fetching SNP on chromosome " + chromosome + " at position " + position + " ...");
         
+        Map <String, String> result = getNearestSNPs(chromosome, Integer.parseInt(position));
+        if (result.containsKey("0")) {
+            return getSNP(result.get("0"));
+        }
+        else {
+            return null;
+        }
 
         //String snpData = queryEntry(chromosome, snpID);
         //SNPDatabaseEntry databaseEntry = new SNPDatabaseEntry(snpData);
-        //SNP snp = new SNP(snpID, chromosome, position, snpData);
+        //SNP snp = new VerifiedSNP(snpID, chromosome, position, snpData);
         //requestedSNPs.put(chromosome + ":" + position, databaseEntry);
 
         //System.out.println(chromosome + " " + position);
         //System.out.println(snp);
         //return databaseEntry;
-        return null;
+        //return null;
     }
     
     // of the form 21_9411298_G_A
-    public SNP getSNP(String chromosome, String position, String ref, String alt) {   
+    public VerifiedSNP getSNP(String chromosome, String position, String ref, String alt) {   
         String databaseSNPID = chromosome + "_" + position + "_" + ref + "_" + alt;
         if (requestedSNPs.containsKey(databaseSNPID)) { // don't query the database system more than necessary
             System.out.println("Using data stored in memory for SNP with database ID " + databaseSNPID);
@@ -124,7 +131,7 @@ public class Database {
         
         SNPDatabaseEntry databaseEntry = getEntry(chromosome, databaseSNPID);
         DbSNPentry dbSNPentry = null;
-        SNP snp = new SNP(databaseEntry, dbSNPentry);
+        VerifiedSNP snp = new VerifiedSNP(databaseEntry, dbSNPentry);
         requestedSNPs.put(databaseSNPID, snp);
         return snp;
     }
@@ -134,9 +141,9 @@ public class Database {
      * @param chromosome - chromosome to search on
      * @param position - position
      * @return Map with mandatory key "result" and optional keys
-     * "-1" - closest SNP before before the position
-     * "0" - exact match
-     * "1" - closest SNP after the position
+ "-1" - closest VerifiedSNP before before the position
+ "0" - exact match
+ "1" - closest VerifiedSNP after the position
      */
     public Map <String, String> getNearestSNPs(String chromosome, int position) {
         int maxNumber = 5;
@@ -175,9 +182,14 @@ public class Database {
 
                 currentPosition = Integer.parseInt(columns[1]);
                 //System.out.println("current position: " + currentPosition);
-                if (currentPosition == 9411377) {
-                    System.out.println("match: " + currentPosition);
+                //if (currentPosition == 9411377) {
+                //    System.out.println("match: " + currentPosition);
+                //}
+                
+                if (currentPosition > 16588000 && currentPosition < 16588999) {
+                    System.out.println("Current position: " + currentPosition);
                 }
+                
                 if (currentPosition == position) {
                     System.out.println("exact match: " + currentPosition);
                     result.put("result", "exact");

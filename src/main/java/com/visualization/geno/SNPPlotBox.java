@@ -1,12 +1,12 @@
 package com.visualization.geno;
 
 import com.utils.vaadin.PlotDataWindow;
-import com.components.LoadingIndicator;
+import com.components.archive.LoadingIndicator;
 import com.litemol.LiteMol;
 import com.locuszoom.LocusZoom;
 import com.database.Database;
 import com.database.SNPDatabaseEntry;
-import com.snp.SNP;
+import com.snp.VerifiedSNP;
 import com.plotly.SNPPlot;
 import com.utils.Alphanumerical;
 import com.utils.Constants;
@@ -41,6 +41,8 @@ import com.vaadin.ui.themes.ValoTheme;
 import com.visualization.MoBaVisualization;
 import com.database.web.DbSNPentry;
 import com.main.Controller;
+import com.snp.InputSNP;
+import com.snp.SNP;
 import com.snp.SNPIDParser;
 import com.snp.SNPIDParser.SNPIDFormat;
 import com.utils.vaadin.CaptionLeft;
@@ -86,20 +88,21 @@ public class SNPPlotBox extends GenoView {
     Map <ShowOption, Boolean> showOptions = new HashMap();
     Map <String, Option <String>> stringOptions = new HashMap();
     Set <ShowOption> previousShowOptions = new HashSet();
-    Label message;
+    Label plotReplacingMessage;
     Label SNPInformation = new Label();
     HorizontalLayout SNPinformationContainer = new HorizontalLayout();
     
     List <String> phenotypeOptions = new ArrayList();
     
     String currentPhenotype;
-    SNP currentSNP;
+    //VerifiedSNP currentSNP;
     
     List <String> SNPOptions;
     
     ComboBox <String> SNPInput;
     String currentSNPInputValue;
     boolean SNPInputActive = false;
+    boolean snpUpdateInProgress = false;
     NativeSelect <String> phenotypeSelector;
     
     Button locusZoomButton = new Button("Show LocusZoom plot");
@@ -193,7 +196,7 @@ public class SNPPlotBox extends GenoView {
         box.addComponent(middleBox);
         box.setExpandRatio(middleBox, 10);
         
-        // default SNP input
+        // default VerifiedSNP input
         
         SNPInput = new ComboBox("SNP");
         SNPInput.addFocusListener(event -> clearSNPInput(true));
@@ -214,9 +217,8 @@ public class SNPPlotBox extends GenoView {
         // rs17649232 (female below, male above)
         // rs16861872 (male below, female above)
         SNPInput.setItems(SNPOptions);        
-        SNPInput.addValueChangeListener(event -> searchSNP(String.valueOf(
-                event.getValue())));
-        SNPInput.addValueChangeListener(event -> controller.SNPIDinputChanged());
+        SNPInput.addValueChangeListener(event -> snpInputEntered(event));
+        //SNPInput.addValueChangeListener(event -> controller.SNPIDinputChanged()); 03.11
         SNPInput.setNewItemHandler(inputString -> addSNP(inputString));
         SNPInput.setIcon(VaadinIcons.CUBES);
         SNPInput.setEmptySelectionAllowed(false);
@@ -224,7 +226,9 @@ public class SNPPlotBox extends GenoView {
         currentPhenotype = "BMI";
         phenotypeSelector.setValue(currentPhenotype);
         
-        SNPInput.setValue(SNPOptions.get(0));  
+        //SNPInput.setValue(SNPOptions.get(0));  
+        SNPInput.setValue(getController().getActiveSNP().getID());
+        //updateSNP();
         
         for (ShowOption showOption : showOptionList) {
             if (showOption.getDefaultValue()) {
@@ -310,7 +314,7 @@ public class SNPPlotBox extends GenoView {
         }
     }
        
-    public void setDatasets(SNP snp, String phenotype) {
+    public void setDatasets(VerifiedSNP snp, String phenotype) {
         int overallMaxN = 0;
         double overallMaxSEM = 0;
         double overallMinSEM = -1;
@@ -449,9 +453,19 @@ public class SNPPlotBox extends GenoView {
         plotDataWindow.setTab("2", dataObjects.get("male").toJson(), "male");        
     }
     
-    public boolean searchSNP(String searchString) {
+    private void snpInputEntered(ValueChangeEvent event) {
+        String input = event.getValue().toString();
+        if (event.isUserOriginated()) {
+            searchSNP(input);
+        }
+    }
+    
+    private void searchSNP(String searchString) {
+        SNP currentSNP = getController().getActiveSNP();
+        
         if (SNPInputActive) {
-            return false;
+            System.out.println("SNP input is active.");
+            return;
         }
         //viewSelector.setEnabled(false); // TODO: check effects
         SNPInputActive = true;
@@ -461,14 +475,16 @@ public class SNPPlotBox extends GenoView {
         SNPInput.setValue(searchString.replaceFirst(" \\[your input\\]$", ""));
         searchString = searchString.replaceFirst(" \\[.*?\\]$", "");
         
-        if (searchString.equals("null") || searchString.equals("") || (currentSNP != null && searchString.equals(currentSNP.getID()))
+        if (searchString.equals("null") || searchString.equals("") || (currentSNP != null && currentSNP instanceof VerifiedSNP && searchString.equals(currentSNP.getID()))
                 || searchString.contains("(not found)")) {
             SNPInputActive = false;
+            System.out.println("SNP already chosen");
             //SNPRightGrid.removeComponent(SNPInformation);
             //SNPInformation = new Label("");
             //SNPRightGrid.addComponent(SNPInformation);
              //viewSelector.setEnabled(true);// TODO: check effects
-            return false;
+            
+            //return false;
         }
         
        
@@ -477,7 +493,7 @@ public class SNPPlotBox extends GenoView {
         //Notification.sendPlotOptions("disabled", Notification.Type.TRAY_NOTIFICATION);
         currentSNPInputValue = searchString;
         
-        SNP snp = null;
+        VerifiedSNP verifiedSNP = null;
         
         SNPIDParser snpIDParser = new SNPIDParser(searchString);
         SNPIDFormat IDFormat = snpIDParser.getIDFormat();
@@ -485,21 +501,21 @@ public class SNPPlotBox extends GenoView {
         //System.out.println("format: " + snpIDParser.getIDFormat());
         
         if (IDFormat == SNPIDFormat.UNRECOGNIZED) {
-            snp = null;
+            SNPInputActive = false;
+            verifiedSNP = null;
         }        
         else if (IDFormat.equals(SNPIDFormat.CHROMOSOME_POSITION)) { // SNP entered in format chromosome:position
-            
             String chromosome = snpIDParser.getChromosome();
             String position = snpIDParser.getPosition();
             
-            snp = database.getSNP(chromosome, position);
+            verifiedSNP = database.getSNP(chromosome, position);
             
-            if (!snp.hasData() && !snp.hasAnnotation()) { // SNP is not found in the database system; try searching the neighbourhood
+            if (verifiedSNP != null && !verifiedSNP.hasData() && !verifiedSNP.hasAnnotation()) { // SNP is not found in the database system; try searching the neighbourhood
                 Map <String, String> result = database.getNearestSNPs(chromosome, Integer.parseInt(position));
                 System.out.println("result: " + result);
                 
                 if (result.get("result").equals("exact")) {
-                    snp = database.getSNP(new SNPIDParser(result.get("0")));
+                    verifiedSNP = database.getSNP(new SNPIDParser(result.get("0")));
                 }
                 else {
                     List <String> snpOptions = new ArrayList();
@@ -525,118 +541,174 @@ public class SNPPlotBox extends GenoView {
             }
         }
         else {
-            snp = database.getSNP(snpIDParser);
+            verifiedSNP = database.getSNP(snpIDParser);
         }
-
+        
+        
+        
         //viewSelector.setEnabled(true);
         phenotypeSelector.setEnabled(true);
         //Notification.sendPlotOptions("enabled", Notification.Type.TRAY_NOTIFICATION);
         //System.out.println("enabled");
-        
-        String SNPinformationString = "";
-        if (snp != null) {
-            
-            String locusString = "N/A";
-            String locus = snp.getLocus();
-            if (locus != null) {
-                locusString = html.hoverText(locus, snp.getLocusFullName());
+        if (verifiedSNP == null) {
+            if (!snpUpdateInProgress) {
+                if (IDFormat.equals(SNPIDFormat.CHROMOSOME_POSITION)) {
+                    getController().setActiveSNP(new InputSNP(snpIDParser.getChromosome(), snpIDParser.getPosition()));
+                }
+                else {
+                    getController().setActiveSNP(new InputSNP(searchString));
+                }
             }
-            DbSNPentry dbSNPentry = snp.getDbSNPentry();
-            String dbSNPreference = "";
-            if (dbSNPentry != null) {
-                dbSNPreference = html.floatRight(html.link(dbSNPentry.getEntryURL(), "<br>(dbSNP)"));
-            }
-            
-            //System.out.println("snp: " + snp);
-            //System.out.println("snp.getDataBaseEntry(): " + snp.getDataBaseEntry());
-            
-            
-            SNPinformationString = 
-                "SNP: " + html.floatRight(html.bold(snp.getDataBaseEntry().getAnnotation().get("Id"))) + "<br>" +
-                "Chromosome: " +  html.floatRight(html.bold(snp.getDataBaseEntry().getAnnotation().get("Chromosome"))) + "<br>" +
-                "Position: " +  html.floatRight(html.bold(new Alphanumerical(snp.getDataBaseEntry().getAnnotation().get("Position")).toNonBreakingString())) + "<br>" +
-                html.floatRight(" (" + constants.getGenomeBuild() + ")") + "<br>" +
-                html.hoverText("Locus: ", "As defined by dbSNP") + html.floatRight(html.bold(locusString)) + 
-                dbSNPreference;
-        }
-
-        if (snp != null) {
-            currentSNP = snp; 
-            locusZoomButton.setEnabled(true);
-            liteMolButton.setEnabled(true);
-
-            if (locusZoom != null) {
-                JsonObject region = Json.createObject();
-                region.put("position", snp.getPosition());
-                region.put("chromosome", snp.getChromosome());
-                locusZoom.setRegion(region);
-            }  
         }
         else {
-            currentSNP = null;
-            if (locusZoomWindow != null) {
-                locusZoomWindow.close();
-            }
-            locusZoomButton.setEnabled(false);
-            
-            if (liteMolWindow != null) {
-                liteMolWindow.close();
-            }
-            liteMolButton.setEnabled(false);
+            getController().setActiveSNP(verifiedSNP);
         }
+        if (!snpUpdateInProgress) {
+            updateSNP();
+        }
+        SNPInputActive = false;
+    }
+    
+    @Override
+    public void updateSNP() {        
+        snpUpdateInProgress = true;
+        String SNPinformationString = "";
         
-        if (snp == null || !snp.hasData() || snp.getDataBaseEntry().getDataObject().keys().length == 0) {          
-            plotBox.removeAllComponents();
+        SNP currentSNP = getController().getActiveSNP();
+        
+        if (currentSNP instanceof InputSNP && ((InputSNP) currentSNP).verificationFailed() == null) {
+            String currentSNPID = currentSNP.getID();
             
-            rightBox.removeComponent(showOptionsSelector);        
-            rightBox.removeComponent(morePlotOptionsButton);
-            phenotypeSelector.setEnabled(false);
-            //currentSNP = null;
+            if (currentSNPID == null) { // search by input chromosome and position
+                String searchString = currentSNP.getChromosome() + ":" + currentSNP.getPosition();
+                searchSNP(searchString);
+            }
+            else { // search by input SNP ID
+                searchSNP(currentSNPID);
+            }            
+            currentSNP = getController().getActiveSNP();
+        }
+  
+        
+        System.out.println("Current SNP: " + currentSNP);
+        String plotReplacingMessageText = "";
+        
+        
+        if (currentSNP instanceof VerifiedSNP) {
+            VerifiedSNP verifiedCurrentSNP = (VerifiedSNP) currentSNP;
+            if (currentSNP != null) {
 
-            SNPInputActive = false;
-            SNPinformationContainer.removeComponent(SNPInformation);
-            if (snp != null) {
-                SNPinformationString += "<br><br>" + html.bold("No phenotype data could be found.");
-                message = new Label(html.bold("No phenotype data could be found for the SNP " + html.italics(searchString) + "."), ContentMode.HTML);
+                String locusString = "N/A";
+                String locus = verifiedCurrentSNP.getLocus();
+                if (locus != null) {
+                    locusString = html.hoverText(locus, verifiedCurrentSNP.getLocusFullName());
+                }
+                DbSNPentry dbSNPentry = verifiedCurrentSNP.getDbSNPentry();
+                String dbSNPreference = "";
+                if (dbSNPentry != null) {
+                    dbSNPreference = html.floatRight(html.link(dbSNPentry.getEntryURL(), "<br>(dbSNP)"));
+                }
+
+                //System.out.println("snp: " + snp);
+                //System.out.println("snp.getDataBaseEntry(): " + snp.getDataBaseEntry());
+
+
+                SNPinformationString = 
+                    "SNP: " + html.floatRight(html.bold(verifiedCurrentSNP.getDataBaseEntry().getAnnotation().get("Id"))) + "<br>" +
+                    "Chromosome: " +  html.floatRight(html.bold(verifiedCurrentSNP.getDataBaseEntry().getAnnotation().get("Chromosome"))) + "<br>" +
+                    "Position: " +  html.floatRight(html.bold(new Alphanumerical(verifiedCurrentSNP.getDataBaseEntry().getAnnotation().get("Position")).toNonBreakingString())) + "<br>" +
+                    html.floatRight(" (" + constants.getGenomeBuild() + ")") + "<br>" +
+                    html.hoverText("Locus: ", "As defined by dbSNP") + html.floatRight(html.bold(locusString)) + 
+                    dbSNPreference;
+            }
+
+            if (verifiedCurrentSNP != null) {
+                //currentSNP = verifiedSNP; 
+                locusZoomButton.setEnabled(true);
+                liteMolButton.setEnabled(true);
+
+                if (locusZoom != null) {
+                    JsonObject region = Json.createObject();
+                    region.put("position", verifiedCurrentSNP.getPosition());
+                    region.put("chromosome", verifiedCurrentSNP.getChromosome());
+                    locusZoom.setRegion(region);
+                }  
             }
             else {
-                
-                String text = "The SNP " + html.italics(searchString) + " could not be found.";
-                if (IDFormat == SNPIDFormat.UNRECOGNIZED) {
-                    text += " The input format was not recognized.";
-                }                
-                
-                message = new Label(html.bold(text), ContentMode.HTML);
-                
-            }
-            
-            message.setSizeFull();
-            plotBox.addComponent(message);
-            
-            plotBox.setComponentAlignment(message, Alignment.MIDDLE_CENTER);
-            SNPInformation = new Label(SNPinformationString, ContentMode.HTML);
+                verifiedCurrentSNP = null;
+                if (locusZoomWindow != null) {
+                    locusZoomWindow.close();
+                }
+                locusZoomButton.setEnabled(false);
 
-            SNPinformationContainer.addComponent(SNPInformation);
-            return false;
+                if (liteMolWindow != null) {
+                    liteMolWindow.close();
+                }
+                liteMolButton.setEnabled(false);
+            }
+
+            if (!verifiedCurrentSNP.hasData() || verifiedCurrentSNP.getDataBaseEntry().getDataObject().keys().length == 0) {          
+
+                //verifiedSNP = null;
+
+                SNPInputActive = false;
+               
+                SNPinformationString += "<br><br>" + html.bold("No phenotype data could be found.");
+                plotReplacingMessageText = "No phenotype data could be found for the SNP " + html.italics(verifiedCurrentSNP.getID()) + ".";
+                plotReplacingMessage = new Label(html.bold(plotReplacingMessageText), ContentMode.HTML);
+                replacePlotWithMessage(plotReplacingMessage);
+  
+                SNPInformation = new Label(SNPinformationString, ContentMode.HTML);
+
+                SNPinformationContainer.addComponent(SNPInformation);
+                //return false;
+            }
+            else {
+                setDatasets(verifiedCurrentSNP, currentPhenotype);
+                SNPinformationContainer.removeComponent(SNPInformation);
+                SNPInformation = new Label(SNPinformationString, ContentMode.HTML);
+                SNPInformation.setSizeFull();
+                SNPinformationContainer.addComponent(SNPInformation);
+
+                if (plotBox.getComponentCount() < 2) {
+                    plotBox.removeAllComponents();
+                    //plotBox.addComponents(femalePlotBox, malePlotBox);
+                    plotBox.addComponents(femaleChart, maleChart);
+                }
+                phenotypeSelector.setEnabled(true);
+                rightBox.addComponent(showOptionsSelector, 0);
+                rightBox.addComponent(morePlotOptionsButton, 0);
+                SNPInputActive = false;
+                //return true;   
+            }
         }
         else {
-            setDatasets(snp, currentPhenotype);
-            SNPinformationContainer.removeComponent(SNPInformation);
-            SNPInformation = new Label(SNPinformationString, ContentMode.HTML);
-            SNPInformation.setSizeFull();
-            SNPinformationContainer.addComponent(SNPInformation);
-
-            if (plotBox.getComponentCount() < 2) {
-                plotBox.removeAllComponents();
-                //plotBox.addComponents(femalePlotBox, malePlotBox);
-                plotBox.addComponents(femaleChart, maleChart);
+            if (currentSNP.getID() == null) {
+                plotReplacingMessageText = "No SNP was found on chromosome " + currentSNP.getChromosome() + " at position " + currentSNP.getPosition() + ".";
             }
-            phenotypeSelector.setEnabled(true);
-            rightBox.addComponent(showOptionsSelector, 0);
-            rightBox.addComponent(morePlotOptionsButton, 0);
-            SNPInputActive = false;
-            return true;   
+            else {
+                SNPIDParser snpIDParser = new SNPIDParser(currentSNP.getID());
+                SNPIDFormat IDFormat = snpIDParser.getIDFormat();
+                plotReplacingMessageText = "The SNP " + html.italics(currentSNP.getID()) + " could not be found.";
+                if (IDFormat == SNPIDFormat.UNRECOGNIZED) {
+                    plotReplacingMessageText += " The input format was not recognized.";
+                }
+            }
+            plotReplacingMessage = new Label(html.bold(plotReplacingMessageText), ContentMode.HTML);
+            replacePlotWithMessage(plotReplacingMessage);    
         }
+        snpUpdateInProgress = false;
+    }
+    
+    private void replacePlotWithMessage(Label message) {
+        message.setSizeFull();
+        plotBox.removeAllComponents();
+        rightBox.removeComponent(showOptionsSelector);        
+        rightBox.removeComponent(morePlotOptionsButton);
+        phenotypeSelector.setEnabled(false);
+        SNPinformationContainer.removeComponent(SNPInformation);
+        plotBox.addComponent(message);
+        plotBox.setComponentAlignment(message, Alignment.MIDDLE_CENTER);
         
     }
     
@@ -648,13 +720,14 @@ public class SNPPlotBox extends GenoView {
 
         //System.out.println("addSNP(): " + option);
         
+        SNP currentSNP = getController().getActiveSNP();
         if (option.equals("null") || option.equals("") || (currentSNP != null && option.equals(currentSNP.getID()))
                 || option.contains("(not found)") || option.matches(".*?\\[.*?\\]$")) {
             return;
         }
         //System.out.println(option);
-        
-        if (searchSNP(option)) {
+        searchSNP(option);
+        if (getController().getActiveSNP() instanceof VerifiedSNP) {
             SNPOptions.add(option + " [your input]");
             SNPInput.setValue(option);
         }
@@ -673,7 +746,7 @@ public class SNPPlotBox extends GenoView {
             return;
         }        
         
-        setDatasets(currentSNP, option);
+        setDatasets((VerifiedSNP) getController().getActiveSNP(), option);
         currentPhenotype = option;        
     }
     
@@ -777,6 +850,7 @@ public class SNPPlotBox extends GenoView {
     }
     
     private void openLocusZoomWindow() {
+        SNP currentSNP = getController().getActiveSNP();
         if (currentSNP == null) {
             return;
         }
@@ -804,6 +878,7 @@ public class SNPPlotBox extends GenoView {
     }
     
     private void openLiteMolWindow() {
+        SNP currentSNP = getController().getActiveSNP();
         if (currentSNP == null) {
             return;
         }
@@ -832,7 +907,7 @@ public class SNPPlotBox extends GenoView {
             window.setComponentAlignment(submitButton, Alignment.BOTTOM_CENTER);
             window.setComponentAlignment(entryIDInputField, Alignment.BOTTOM_CENTER);
             window.addComponent(liteMol, 0, 4, 99, 99);
-            liteMolWindow = new Window("LiteMol visualisation", window);
+            liteMolWindow = new Window("LiteMol visualization", window);
             liteMolWindow.setWidth(60, Sizeable.Unit.PERCENTAGE);
             liteMolWindow.setHeight(90, Sizeable.Unit.PERCENTAGE);
             liteMolWindow.center();
@@ -909,24 +984,22 @@ public class SNPPlotBox extends GenoView {
     public SNPPlot getChart2() {
         return maleChart;
     }
-    public SNP getCurrentSNP() {
-        return currentSNP;
-    }
-    public void setSNP() {
-        //TODO: implement
-    }
     @Override
     public AbstractComponent getComponent() {
         return box;
     }
-    @Override
-    public void SNPChanged() {
-        // TODO: implement
-    } 
     
     @Override
     public void resizePlots() {
         femaleChart.resize();
         maleChart.resize();
     }
+    
+    @Override
+    public void handOver() {
+        System.out.println("Handed over to SNP level.");
+        System.out.println("Current active SNP: " + getController().getActiveSNP());
+        updateSNP();
+    }
+    
 }

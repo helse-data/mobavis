@@ -21,15 +21,16 @@ import com.main.Controller;
 import com.visualization.geno.SNPStatisticsBox;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import com.visualization.State;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import com.visualization.MoBaVisualizationInterface;
 
 /**
+ * 
+ * This class sets up the visualization part of the web application.
+ * 
+ * 
  *
  * @author Christoffer Hjeltnes Støle
  */
@@ -71,7 +72,6 @@ public class VisualizationBox {
             "rs9996", "rs2767486 [big difference]", "rs117845375 [female plunge]", "rs41301756 [female plunge x2]", "21_10915988_A_C", "rs12627379", "rs28720096 [AA-only]", "rs62033413", "rs375583050 [BB-only]",
         "rs147446959", "1_154729900_T_G [large chromosome]"}));
         SNPInput.setItems(SNPOptions);        
-        SNPInput.addValueChangeListener(event -> controller.SNPIDinputChanged());
         //SNPInput.setNewItemHandler(inputString -> addSNP(inputString));
         SNPInput.setIcon(VaadinIcons.CUBES);
         SNPInput.setEmptySelectionAllowed(false);        
@@ -81,10 +81,10 @@ public class VisualizationBox {
         //genoContainer.setExpandRatio(SNPInput, 1);
         //genoContainer.setComponentAlignment(SNPInput, Alignment.TOP_RIGHT);
         
-        messageText = "The Norwegian Mother and Child Cohort Study (MoBa) recruited more than 90,000 pregnant women and more than 70,000 fathers between 1998 and 2008. " +
+        messageText = "The Norwegian Mother and Child Cohort Study (MoBa) recruited more than 100,000 pregnant women and more than 75,000 fathers between 1999 and 2008. " +
                 "Phenotype data for the children was collected for 12 ages - from birth to age 8. " +
                 "In addition, approximately 16,900 trios, representing over 50,000 donors, underwent genotyping." + 
-                "<br><br> If you are a parent, you are most likely interested in the summary statistics.";
+                "<br><br> If you are a parent, you are most likely interested in the summary cohort statistics.";
         
         ClosableMessage message = new ClosableMessage(messageText, "Background information", page);
         message.addCloseListener(new ClosableMessage.CloseListener() {
@@ -120,11 +120,12 @@ public class VisualizationBox {
         int iGeno = 0;
         int iSummary = 0;
         for (Visualization visualization : Visualization.values()) {
-            TabWrapper tabWrapper = new TabWrapper(visualization.getViewClass(), controller);
+            System.out.println("visualization: " + visualization);
+            TabWrapper tabWrapper = new TabWrapper(visualization.getVisualizationClass(), controller);
             viewTabIndices.put(visualization, new HashMap());
             if (visualization.hasGeneticData()) {
                 //genoTabWrappers.put(iGeno, tabWrapper);
-                genoTabClasses.put(iGeno, visualization.getViewClass());
+                genoTabClasses.put(iGeno, visualization.getVisualizationClass());
                 genoTabLoaded.put(iGeno, false);
                 tabWrappers.get(0).put(iGeno, tabWrapper);
                 viewTabIndices.get(visualization).put("outer", 0);
@@ -140,7 +141,7 @@ public class VisualizationBox {
                 viewTabIndices.get(visualization).put("inner", iSummary);
                 summaryTabSheet.addTab(tabWrapper.getComponent(), iSummary);
                 summaryTabSheet.getTab(iSummary).setCaption(visualization.toString());
-                genoTabClasses.put(iSummary, visualization.getViewClass());
+                genoTabClasses.put(iSummary, visualization.getVisualizationClass());
                 summaryTabLoaded.put(iSummary, false);
                 iSummary++;
             }
@@ -212,11 +213,18 @@ public class VisualizationBox {
         
         TabWrapper tabWrapper = tabWrappers.get(outerTabIndex).get(innerTabIndex);
         
+        
+        
+
+        
         //TabWrapper tabWrapper = (TabWrapper) innerTabSheet.getTab(innerTabIndex).getComponent();
         
         if (!tabWrapper.isLoaded()) {
            tabWrapper.loadContents();
         }
+        
+        MoBaVisualizationInterface visualization = tabWrapper.getVisualization();
+        visualization.handOver();
         
         //tabSheet.setSelectedTab(outerTabIndex);
         

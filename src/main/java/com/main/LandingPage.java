@@ -31,8 +31,11 @@ import java.io.Reader;
 import java.util.Map;
 
 /**
+ * 
+ * This page acts as a cover for the web application. It has a password feature that
+ * prevents unauthorized access.
  *
- * @author ChristofferHjeltnes
+ * @author Christoffer Hjeltnes Støle
  */
 public class LandingPage {
     //GridLayout page = new GridLayout(100, 100);
@@ -43,18 +46,20 @@ public class LandingPage {
     Button enterDemoButton;
     Button returnButton;
     PasswordField keyInputField;
-    boolean firstLanding = true;
-    private boolean keyFits = false; // for class-internal double check
-    
-    String NEW_LANDING_PAGE = "new landing page";
-    
+    boolean firstLanding = true;    
     Constants constants = new Constants();
     HtmlHelper htmlHelper;
     
     Label sponsorNotice;
     
     private String accessKey;
-       
+    
+    
+    /**
+     * Constructor for LandingPage.
+     * 
+     * @param controller - the shared controller object for the web application
+     */   
     public LandingPage(Controller controller) {
         this.controller = controller;
         page.addStyleName("white");
@@ -153,6 +158,10 @@ public class LandingPage {
         page.setExpandRatio(quickMenuContainer, 4);
     }
     
+    /**
+     * Creates a menu for quick navigation from the landing page.
+     * 
+     */
     private void createQuickMenu() {
         quickMenu = new HorizontalLayout();
         quickMenu.setSizeFull();
@@ -174,6 +183,11 @@ public class LandingPage {
             //System.out.println("option: " + option);
         }
     }
+    /**
+     * 
+     * Creates the sponsor notice displayed at the landing page.
+     * 
+     */    
     private void createSponsorNotice() {
         String sourceText = htmlHelper.bold("Sponsors:");
         sourceText += htmlHelper.listStart();
@@ -185,11 +199,20 @@ public class LandingPage {
         sponsorNotice = new Label(sourceText, ContentMode.HTML);
     }
     
-    
+    /**
+     * For the UI object to retrieve the landing page as a component.
+     * 
+     * @return - the root component of the landing page
+     */
     public Component getComponent() {
         return page;
     }
     
+    /**
+     * 
+     * Loads the access key to the application.
+     * 
+     */    
     private void loadAccessKey() {
         try {
             String basepath = constants.getVaadinPath();
@@ -209,10 +232,22 @@ public class LandingPage {
         }
     }
     
+    /**
+     * 
+     * Opens the URL to the demo version of the web application.
+     * 
+     */
     private void enterDemo() {
         Page.getCurrent().open("https://helse-data.no/demo", null);
     }
     
+    /**
+     * 
+     * Checks that the entered access key is correct.
+     * 
+     * @param visualization - the visualization tab the that should be shown to the user
+     * if the access key is correct.
+     */
     private void checkKey(Visualization visualization) {
         if (accessKey == null) {
             loadAccessKey();
@@ -220,7 +255,6 @@ public class LandingPage {
         String key = keyInputField.getValue();
         
         if (key.equals(accessKey)) {
-            keyFits = true;
             if (visualization != null) {
                 controller.setVisualization(visualization);
             }

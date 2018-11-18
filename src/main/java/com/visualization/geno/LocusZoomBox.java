@@ -2,7 +2,9 @@ package com.visualization.geno;
 
 import com.locuszoom.LocusZoom;
 import com.main.Controller;
+import com.snp.InputSNP;
 import com.snp.SNP;
+import com.snp.VerifiedSNP;
 import com.utils.Constants;
 import com.vaadin.event.ShortcutAction;
 import com.vaadin.event.ShortcutListener;
@@ -25,13 +27,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * 
+ * This class is the container for the locus zoom plot.
  *
  * @author Christoffer Hjeltnes Støle
  */
 public class LocusZoomBox extends GenoView {    
     LocusZoom locusZoom = new LocusZoom();
     Constants constants = new Constants();
-    SNP currentSNP;
     VerticalLayout box = new VerticalLayout();
     HorizontalLayout navigationBox = new HorizontalLayout();
     NativeSelect <String> chromosomeSelector;
@@ -82,19 +85,17 @@ public class LocusZoomBox extends GenoView {
                     String clickedPosition = locusZoom.getClickedSNP();
                     System.out.println("Data received in view box: " + clickedPosition);
                     positionSpecifier.setValue(clickedPosition);
+                    // new SNP clicked by the user
+                    SNP activeSNP = new InputSNP(chromosomeSelector.getValue(), clickedPosition);
+                    getController().setActiveSNP(activeSNP);
                 }
             });
         
-        setSNP(currentSNP);
-        
     }
     
-    public void setSNP(SNP snp) {
-        currentSNP = snp;
-        
-        
-        String position = "";
-        String chromosome = "";
+    public void setSNP(SNP snp) {        
+        String position;
+        String chromosome;
         
         if (snp != null) {
             position = snp.getPosition();
@@ -104,9 +105,7 @@ public class LocusZoomBox extends GenoView {
             position = defaultPosition;
             chromosome = defaultChromosome;
         }
-        
-        setRegion(chromosome, position);
-       
+        setRegion(chromosome, position);       
     }
     
     public void setRegion(String region) {
@@ -123,6 +122,12 @@ public class LocusZoomBox extends GenoView {
         positionSpecifier.setValue(position);
         
         locusZoom.setRegion(region); 
+        
+        SNP currentSNP = getController().getActiveSNP();
+        if (!currentSNP.getChromosome().equals(chromosome) || !currentSNP.getPosition().equals(position)) {
+            SNP activeSNP = new InputSNP(chromosome, position);
+            getController().setActiveSNP(activeSNP);
+        }
     }
     
     private void useInputFields() {
@@ -151,21 +156,25 @@ public class LocusZoomBox extends GenoView {
         
     }
     
-    public SNP getCurrentSNP() {
-        return currentSNP;
-    }
     @Override
     public AbstractComponent getComponent() {
         return box;
     }
     @Override
-    public void SNPChanged() {
-        // TODO: implement
+    public void updateSNP() {
+        SNP currentSNP = getController().getActiveSNP();
+        setSNP(currentSNP);
     } 
 
     @Override
     public void resizePlots() {
         
     }
-    
+
+    @Override
+    public void handOver() {
+        System.out.println("Handed over to locus level.");
+        System.out.println("Current active SNP: " + getController().getActiveSNP());
+        updateSNP();
+    }    
 }

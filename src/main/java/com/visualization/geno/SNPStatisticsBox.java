@@ -483,11 +483,15 @@ public class SNPStatisticsBox extends GenoView {
     }
     
     @Override
-    public void SNPChanged() {} // no functionality yet
+    public void updateSNP() {} // no functionality yet
     
     @Override
     public void resizePlots() {
         chart.resize();
+    }
+    
+    @Override
+    public void handOver() {
     }
     
 }

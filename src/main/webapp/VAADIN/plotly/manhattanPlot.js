@@ -23,6 +23,7 @@ manhattanPlot.Component = function (element, number, connector) {
      */
     this.setData = function (newData) {
         console.log('setting data');
+        var t0 = performance.now();
         
         const colours = ['gray', 'black'];
         
@@ -151,6 +152,8 @@ manhattanPlot.Component = function (element, number, connector) {
         configuration['modeBarButtonsToRemove'] = ['sendDataToCloud'];
 
         Plotly.newPlot(this.gd, traceList, layout, configuration);
+        var t1 = performance.now();
+        console.log('Setting data took ' + Math.round(t1 - t0) + ' milliseconds.');
         
         var plot = document.getElementById(thisObject.divID);
         
@@ -170,7 +173,7 @@ manhattanPlot.Component = function (element, number, connector) {
             connector.registerSNPclick(eventData.points[0].text);
         });
         
-        this.resize(); // TODO: make redundant
+        //this.resize(); // TODO: make redundant
         
         /** Catch the plotly_relayout event. */
         

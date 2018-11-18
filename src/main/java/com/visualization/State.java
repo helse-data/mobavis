@@ -1,6 +1,6 @@
 package com.visualization;
 
-import com.snp.SNP;
+import com.snp.VerifiedSNP;
 
 /**
  *
@@ -8,9 +8,9 @@ import com.snp.SNP;
  */
 public class State {
     
-    SNP activeSNP;
+    VerifiedSNP activeSNP;
 
-    public SNP getActiveSNP() {
+    public VerifiedSNP getActiveSNP() {
         return activeSNP;
     }
 

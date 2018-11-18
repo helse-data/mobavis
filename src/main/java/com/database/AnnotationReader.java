@@ -17,6 +17,8 @@ import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 /**
+ * AnnotationReader reads the annotation files for the SNP data.
+ * 
  *
  * @author Christoffer Hjeltnes Støle
  */

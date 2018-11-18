@@ -248,13 +248,7 @@ public class SummaryStatisticsBox extends MoBaVisualization {
         // phenotype selectors        
         for (int i = 1; i < numberOfPlots + 1; i++) {
             String plotNumber = Integer.toString(i);
-            NativeSelect phenotypeSelector = new NativeSelect("Phenotype");
-            NativeSelect phenotypeSelectorNEW = new NativeSelect("Phenotype [NEW]");
-            phenotypeSelectorNEW.setWidth(100, Sizeable.Unit.PERCENTAGE);
-            phenotypeSelectorNEW.setItems(Arrays.asList(tables));
-            phenotypeSelectorNEW.addValueChangeListener(event -> selectPhenotypeNEW(plotNumber, event));
-            
-            
+            NativeSelect phenotypeSelector = new NativeSelect("Phenotype");            
             phenotypeSelector.setWidth(100, Sizeable.Unit.PERCENTAGE);
             phenotypeSelector.setItems(phenotypeOptions);            
             phenotypeSelector.setIcon(VaadinIcons.CLIPBOARD_PULSE);
@@ -267,8 +261,6 @@ public class SummaryStatisticsBox extends MoBaVisualization {
             enterDataButtons.put(plotNumber, enterDataButton);
             topBox.addComponent(sexSelectors.get(plotNumber));
             topBox.setComponentAlignment(sexSelectors.get(plotNumber), Alignment.BOTTOM_CENTER);
-            topBox.addComponent(phenotypeSelectorNEW);
-            topBox.setComponentAlignment(phenotypeSelectorNEW, Alignment.BOTTOM_CENTER);
             topBox.addComponent(phenotypeSelector);
             topBox.setComponentAlignment(phenotypeSelector, Alignment.BOTTOM_CENTER);
             topBox.addComponent(conditionCategorySelectors.get(plotNumber));
@@ -612,19 +604,6 @@ public class SummaryStatisticsBox extends MoBaVisualization {
             setPhenotype(plotNumber, currentPhenotype);
         }
         //System.out.println("phenotypeMap: " + phenotypeMap + " (" + plotNumber +")");
-    }
-    
-    
-    private void selectPhenotypeNEW(String plotNumber, ValueChangeEvent event) {
-        String selectedPhenotype = (String) event.getValue();
-        
-        System.out.println("selected new phenotype: " + selectedPhenotype);
-        
-        int [] tableData = extractor.getTableData(selectedPhenotype);
-        
-        System.out.println("data for this phenotype: " + Arrays.toString(tableData));
-        System.out.println("Labels for this phenotype: " + extractor.getTableLabels(selectedPhenotype));
-        
     }
     
     private void selectPhenotype(String plotNumber, ValueChangeEvent event) {
@@ -991,6 +970,10 @@ public class SummaryStatisticsBox extends MoBaVisualization {
         for (NonLongitudinalPercentiles chart : nonLongitudinalChartMap.values()) {
             chart.resize();
         }
+    }
+
+    @Override
+    public void handOver() {
     }
     
 }

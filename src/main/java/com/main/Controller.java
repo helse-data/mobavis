@@ -104,9 +104,14 @@ public class Controller {
         VARIANT_PLOT(SNPPlotBox.class, "Phenotype by SNP genotype", true),        
         SNP_STATISTICS(SNPStatisticsBox.class, "SNP statistics", true),
         
-        SUMMARY_STATISTICS(SummaryStatisticsBox.class, "Summary statistics for the MoBa cohort", false),
+        //SUMMARY_STATISTICS(SummaryStatisticsBox.class, "Summary statistics for the MoBa cohort", false),
+        
+        // data has not been separated yet, so the tab titles below are currently relatively inaccurate 
+        SUMMARY_STATISTICS(SummaryStatisticsBox.class, "Child", false),
+        MOTHER(MotherVisBox.class, "Mother", false),
+        FATHER(SummaryStatisticsBox.class, "Father", false);
         //CHILD(MotherVisBox.class, "Child", false),
-        MOTHER(MotherVisBox.class, "Mother", false);
+        //MOTHER(MotherVisBox.class, "Mother", false);
         //FATHER(MotherVisBox.class, "Father", false);
         private final Class visualizationClass;
         private final String displayName;
@@ -115,7 +120,7 @@ public class Controller {
         /**
          * 
          * @param visualizationClass - the class of the visualization
-         * @param displayName - the name that the visualization will have in the menu
+         * @param displayName - the name that the visualization will have in the tab title and on the landing page
          * @param hasGeneticData - whether or not the visualization visualizes data with genetic information
          */
         Visualization(Class visualizationClass, String displayName, boolean hasGeneticData) {

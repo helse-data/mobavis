@@ -32,12 +32,18 @@ public class DbSNP {
             in.close();
             
         }
-        catch (Exception e) {
-            System.out.println(e.getMessage());
+        catch (Exception e) { 
+            System.out.println(e);
+            return null; // better handling?
         }
         
-        DbSNPentry dbSNPentry = new DbSNPentry(stringBuilder.toString());
-
+        String response = stringBuilder.toString();
+        //System.out.println("Response from dbSNP:" + response);
+        
+//        if (response.equals("")) {
+//            
+//        }
+        DbSNPentry dbSNPentry = new DbSNPentry(response);
         
         return dbSNPentry;        
     }

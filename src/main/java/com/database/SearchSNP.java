@@ -1,22 +1,22 @@
 package com.database;
 
-import com.snp.SNP;
+import com.snp.VerifiedSNP;
 
 /**
  * 
- * Class for searching for a SNP by ID or position. Returns a SNP object.
+ * Class for searching for a VerifiedSNP by ID or position. Returns a VerifiedSNP object.
  *
  * @author Christoffer Hjeltnes Støle
  */
 public class SearchSNP {
     
     
-    public SNP searchByID() {
+    public VerifiedSNP searchByID() {
         return null;
         
     }
     
-    public SNP searchByPosition() {
+    public VerifiedSNP searchByPosition() {
         return null;
     }
     

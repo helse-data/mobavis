@@ -1,4 +1,4 @@
-package com.components;
+package com.components.archive;
 
 import com.vaadin.server.Sizeable;
 import com.vaadin.ui.CustomComponent;

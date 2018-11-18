@@ -2,15 +2,17 @@ package com.snp;
 
 /**
  * 
- * Class to store SNP input. The data stored here (ID, position and chromosome) 
+ * Class to store SNP input. The data stored here (ID, position, chromosome or a combination of them) 
  *  are not verified and not guaranteed to correspond to any real SNP.
+ * This is in contrast to the SNP class, which should only contain information from verified sources.
  *
  * @author Christoffer Hjeltnes Støle
  */
-public class InputSNP implements SNPInterface {
+public class InputSNP implements SNP {
     String ID;
     String chromosome;
     String position;
+    Boolean verificationFailed;
     
     public InputSNP(String ID, String chromosome, String position) {
         this.ID = ID;
@@ -24,6 +26,10 @@ public class InputSNP implements SNPInterface {
     public InputSNP(String ID) {
         this.ID = ID;
     }
+    
+    public Boolean verificationFailed() {
+        return verificationFailed;
+    }
 
     @Override
     public String getID() {
@@ -36,6 +42,11 @@ public class InputSNP implements SNPInterface {
     @Override
     public String getPosition() {
         return position;
+    }
+    
+    @Override
+    public String toString() {
+      return "Input SNP with ID \"" + getID() + "\"";  
     }
     
     

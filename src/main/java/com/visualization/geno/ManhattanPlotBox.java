@@ -3,8 +3,7 @@ package com.visualization.geno;
 import com.files.PValueReader;
 import com.locuszoom.LocusZoom;
 import com.database.Database;
-import com.main.Main;
-import com.snp.SNP;
+import com.snp.VerifiedSNP;
 import com.plotly.ManhattanPlot;
 import com.utils.VaadinUtils;
 import com.vaadin.event.selection.SelectionEvent;
@@ -22,6 +21,8 @@ import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.Window;
 import com.main.Controller;
 import com.main.Controller.Visualization;
+import com.snp.InputSNP;
+import com.snp.SNP;
 import com.vaadin.ui.themes.ValoTheme;
 import elemental.json.Json;
 import elemental.json.JsonObject;
@@ -34,6 +35,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
+ * 
+ * This class is the container for the Manhattan plot.
  *
  * @author Christoffer Hjeltnes Støle
  */
@@ -49,8 +52,6 @@ public class ManhattanPlotBox extends GenoView {
     CheckBoxGroup <String> tresholdSelector;
     Set <String> previousOptions = new HashSet();
     VaadinUtils vaadinUtils = new VaadinUtils();
-    
-    Map <String, String> SNPInformation = new HashMap();
     
     //public ManhattanPlotBox (Main main) {
     public ManhattanPlotBox (Controller controller) {
@@ -98,9 +99,12 @@ public class ManhattanPlotBox extends GenoView {
     
     private void SNPclicked(String data) {        
         window = new Window("SNP clicked");
-
+        
+        //System.out.println("SNP click data: " + data);
+        
         String [] splitData = data.split("<br>");
         String SNPname = splitData[0].replace("SNP: ", "");
+        String pValue = splitData[1].replace("p-value: ", "");
         
         if (SNPname.equals("-")) {
             SNPname = "N/A";
@@ -109,14 +113,16 @@ public class ManhattanPlotBox extends GenoView {
         String chromosome = splitData[2].replace("chromosome: ", "");
         String position = splitData[3].replace("position: ", "");
         
-        SNPInformation.put("ID", SNPname);
-        SNPInformation.put("chromosome", chromosome);
-        SNPInformation.put("position", position);
+        // set the SNP the user clicked on as the currently active SNP
+        SNP selectedSNP = new InputSNP(SNPname, chromosome, position);
+        //SNP selectedSNP = new InputSNP(chromosome, position);        
+        getController().setActiveSNP(selectedSNP);
         
         Label description = new Label(
                 "ID: \t\t" + SNPname + 
                         "\nChromosome: \t" + chromosome + 
-                        "\nPosition: \t" + position, ContentMode.PREFORMATTED);        
+                        "\nPosition: \t" + position + 
+                        "\np-value: \t" + pValue, ContentMode.PREFORMATTED);        
         
         Button locusZoomButton = new Button("LocusZoom plot");
         locusZoomButton.addClickListener(event -> goToVisualization(Visualization.LOCUS_ZOOM));
@@ -133,8 +139,8 @@ public class ManhattanPlotBox extends GenoView {
         window.center();
         window.setResizable(false);
         window.setContent(windowContent);
-        window.setWidth(310, Sizeable.Unit.PIXELS);
-        window.setHeight(220, Sizeable.Unit.PIXELS);
+        window.setWidth(315, Sizeable.Unit.PIXELS);
+        window.setHeight(250, Sizeable.Unit.PIXELS);
         getComponent().getUI().addWindow(window);
     }
     
@@ -149,7 +155,7 @@ public class ManhattanPlotBox extends GenoView {
         //}
         //System.out.println("query: " + query);
         //main.setViewWithSNP(visualization, query);        
-        //System.out.println("Selected option for SNP click: " + visualization);
+        //System.out.println("Selected option for VerifiedSNP click: " + visualization);
         window.close();
         getController().setVisualization(visualization);
         
@@ -212,8 +218,11 @@ public class ManhattanPlotBox extends GenoView {
     }
     
     private void loadManhattanPlot() {
+        //long start = System.nanoTime(); 
         plotContainer.removeAllComponents();
         plotContainer.addComponent(manhattanPlot);
+        //long elapsedTime = System.nanoTime() - start;
+        //System.out.println("\n\nLoading the Manhattan plot took " + elapsedTime*Math.pow(10, -9) + " seconds after button click.\n");
     }
     
     @Override
@@ -222,13 +231,17 @@ public class ManhattanPlotBox extends GenoView {
     }
     
     @Override
-    public void SNPChanged() {
+    public void updateSNP() {
         // TODO: implement
     } 
 
     @Override
     public void resizePlots() {
         manhattanPlot.resize();
+    }
+
+    @Override
+    public void handOver() {
     }
     
 }
