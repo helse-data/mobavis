@@ -60,6 +60,13 @@ public class Database {
         readMasterIndex();
     }
     
+    /**
+     * 
+     * Returs the data for the SNP specified by the input.
+     * 
+     * @param snpIDParser - the input in form of a snpIDParser object
+     * @return 
+     */
     public VerifiedSNP getSNP(SNPIDParser snpIDParser) {
         SNPIDFormat snpIDFormat = snpIDParser.getIDFormat();
         if (snpIDFormat == SNPIDFormat.RSID) {
