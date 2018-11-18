@@ -26,11 +26,23 @@ public class AnnotationReader {
     final String folderPath = VaadinService.getCurrent().getBaseDirectory().getAbsolutePath() + "/../../../../server/data/new_annotation/";
     
     
+    /**
+     * Returns the path to the annotation file for the given chromosome.
+     * 
+     * @param chromosome
+     * @return 
+     */
     private String getAnnotationFilePath(String chromosome) {
         return folderPath + "snp_annotation_" + chromosome + ".gz";
     }
     
-    // reads the given columns of the annotation file for the given chromosome
+    /**
+     * Reads the given columns of the annotation file for the given chromosome.
+     * 
+     * @param chromosome
+     * @param columns
+     * @return 
+     */
     public Map <String, JsonArray> readAnnotationFile(String chromosome, int [] columns) {
         System.out.println("Reading annotation for chromosome " + chromosome);
         //Map <Integer, List <String>> result = new HashMap();
@@ -78,6 +90,15 @@ public class AnnotationReader {
     }
     
     
+    /**
+     * 
+     * Returns the annotation for the given SNP on the given chromosome in the form of a map.
+     * 
+     * 
+     * @param chromosome
+     * @param databaseSNPID
+     * @return 
+     */
     public Map <String, String> getAnnotation(String chromosome, String databaseSNPID) {
         Map <String, String> annotation = null;
 
@@ -89,8 +110,6 @@ public class AnnotationReader {
             Reader reader = new InputStreamReader(gzipStream);
            
             BufferedReader bufferedReader = new BufferedReader(reader);
-            
-            
             
             String [] header = bufferedReader.readLine().split("\t"); // read the header
             String line = bufferedReader.readLine();
@@ -115,6 +134,5 @@ public class AnnotationReader {
             System.out.println(e);
         }
         return annotation;
-    }
-    
+    }    
 }
