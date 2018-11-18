@@ -23,8 +23,7 @@ import java.util.zip.GZIPInputStream;
  * @author Christoffer Hjeltnes Støle
  */
 public class AnnotationReader {
-    final String folderPath = VaadinService.getCurrent().getBaseDirectory().getAbsolutePath() + "/../../../../server/data/new_annotation/";
-    
+    final String folderPath = VaadinService.getCurrent().getBaseDirectory().getAbsolutePath() + "/../../../../server/data/new_annotation/"; 
     
     /**
      * Returns the path to the annotation file for the given chromosome.
@@ -87,8 +86,7 @@ public class AnnotationReader {
         }
         //System.out.println("testArray: " + Arrays.toString(testArray));
         return columnData;
-    }
-    
+    }    
     
     /**
      * 
