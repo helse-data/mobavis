@@ -5,6 +5,8 @@ import com.vaadin.ui.AbstractJavaScriptComponent;
 import elemental.json.JsonObject;
 
 /**
+ * 
+ * Implements a Vaadin component for LiteMol.
  *
  * @author Christoffer Hjeltnes Støle
  */
@@ -23,6 +25,11 @@ public class LiteMol extends AbstractJavaScriptComponent {
         return (LiteMolState) super.getState();
     }
     
+    /**
+     * Sets the PDB model to visualize in the state object.
+     * 
+     * @param entryID 
+     */
     public void setEntryID(JsonObject entryID) {
         entryID.put("boolean version", booleanEntryIDVersion);
         booleanEntryIDVersion = !booleanEntryIDVersion;
