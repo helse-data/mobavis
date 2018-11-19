@@ -8,25 +8,39 @@ import java.util.regex.Pattern;
 
 /**
  *
- * @author ChristofferHjeltnes
+ * Class for intuitive sorting of alphanumerical strings, 
+ * e.g. such that 100 comes after 20.
  * 
- * Class for intuitive sorting of alphanumerical strings.
+ * @author ChristofferHjeltnes 
+ *
  * 
  */
-public class Alphanumerical implements Comparable<Alphanumerical> {
+public class Alphanumerical implements Comparable <Alphanumerical> {
     String value;
     String format;
     Boolean digitsOnly;
 
+    
     public Alphanumerical(String value) {
         this.value = value;
     }
     
+    /**
+     * 
+     * @param value
+     * @param format - the format of the alphanumerical string, for easier sorting
+     */
     public Alphanumerical(String value, String format) {
         this.value = value;
         this.format = format;
     }
     
+    /**
+     * Compares two alphanumerica objects.
+     * 
+     * @param other
+     * @return 
+     */
     @Override
     public int compareTo(Alphanumerical other) {
         String otherValue = other.getValue();
@@ -144,6 +158,11 @@ public class Alphanumerical implements Comparable<Alphanumerical> {
         }
     }
     
+    /**
+     * Makes all spaces non-breaking.
+     * 
+     * @return 
+     */
     public String toNonBreakingString() {
         return toString().replace(" ", "&nbsp;");
     }
@@ -156,10 +175,19 @@ public class Alphanumerical implements Comparable<Alphanumerical> {
         return value;
     }
     
+    /**
+     * Returns the format of the alphanumerical string, if specified.
+     * 
+     * @return 
+     */
     public String getFormat() {
         return format;
     }
     
+    /**
+     * Whether the alphanumerical string only has digits.
+     * @return 
+     */
     public boolean hasDigitsOnly() {
         return digitsOnly;
     }

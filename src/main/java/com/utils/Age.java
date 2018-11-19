@@ -9,12 +9,13 @@ import java.util.regex.Pattern;
 
 /**
  *
- * @author Christoffer Hjeltnes Støle
- * 
  * Class to represent ages.
  * 
+ * @author Christoffer Hjeltnes Støle* 
+ * 
+ * 
  */
-public class Age implements Comparable<Age> {    
+public class Age implements Comparable <Age> {    
     Constants constants = new Constants();
     String [] recognisedUnits = constants.getTimeUnits();
     String [] recognisedUnitsShort = constants.getTimeUnitsShort();
@@ -24,6 +25,10 @@ public class Age implements Comparable<Age> {
     boolean standardiseUnits = false;
     Map <String, Double> dayEquivalents = new HashMap();
     
+    /**
+     * 
+     * @param ageString 
+     */
     public Age (String ageString) {
         this();
         description = ageString;
@@ -31,7 +36,7 @@ public class Age implements Comparable<Age> {
             ageInDays = "-1";
         }
         else {
-            standardiseDescription();
+            standardizeDescription();
         }        
     }
     /**
@@ -50,6 +55,11 @@ public class Age implements Comparable<Age> {
         createRecognisedUnitsPatternString();
     }
     
+    /**
+     * Returns a representation of the age.
+     * 
+     * @return 
+     */
     public String getDescription() {
         return description;
     }
@@ -76,7 +86,12 @@ public class Age implements Comparable<Age> {
         return true;
     }
     
-    public void standardiseDescription() {        
+    /**
+     * 
+     * Standardizes the description of the age.
+     * 
+     */
+    public void standardizeDescription() {        
         description = description.replaceAll("(| )d$", " days");
         description = description.replaceAll("(| )w$", " weeks");
         description = description.replaceAll("(| )m$", " months");
@@ -103,6 +118,13 @@ public class Age implements Comparable<Age> {
         description = correctNumberUnitExpression(description);
     }
     
+    /**
+     * 
+     * Returns the numerical value of the age and its unit in an array.
+     * 
+     * @param ageString
+     * @return 
+     */
     public String [] getValueAndUnit(String ageString) {
         Pattern pattern = Pattern.compile("([0-9.-]+)(?: |)(" + recognisedUnitsPatternString + ")(?:s|)$");
         Matcher patternMatch = pattern.matcher(ageString);
@@ -151,7 +173,8 @@ public class Age implements Comparable<Age> {
         }
     }
     
-    /** Convert a time period to days.
+    /** 
+     * Converts a time period to days.
      * 
      */
     private void toDays() {        
@@ -190,6 +213,9 @@ public class Age implements Comparable<Age> {
         return correctedExpression;
     }
     
+    /**
+     * Aids in the construction of regex patterns.
+     */
     private void createRecognisedUnitsPatternString() {
         if (recognisedUnitsPatternString == null){
             recognisedUnitsPatternString = "";
@@ -227,7 +253,6 @@ public class Age implements Comparable<Age> {
         return Objects.equals(getAgeInDays(), other.getAgeInDays());
     }
    
-
     @Override
     public int compareTo(Age other) {
         return Double.compare(Double.parseDouble(getAgeInDays()), Double.parseDouble(other.getAgeInDays()));

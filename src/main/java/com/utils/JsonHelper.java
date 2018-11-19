@@ -8,9 +8,20 @@ import java.util.List;
 
 /**
  *
+ * JsonHelper provides auxiliary methods for the handling of JSON objects
+ * and arrays.
+ * 
  * @author Christoffer Hjeltnes Støle
  */
-public class JsonHelper {    
+public class JsonHelper {  
+    
+    /**
+     * Adds an element to a JSON array, including null.
+     * 
+     * @param jsonArray
+     * @param index
+     * @param element 
+     */
     public void set(JsonArray jsonArray, int index, String element) {
         if (element != null) { 
                 jsonArray.set(index, element);                
@@ -20,6 +31,13 @@ public class JsonHelper {
         }
     }   
 
+    /**
+     * Converts a list of strings to a JSON array and places it in a JSON object.
+     * 
+     * @param jsonObject
+     * @param key
+     * @param list 
+     */
     public void put(JsonObject jsonObject, String key, List <String> list) {
         JsonArray jsonArray = Json.createArray();
         for (String element : list) {            
@@ -28,6 +46,13 @@ public class JsonHelper {
         jsonObject.put(key, jsonArray);
     }
     
+    /**
+     * Converts a list of alphanumerical objects to a JSON array and places it in a JSON object.
+     * 
+     * @param jsonObject
+     * @param key
+     * @param list 
+     */
     public void putAlphanumerical(JsonObject jsonObject, String key, List <Alphanumerical> list) {
         JsonArray jsonArray = Json.createArray();
         if (list == null) {
@@ -41,7 +66,15 @@ public class JsonHelper {
         }
         
     }
-    
+   
+    /**
+     * 
+     * Converts a nested list of strings to a nested JSON array and places it in a JSON object.
+     * 
+     * @param jsonObject
+     * @param key
+     * @param doubleList 
+     */
     public void putDoubleList(JsonObject jsonObject, String key, List <List <String>> doubleList) {
         JsonArray containerJsonArray = Json.createArray();
         for (List <String> list : doubleList) {
@@ -52,15 +85,5 @@ public class JsonHelper {
             containerJsonArray.set(containerJsonArray.length(), containedJsonArray);
         }
         jsonObject.put(key, containerJsonArray);
-    }
-    
-    public String stringify(JsonObject jsonObject) {
-        String string = jsonObject.toJson();
-        string = string.replaceAll("\\{", "\n\t{");
-        
-        string = string.replaceAll("\\},", "},\n");
-        string = string.replaceAll("\\],", "],\n");
-        return string;
-    }
-    
+    }    
 }

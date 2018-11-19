@@ -14,6 +14,8 @@ import java.util.regex.Pattern;
 
 /**
  *
+ * UtilFunctions provides various functions that can be useful for several classes.
+ * 
  * @author ChristofferHjeltnes
  */
 public class UtilFunctions {

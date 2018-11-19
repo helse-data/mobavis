@@ -3,6 +3,7 @@ package com.utils;
 import java.util.List;
 
 /**
+ * HtmlHelper provides an interface for the introduction of HTML tags in strings.
  *
  * @author ChristofferHjeltnes
  */
@@ -42,6 +43,11 @@ public class HtmlHelper {
         //return "<span class=\"v-align-left\">" + string + "</span>";
     }
     
+    /**
+     * Creates an HTML list.
+     * @param list
+     * @return 
+     */
     public String createList(List <String> list) {
         StringBuilder listString = new StringBuilder("<ul>");
         
