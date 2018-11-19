@@ -15,7 +15,6 @@ import com.vaadin.ui.Label;
 import com.vaadin.ui.NativeSelect;
 import com.vaadin.ui.VerticalLayout;
 import com.visualization.MoBaVisualization;
-import com.visualization.State;
 import elemental.json.Json;
 import elemental.json.JsonArray;
 import elemental.json.JsonObject;

@@ -55,10 +55,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import com.visualization.State;
 import com.visualization.MoBaVisualizationInterface;
 
 /**
+ * This class is the container for the phenotype plots stratified by genotype 
+ * and their interface.
  *
  * @author Christoffer Hjeltnes Støle
  */

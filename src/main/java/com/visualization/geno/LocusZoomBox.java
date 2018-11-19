@@ -18,7 +18,6 @@ import com.vaadin.ui.Notification;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.VerticalLayout;
 import com.visualization.MoBaVisualization;
-import com.visualization.State;
 import elemental.json.Json;
 import elemental.json.JsonObject;
 import java.util.Arrays;
@@ -28,7 +27,7 @@ import java.util.Map;
 
 /**
  * 
- * This class is the container for the locus zoom plot.
+ * This class is the container for the locus zoom plot and its interface.
  *
  * @author Christoffer Hjeltnes Støle
  */
@@ -93,6 +92,11 @@ public class LocusZoomBox extends GenoView {
         
     }
     
+    /**
+     * Sets the region for LocusZoom.js through a SNP object.
+     * 
+     * @param snp 
+     */
     public void setSNP(SNP snp) {        
         String position;
         String chromosome;
@@ -108,11 +112,23 @@ public class LocusZoomBox extends GenoView {
         setRegion(chromosome, position);       
     }
     
+    /**
+     * Sets the region for LocusZoom.js through the format "chromosome:position".
+     * 
+     * @param region 
+     */
     public void setRegion(String region) {
         String [] splitRegion = region.split(":");
         setRegion(splitRegion[0], splitRegion[1]);        
     }
     
+    /**
+     * 
+     * Sets the region for LocusZoom.js.
+     * 
+     * @param chromosome
+     * @param position 
+     */
     public void setRegion(String chromosome, String position) {
         JsonObject region = Json.createObject();
                 
@@ -133,6 +149,10 @@ public class LocusZoomBox extends GenoView {
         }
     }
     
+    /**
+     * Pulls the input for the drop-down list and the text field, 
+     * and makes them take effect.
+     */
     private void useInputFields() {
         String chromosome = chromosomeSelector.getValue();
         String position = positionSpecifier.getValue();

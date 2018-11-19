@@ -28,7 +28,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
-import com.visualization.State;
 import com.visualization.MoBaVisualizationInterface;
 
 /**
@@ -45,7 +44,7 @@ public class SNPStatisticsBox extends GenoView {
     HorizontalLayout contentBox = new HorizontalLayout();
     HorizontalLayout plotContainer = new HorizontalLayout();
     VerticalLayout rightContentSubBox = new VerticalLayout();
-    ScatterPlot positionPlot;
+    //ScatterPlot positionPlot;
     HorizontalLayout topBox = new HorizontalLayout();
     JsonObject snpsPerChromosomeObject;
     Constants constants = new Constants();
@@ -198,17 +197,17 @@ public class SNPStatisticsBox extends GenoView {
         }
         
         if (eventValue == VisualizationSummary.SNP_POSITION) {
-            if (positionPlot == null) {
-                positionPlot = new ScatterPlot();
-                positionPlot.setSizeFull();
-            }
+//            if (positionPlot == null) {
+//                positionPlot = new ScatterPlot();
+//                positionPlot.setSizeFull();
+//            }
             if (chromosomeSelector.getValue() == null) {
                 chromosomeSelector.setValue("21");
                 //chromosomeSelector.setValue("2");
             }
             contentBox.removeAllComponents();
             //contentBox.addComponent(positionPlot, 0, 0, 99, 99);
-            contentBox.addComponent(positionPlot);
+            //contentBox.addComponent(positionPlot);
         }
         else if (eventValue == VisualizationSummary.SNPS_PER_CHROMOSOME) {
             if (!snpsPerChromosomeSelector.getSelectedItem().isPresent()) {
@@ -247,7 +246,7 @@ public class SNPStatisticsBox extends GenoView {
             object.put("data", Json.createObject());
             object.getObject("data").put(columnMap.get(column), columnData.get(column.toString()));
             System.out.println("Sending data for " + columnMap.get(column));
-            positionPlot.sendData(object);
+            //positionPlot.sendData(object);
         }
         //object.put("SNPs", columnData.getNumber("SNPs"));
         

@@ -10,6 +10,10 @@ import com.visualization.MoBaVisualizationInterface;
  */
 public interface GenoViewInterface extends MoBaVisualizationInterface {
     
+    /**
+     * Makes the currently selected SNP take effect.
+     * 
+     */
     public void updateSNP();
     
 }

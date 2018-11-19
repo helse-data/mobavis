@@ -36,12 +36,11 @@ import java.util.Set;
 
 /**
  * 
- * This class is the container for the Manhattan plot.
+ * This class is the container for the Manhattan plot and its interface.
  *
  * @author Christoffer Hjeltnes Støle
  */
 public class ManhattanPlotBox extends GenoView {
-    //Controller controller;
     Window window;
     VerticalLayout box = new VerticalLayout();
     HorizontalLayout plotContainer = new HorizontalLayout();
@@ -53,7 +52,6 @@ public class ManhattanPlotBox extends GenoView {
     Set <String> previousOptions = new HashSet();
     VaadinUtils vaadinUtils = new VaadinUtils();
     
-    //public ManhattanPlotBox (Main main) {
     public ManhattanPlotBox (Controller controller) {
         super(controller);
 
@@ -97,6 +95,11 @@ public class ManhattanPlotBox extends GenoView {
         
     }
     
+    /**
+     * Responds to a clicked SNP.
+     * 
+     * @param data 
+     */
     private void SNPclicked(String data) {        
         window = new Window("SNP clicked");
         
@@ -144,7 +147,11 @@ public class ManhattanPlotBox extends GenoView {
         getComponent().getUI().addWindow(window);
     }
     
-    
+    /**
+     * Sets the selected visualization as active.
+     * 
+     * @param visualization 
+     */
     private void goToVisualization(Visualization visualization) {
         //String query = "";
         //if (SNPInformation.get("ID").equals("N/A") || option.equals(Controller.Visualization.LOCUS_ZOOM)) {
@@ -161,6 +168,10 @@ public class ManhattanPlotBox extends GenoView {
         
     }
     
+    /**
+     * Opens the window for the plot options.
+     * 
+     */
     private void openOptionsWindow() {
         if (plotOptionsWindow == null) {            
             
@@ -192,6 +203,11 @@ public class ManhattanPlotBox extends GenoView {
         //getComponent().getUI().getUI().addWindow(plotOptionsWindow);
     }
     
+    /**
+     * Closes or opens the given window.
+     * 
+     * @param window 
+     */
     private void toggleWindowVisibility(Window window) {
         if (!window.isAttached()) { // is the window already open?
             getComponent().getUI().addWindow(window);
@@ -201,6 +217,11 @@ public class ManhattanPlotBox extends GenoView {
         }
     }
     
+    /**
+     * Sends the selected options towards the JavaScript code.
+     * 
+     * @param event 
+     */
     private void setOptions(SelectionEvent event) {
         Set <String> currentlySelected = event.getAllSelectedItems();
         Set <String> changed = vaadinUtils.getChangedOptions(currentlySelected, previousOptions);
@@ -217,6 +238,9 @@ public class ManhattanPlotBox extends GenoView {
         previousOptions = tresholdSelector.getValue();
     }
     
+    /**
+     * Loads the Manhattan plot.
+     */
     private void loadManhattanPlot() {
         //long start = System.nanoTime(); 
         plotContainer.removeAllComponents();
