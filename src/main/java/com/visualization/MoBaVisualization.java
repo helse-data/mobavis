@@ -4,9 +4,10 @@ import com.main.Controller;
 
 /**
  * 
- * Abstract class for containers of the visualizations.
+ * Abstract class for classes of the visualization instances.
  * 
- * A container class is the highest-level class specific for a visualization, and is where
+ * A visualization class is the highest-level class specific
+ * for a visualization (such as a Manhattan plot), and is where
  * the visualization should be initiated.
  *
  * @author Christoffer Hjeltnes Støle

@@ -5,7 +5,7 @@ import com.visualization.MoBaVisualization;
 
 /**
  *
- * Abstract class for containers of the visualizations that visualize genetic data.
+ * Abstract class for classes of the visualization instances that visualize genetic data.
  * 
  * @author Christoffer Hjeltnes Støle
  */
