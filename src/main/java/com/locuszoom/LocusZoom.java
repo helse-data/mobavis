@@ -9,6 +9,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
+ * Implements a Vaadin component for LocusZoom.js.
  *
  * @author Christoffer Hjeltnes Støle
  */
@@ -21,11 +22,19 @@ public class LocusZoom extends AbstractJavaScriptComponent {
     boolean initialBooleanVersion = false;
     boolean booleanRegionVersion = initialBooleanVersion;
     
+    /**
+     * Enables listening for clicked SNPs.
+     */
     public interface ValueChangeListener extends Serializable {
         void valueChange();
     }
     ArrayList <ValueChangeListener> listeners =
             new ArrayList();
+    /**
+     * Adds a listener for clicked SNPs.
+     * 
+     * @param listener 
+     */
     public void addValueChangeListener(
                    ValueChangeListener listener) {
         listeners.add(listener);
@@ -45,13 +54,23 @@ public class LocusZoom extends AbstractJavaScriptComponent {
         });
     }
     
-    
+    /**
+     * 
+     * Sets the region for LocusZoom.js in the state object.
+     * 
+     * @param region 
+     */
     public void setRegion(JsonObject region) {
         region.put("boolean version", booleanRegionVersion);
         booleanRegionVersion = !booleanRegionVersion;
         getState().setRegion(region);
     }
     
+    /**
+     * Returns the clicked SNP.
+     * 
+     * @return 
+     */
     public String getClickedSNP() {
         return getState().getClickedSNP();
     }

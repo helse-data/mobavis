@@ -18,8 +18,7 @@ public class LiteMolState extends JavaScriptComponentState {
      */
     public JsonObject getEntryID() {
         return entryID;
-    }
-    
+    }    
     
     /**
      * Sets the PDB model to visualize.
