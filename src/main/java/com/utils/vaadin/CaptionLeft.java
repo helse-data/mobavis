@@ -8,11 +8,19 @@ import com.vaadin.ui.Label;
 
 /**
  *
+ * CaptionLeft uses a label to place the caption of a component to its left.
+ * 
  * @author Christoffer Hjeltnes Støle
  */
 public class CaptionLeft {
     HorizontalLayout box = new HorizontalLayout();
     
+    /**
+     * 
+     * @param captionString - the caption
+     * @param component - the component
+     * @param icon - any icon
+     */
     public CaptionLeft(String captionString, AbstractComponent component, VaadinIcons icon) {
         Label caption = new Label(captionString);
         //caption.setIcon(icon);
@@ -26,6 +34,11 @@ public class CaptionLeft {
         box.setSizeFull();
     }
     
+    /**
+     * Returns the component with its caption.
+     * 
+     * @return 
+     */
     public AbstractComponent getComponent() {
         return box;
     }

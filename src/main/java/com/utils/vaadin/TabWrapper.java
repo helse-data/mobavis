@@ -12,6 +12,9 @@ import java.util.logging.Logger;
 
 /**
  *
+ * TabWrapper ensures that visualization instances are not loaded before
+ * they are displayed to the user.
+ * 
  * @author Christoffer Hjeltnes Støle
  */
 public class TabWrapper {
@@ -21,22 +24,37 @@ public class TabWrapper {
     Boolean loaded = false;
     MoBaVisualizationInterface visualization;
     
+    /**
+     * 
+     * @param contentClass - the class of the visualization instance
+     * @param controller - the controller object to pass to the visualization instance
+     */
     public TabWrapper (Class contentClass, Controller controller) {
         this.contentClass = contentClass;
         this.controller = controller;
         component.setSizeFull();
     }
     
+    /**
+     * Returns whether the tab has been loaded.
+     * @return 
+     */
     public boolean isLoaded() {
         return this.loaded;
     }
     
+    /**
+     * Load the contents of a tab.
+     */
     public void loadContents() {
         visualization = getVisualization();
         component.addComponent(visualization.getComponent());
         this.loaded = true;
     }
     
+    /**
+     * Instantiate the class of the visualization.
+     */
     private void instantiateContentClass() {
         try {
             //if (GenoView.class.isAssignableFrom(contentClass)) {
@@ -56,6 +74,12 @@ public class TabWrapper {
         }
     }
     
+    /**
+     * 
+     * Returns the visualization instance of the tab.
+     * 
+     * @return 
+     */
     public MoBaVisualizationInterface getVisualization() {
         if (visualization == null) {
             instantiateContentClass();
@@ -64,6 +88,11 @@ public class TabWrapper {
         
     }
     
+    /**
+     * Returns the root component of the tab contents.
+     * 
+     * @return 
+     */
     public AbstractComponent getComponent() {
         return component;
     }

@@ -8,6 +8,7 @@ import com.vaadin.ui.TextArea;
 import com.vaadin.ui.Window;
 
 /**
+ * PlotDataWindow provides a means to display the data underlying a plot.
  *
  * @author Christoffer Hjeltnes Støle
  */
@@ -26,6 +27,13 @@ public class PlotDataWindow {
         tabSheet.setSizeFull();
     }
     
+    /**
+     * Adds or adjusts a tab in the tabshet of the window.
+     * 
+     * @param indexString
+     * @param data
+     * @param tabCaption 
+     */
     public void setTab(String indexString, String data, String tabCaption ){
         int index = Integer.parseInt(indexString) - 1;
         if (tabSheet.getTab(index) == null) {
@@ -51,7 +59,11 @@ public class PlotDataWindow {
         }
         tab.setValue(data);
     }
-    
+    /**
+     * Returns the window.
+     * 
+     * @return 
+     */
     public Component getComponent() {
         return window;
     }

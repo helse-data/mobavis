@@ -12,6 +12,8 @@ import java.util.ArrayList;
 
 /**
  *
+ * Implements a message in Vaadin that can be closed, using a tab sheet.
+ * 
  * @author Christoffer Hjeltnes Støle
  */
 public class ClosableMessage {
@@ -19,18 +21,31 @@ public class ClosableMessage {
     Label message;
     String messageText;
     
-    
+    /**
+     * Makes it possible to listen for the user closing the message.
+     */
     public interface CloseListener extends Serializable {
         void windowClose();
     }
     ArrayList <CloseListener> listeners =
             new ArrayList();
+    /**
+     * Add a listener for the closing of the message.
+     * 
+     * @param listener 
+     */
     public void addCloseListener(CloseListener listener) {
         System.out.println("closeListener added");
         listeners.add(listener);
     }
     
-    public ClosableMessage(String messageText, String tabCaption, Layout parentLayout) {
+    /**
+     * 
+     * @param messageText - the message
+     * @param title - the title of the message
+     * @param parentLayout - the parent layout of the message
+     */
+    public ClosableMessage(String messageText, String title, Layout parentLayout) {
         this.messageText = messageText;
         message = new Label(messageText, ContentMode.HTML);
         
@@ -38,7 +53,7 @@ public class ClosableMessage {
         
         
         container.setSizeFull();
-        container.addTab(message, tabCaption);
+        container.addTab(message, title);
         //container.addStyleName("rightaligned-tabs");
         container.addStyleName(ValoTheme.TABSHEET_CENTERED_TABS);
         container.getTab(message).setClosable(true);
@@ -62,7 +77,11 @@ public class ClosableMessage {
         
         
     }
-    
+    /**
+     * Returns the root component of the closable message.
+     * 
+     * @return 
+     */
     public AbstractComponent getComponent() {
         return container;        
     }
