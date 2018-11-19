@@ -7,14 +7,21 @@ import java.io.InputStreamReader;
 import java.net.URL;
 
 /**
+ * 
+ * DbSNP queries dbSNP for data.
  *
  * @author Christoffer Hjeltnes Støle
  */
-public class DbSNP {
-    
+public class DbSNP {    
     String QUERY_URL_START = "https://api.ncbi.nlm.nih.gov/variation/v0/beta/refsnp/";
     
-    
+    /**
+     * 
+     * Gets a dbSNP entry by rsID.
+     * 
+     * @param rsID
+     * @return 
+     */
     public DbSNPentry getEntry (String rsID) {
         String query = QUERY_URL_START + rsID;
         StringBuilder stringBuilder = new StringBuilder("");

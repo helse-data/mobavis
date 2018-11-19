@@ -6,6 +6,8 @@ import elemental.json.impl.JreJsonFactory;
 
 /**
  *
+ * DbSNPentry parses and stores data returned from dbSNP.
+ * 
  * @author Christoffer Hjeltnes Støle
  */
 public class DbSNPentry {
@@ -15,12 +17,21 @@ public class DbSNPentry {
     private String locus;
     private String locusFullName;
     
+    /**
+     * 
+     * 
+     * @param response - the response from dbSNP
+     */
     public DbSNPentry (String response) {        
         JreJsonFactory jreJsonFactory = new JreJsonFactory();
         queryObject = jreJsonFactory.parse(response);
         SNPID = queryObject.getString("refsnp_id");
     }
 
+    /**
+     * Parses the response from dbSNP and stores it.
+     * 
+     */
     private void parseResponse() {
         JsonObject primary_snapshot_data = queryObject.getObject("primary_snapshot_data");
             
@@ -56,14 +67,30 @@ public class DbSNPentry {
         
     }
     
+    /**
+     * Returns the ID of the SNP.
+     * 
+     * @return 
+     */
     public String getSNPID() {
         return SNPID;
     }
     
+    /**
+     * 
+     * Returns the ID of the locus provided by dbSNP.
+     * 
+     * @return 
+     */
     public String getLocusID() {
         return locusID;
     }
     
+    /**
+     * Returns the full name of the locus of the SNP.
+     * 
+     * @return 
+     */
     public String getLocusFullName () {
         if (locusFullName == null) {
             parseResponse();
@@ -71,6 +98,11 @@ public class DbSNPentry {
         return locusFullName;        
     }
     
+    /**
+     * Returns the short name of the locus of the SNP.
+     * 
+     * @return 
+     */
     public String getLocus() {
         if (locus == null) {
             parseResponse();
@@ -78,6 +110,11 @@ public class DbSNPentry {
         return locus;
     }
     
+    /**
+     * Returns the URL of the entry.
+     * 
+     * @return 
+     */
     public String getEntryURL() {
         return "https://www.ncbi.nlm.nih.gov/snp/rs" + getSNPID();
     }
