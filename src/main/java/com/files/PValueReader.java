@@ -16,12 +16,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * 
+ * PValueReader reads the plain text file storing the p-values used for the regional plot and
+ * Manhattan plot, and parses its contents.
  *
  * @author Christoffer Hjeltnes Støle
  */
 public class PValueReader {
     
-    
+    /**
+     * 
+     * Read and parse the p-value data.
+     * 
+     * @return 
+     */
     public JsonObject read() {
         JsonObject chromosomes = Json.createObject();
         Constants constants = new Constants();

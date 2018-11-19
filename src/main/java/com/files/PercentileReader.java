@@ -28,6 +28,10 @@ import java.util.regex.Pattern;
 
 
 /**
+ * 
+ * PercentileReader reads the percentile data (without genotyping information)
+ * stored for the continuous variables.
+ * 
  *
  * @author Christoffer Hjeltnes Støle
  */
@@ -65,7 +69,12 @@ public class PercentileReader {
         sharedPath = sharedPath + "/../../../../server/data";
         
     }
-
+    
+    /**
+     * 
+     * Reads and parses non-conditional data.
+     * 
+     */
     public void readWholePopulation(){
         System.out.println("Reading whole-population summary statistics.");
         
@@ -126,8 +135,6 @@ public class PercentileReader {
                         nonLongitudinalData.get(phenotype).put("1", new ArrayList());
                         nonLongitudinalData.get(phenotype).put("2", new ArrayList());
                     }
-                    
-
                     nonLongitudinalData.get(phenotype).get(sex).add(Arrays.copyOfRange(splitLine, 2, splitLine.length));
                 }
                 
@@ -142,6 +149,14 @@ public class PercentileReader {
         }
     }    
     
+    /**
+     * 
+     * Returns a JSON object with non-conditional phenotype data.
+     * 
+     * @param phenotype
+     * @param sexAsText
+     * @return 
+     */
     public JsonObject getNonConditionalPhenotypeData(Variable phenotype, String sexAsText) {
         String sexAsNumber = textToNumberSexMap.get(sexAsText);
         if (longitudinalData == null) {
@@ -184,6 +199,16 @@ public class PercentileReader {
         return object;
     }
     
+    /**
+     * 
+     * Returns a JSON object with conditional phenotype data.
+     * 
+     * @param phenotype
+     * @param sexAsText
+     * @param conditionCategory
+     * @param condition
+     * @return 
+     */
     public JsonObject getConditionalPhenotypeData(Variable phenotype, String sexAsText, Variable conditionCategory, Alphanumerical condition) {
         String sexAsNumber = textToNumberSexMap.get(sexAsText);
         if (!conditionDataLists.containsKey(phenotype)) {
@@ -211,6 +236,15 @@ public class PercentileReader {
         return object;
     }
     
+    /**
+     * Parses longitudinal conditional data.
+     * 
+     * @param phenotype
+     * @param sex
+     * @param conditioncategory
+     * @param condition
+     * @return 
+     */
     private JsonObject extractLongitudinalConditionalData(Variable phenotype, String sex, Variable conditioncategory, Alphanumerical condition) {
         Map <String, Map <String, String>> dataMap = new HashMap();
         Set <String> percentileSet = new HashSet();
@@ -302,6 +336,16 @@ public class PercentileReader {
         object.put("sex", numberToTextSexMap.get(sex));
         return object;
     }
+    
+    /**
+     * Parses non-longitudinal conditional data.
+     * 
+     * @param phenotype
+     * @param sex
+     * @param conditioncategory
+     * @param condition
+     * @return 
+     */
     private JsonObject extractNonLongitudinalConditionalData(Variable phenotype, String sex, Variable conditioncategory, Alphanumerical condition) {
         JsonObject object = Json.createObject();
         
@@ -316,6 +360,12 @@ public class PercentileReader {
         return object;
     }
     
+    /**
+     * Prepares non-longitudinal data for plotting.
+     * 
+     * @param oldObject
+     * @return 
+     */
     private JsonObject convertNonLongitudinalDataToXYArrays (JsonObject oldObject) {
         //System.out.println("object: " + oldObject.toJson());
         JsonObject newObject = Json.createObject();
@@ -335,7 +385,12 @@ public class PercentileReader {
         return newObject;
     }
     
-    
+    /**
+     * Prepares longitudinal data for plotting.
+     * 
+     * @param oldObject
+     * @return 
+     */
     private JsonObject convertLongitudinalDataToXYArrays (JsonObject oldObject) {
         JsonObject newObject = Json.createObject();
 
@@ -353,6 +408,11 @@ public class PercentileReader {
         return newObject;
     }
     
+    /**
+     * Returns a list of the percentiles as strings.
+     * 
+     * @return 
+     */
     public List <String> getPercentileTextList() {
         List <String> list = new ArrayList();
         for (Alphanumerical percentile : getPercentiles()) {
@@ -361,6 +421,12 @@ public class PercentileReader {
         return list;
     }
     
+    /**
+     * 
+     * Returns a list of percentiles for which statistics were generated.
+     * 
+     * @return 
+     */
     public List <Alphanumerical> getPercentiles() {
         if (percentileList == null) {
             percentileList = new ArrayList();
@@ -380,7 +446,11 @@ public class PercentileReader {
         return percentileList;
     }
     
-    
+    /**
+     * Returns a set with all longitudinal phenotypes.
+     * 
+     * @return 
+     */
     public Set <String> getLongitudinalPhenotypes() {
         if (longitudinalData == null) {
             readWholePopulation();
@@ -388,6 +458,11 @@ public class PercentileReader {
         return longitudinalPhenotypes;
     }
     
+    /**
+     * Returns a set with all non-longitudinal phenotypes.
+     * 
+     * @return 
+     */
     public Set <String> getNonLongitudinalPhenotypes() {
         if (nonLongitudinalData == null) {
             readWholePopulation();
@@ -395,6 +470,11 @@ public class PercentileReader {
         return nonLongitudinalPhenotypes;
     }
     
+    /**
+     * Returns a set with all phenotypes, longitudinal and non-longitudinal.
+     * 
+     * @return 
+     */
     public Set <String> getPhenotypes() {
         Set <String> allPhenoypes = new HashSet();
         allPhenoypes.addAll(getLongitudinalPhenotypes());
@@ -402,6 +482,13 @@ public class PercentileReader {
         return allPhenoypes;
     }
     
+    /**
+     * 
+     * Returns a set with all condition categories.
+     * 
+     * @param phenotype
+     * @return 
+     */
     public Set <Variable> getConditionCategories(Variable phenotype) {
         if (!conditions.containsKey(phenotype)) {
             if (!conditionDataLists.containsKey(phenotype)) {
@@ -423,7 +510,13 @@ public class PercentileReader {
         }
         return conditions.get(phenotype).keySet();    
     }
-    
+    /**
+     * Returns a list with all condition values.
+     * 
+     * @param phenotype
+     * @param conditionCategory
+     * @return 
+     */
     public List <Alphanumerical> getConditions(Variable phenotype, Variable conditionCategory) {
         if (!conditions.containsKey(phenotype)) {
             PercentileReader.this.getConditionCategories(phenotype);
@@ -441,10 +534,14 @@ public class PercentileReader {
         }
         
         return conditions.get(phenotype).get(conditionCategory);
-        
-     
     }
     
+    /**
+     * Adds all lines of a file containing data on the given phenotype into an ArrayList object.
+     * 
+     * @param fileName
+     * @param phenotype 
+     */
     private void ScanFile(String fileName, Variable phenotype) {
         try {
             InputStream inputStream = new FileInputStream(sharedPath + "/summary_statistics/" + fileName);
@@ -473,7 +570,5 @@ public class PercentileReader {
         catch (IOException e) {
             System.out.println(e.getMessage());
         }
-    }
-    
-    
+    }    
 }
