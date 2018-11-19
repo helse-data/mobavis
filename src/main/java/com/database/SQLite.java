@@ -24,11 +24,13 @@ import org.sqlite.SQLiteConfig;
 
 /**
  * 
- * @author ChristofferHjeltnes
- *
+ * 
+ * Queries for the SQLite database system go through here.
+ * 
+ * 
+ * @author ChristofferHjeltnes *
  * 
  */
-
 public class SQLite {
     Constants constants = new Constants();
     //Connection connection;
@@ -66,6 +68,12 @@ public class SQLite {
         //System.out.println(tables.get("1").get(tables.get("1").size()-1));
     }
     
+    /**
+     * Returns a SNP object with MoBa data based on the SNPs rsID.
+     * 
+     * @param snpID
+     * @return 
+     */
     public SNPOld getSNP(String snpID) {        
         System.out.println("Fetching SNP \"" + snpID + "\" ...");
         
@@ -103,7 +111,15 @@ public class SQLite {
         return snp;
     }
     
-        
+    
+    /**
+     * 
+     * Queries a table of an SQLite database file.
+     * 
+     * @param database
+     * @param table
+     * @param snp 
+     */
     private void queryDatabaseTable(String database, String table, SNPOld snp) {
         ResultSet resultSet;
                 
@@ -163,15 +179,14 @@ public class SQLite {
         }
     }
     
-    // 20 000 bases per table:
-    // chr1_164700000_164720000
-    // chr9_128020000_128040000
-    
-    // last table:  chr1_249220000_249250621 || 249 250 621
-    // given table: chr1_249220000_249240000 || 249 240 000
-    
-    // not found: 22_16053352_C_T; given table chr22_16040000_16060000
-    // actual table: chr22_460000_480000
+    /**
+     * 
+     * Gets the table corresponding to the provided chromosome and position.
+     * 
+     * @param chromosome
+     * @param position
+     * @return 
+     */
     private String getTable(String chromosome, String position) {
         int tableLength = constants.getTableLength();
         int posInt = Integer.parseInt(position);
@@ -187,6 +202,13 @@ public class SQLite {
         return table;
     }
     
+    /**
+     * 
+     * Searches the index files for the given SNP ID.
+     * 
+     * @param SNPID
+     * @return 
+     */
     private String[] searchIndices(String SNPID) {
         Alphanumerical index = getIndex(SNPID);
         System.out.println("SNP " + SNPID + " should be found in index " + index + ".csv");
@@ -212,6 +234,12 @@ public class SQLite {
         return null;
     }
     
+    /**
+     * Retrieves the right index file from the given SNP from the master index.
+     * 
+     * @param SNPID
+     * @return 
+     */
     private Alphanumerical getIndex(String SNPID) {
         Alphanumerical ID = new Alphanumerical(SNPID, "<letters><integers>");
         for (int i = 1; i < masterIndex.size(); i++) {
@@ -226,6 +254,10 @@ public class SQLite {
         return masterIndex.get(masterIndex.size()-1);
     }
     
+    /**
+     * Parses the contents of the master index and loads the result
+     * into an ArrayList object.
+     */
     private void readMasterIndex() {
         try {
             System.out.println("Reading master index.");
@@ -246,7 +278,12 @@ public class SQLite {
         }
     }
 
-        
+    /**
+     * Returns a connection to an SQLite database.
+     * 
+     * @param database
+     * @return 
+     */
     private Connection connect(String database) {
         Connection connection;
         try {
@@ -264,6 +301,12 @@ public class SQLite {
         return null;
     }
     
+    /**
+     * 
+     * Disconnects from a database.
+     * 
+     * @param connection 
+     */    
     public void disconnect(Connection connection) {
         try {
             if (connection != null) {

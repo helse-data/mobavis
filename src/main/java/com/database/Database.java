@@ -29,7 +29,7 @@ import org.rocksdb.RocksDBException;
 /**
  * 
  * 
- * The main class the database system, requests for MoBa data on SNPS go through here.
+ * The main class the database system (using RocksDB), requests for MoBa data on SNPS go through here.
  * 
  * @author Christoffer Hjeltnes Støle 
  * 
