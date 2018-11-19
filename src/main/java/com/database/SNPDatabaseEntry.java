@@ -10,6 +10,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
+ * 
+ * SNPDatabaseEntry stores the data returned from the database system for a SNP.
+ * 
  *
  * @author Christoffer Hjeltnes Støle
  */
@@ -21,15 +24,11 @@ public class SNPDatabaseEntry {
     Map <String, String> numberToSexMap = constants.getNumberToTextSexMap();
     JsonObject dataObject;
     
-    
-//     public SNPDatabaseEntry() {
-//         
-//     }
-//    
-//    public SNPDatabaseEntry(Map <String, String> annotation) {
-//        this.annotation = annotation;
-//    }
-    
+    /**
+     * 
+     * @param rawDataString - the string returned from the database system
+     * @param annotation - the annotation for the SNP
+     */
     public SNPDatabaseEntry(String rawDataString, Map <String, String> annotation) {
         System.out.println("annotation: " + annotation);
         this.annotation = annotation;
@@ -42,6 +41,13 @@ public class SNPDatabaseEntry {
         }        
     }
     
+    /**
+     * 
+     * Parses the string returned from the database system and
+     * loads the result into a JsonObject object.
+     * 
+     * @param rawDataString 
+     */
     private void parseRawData(String rawDataString) {
         String [] lines = rawDataString.split("\n");
         
@@ -108,6 +114,12 @@ public class SNPDatabaseEntry {
         
     }
     
+    /**
+     * Query the JSON object storing data from the database system.
+     * 
+     * @param query - space-separated query
+     * @return 
+     */
     public Json queryData(String query) {
         if (dataObject == null) {
             return null;
@@ -117,27 +129,38 @@ public class SNPDatabaseEntry {
         //System.out.println(genotypes.get(args[0]).get(args[1]));
         return dataObject.getObject(args[0]).getObject(args[1]).getObject(args[2]).get(args[3]);
     }
-    
-    public  Map <String, String> getDatabaseSNPID () {
-        return annotation;
-    }
-    
-    public Optional <String> getChromosome() {
-        return Optional.ofNullable(chromosome);
-    }
-    public Optional <String> getPosition() {
-        return Optional.ofNullable(position);
-    }
-    
+       
+
+    /**
+     * Returns the JSON object storing data from the database system.
+     * 
+     * @return 
+     */    
     public JsonObject getDataObject() {
         return dataObject;
     }
+    /**
+     * Whether the database query returned data.
+     * 
+     * @return 
+     */
     public boolean hasData() {
         return dataObject != null;
     }
+    /**
+     * 
+     * Whether the SNP has annotation.
+     * 
+     * @return 
+     */
     public boolean hasAnnotation() {
         return annotation != null;
     }
+    /**
+     * Returns the annotation of the SNP.
+     * 
+     * @return 
+     */
     public Map <String, String> getAnnotation() {
         return annotation;
     }

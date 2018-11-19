@@ -94,7 +94,7 @@ public class AnnotationReader {
      * 
      * 
      * @param chromosome
-     * @param databaseSNPID
+     * @param databaseSNPID - rsID or unique internal identifier
      * @return 
      */
     public Map <String, String> getAnnotation(String chromosome, String databaseSNPID) {
