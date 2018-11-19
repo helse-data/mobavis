@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * 
+ * Table objects represent tables stored in memory-mapped files.
+ * 
  *
  * @author Christoffer Hjeltnes Støle
  */
@@ -20,6 +23,12 @@ public class Table {
     
     boolean stratifiedBySex;
     
+    /**
+     * 
+     * @param data
+     * @param labels
+     * @param stratifiedBySex - whether or not the data is stratified by sex
+     */
     public Table(int [] data, List <String> labels, boolean stratifiedBySex) {
         this.data = data;
         this.labels = labels;
@@ -43,32 +52,73 @@ public class Table {
             }
         }        
     }
-        
+    
+    /**
+     * Returns whether or not the data is stratified by sex.
+     * 
+     * @return 
+     */
     public boolean isStratifiedBySex() {
         return stratifiedBySex;
     }
+    /**
+     * Returns labels for the values of a phenotype.
+     * 
+     * @return 
+     */
     public List<String> getLabels() {
         return labels;
     }
+    /**
+     * Returns the data stored in the table.
+     * 
+     * @return 
+     */
     public int[] getData() {
         return data;
     }
     
+    /**
+     * Returns the data stored on females.
+     * 
+     * @return 
+     */
     public List <Integer> getFemaleValues () {
         return femaleValues;
     }
+    /**
+     * Returns the data stored on males.
+     * @return 
+     */
     public List <Integer> getMaleValues () {
         return maleValues;
     }
     
+    /**
+     * 
+     * Returns the labels for the values stored on females.
+     * 
+     * @return 
+     */
     public List <String> getFemaleLabels() {
         return femaleLabels;
     }
-
+    /**
+     * Returns the labels for the values stored on males.
+     * 
+     * @return 
+     */
     public List <String> getMaleLabels() {
         return maleLabels;
     }
     
+    /**
+     * 
+     * Returns the data for the given sex.
+     * 
+     * @param sex
+     * @return 
+     */
     public List <Integer> getData(String sex) {
         if (sex.equals("female")) {
             return getFemaleValues();
@@ -79,6 +129,13 @@ public class Table {
         return null;
     } 
     
+    /**
+     * 
+     * Returns the labels for the for the values stored on the given sex.
+     * 
+     * @param sex
+     * @return 
+     */
     public List <String> getLabels(String sex) {
         if (sex.equals("female")) {
             return getFemaleLabels();
@@ -87,6 +144,5 @@ public class Table {
             return getMaleLabels();
         }
         return null;
-    } 
-    
+    }    
 }

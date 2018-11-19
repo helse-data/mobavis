@@ -10,6 +10,8 @@ import no.uib.mobaextraction.api.PhenotypeSummaryProvider;
 
 /**
  *
+ * Extractor enables the extraction of data stored in the memory-mapped files.
+ * 
  * @author Christoffer Hjeltnes Støle
  */
 public class Extractor {
@@ -36,6 +38,11 @@ public class Extractor {
         }
     }
     
+    /**
+     * Returns the tables storing phenotype data.
+     * 
+     * @return 
+     */
     public String [] getTables() {        
         String[] phenoTables = phenotypeProvider.phenoNames;
 
@@ -45,7 +52,12 @@ public class Extractor {
     }
     
 
-    
+    /**
+     * Returns the data stored in table for a phenotype.
+     * 
+     * @param table
+     * @return 
+     */
     public int [] getTableData(String table) {        
         try {
             return phenotypeProvider.getPhenoTable(table);
@@ -55,10 +67,23 @@ public class Extractor {
         return null;
     }
     
+    /**
+     * 
+     * Returns the different levels for a phenotype.
+     * 
+     * @param tableName
+     * @return 
+     */
     public List <String> getTableLevels(String tableName) {
         return phenotypeProvider.getLevels(tableName);
     }
     
+    /**
+     * Returns labels for the values of a phenotype.
+     * 
+     * @param tableName
+     * @return 
+     */
     public List <String> getTableLabels(String tableName) {
         List <String> labels = new ArrayList();
         List <String> levels = getTableLevels(tableName);
@@ -89,8 +114,12 @@ public class Extractor {
         return labels;
     }
     
-    
-    
+    /**
+     * Returns the table storing data for a phenotype.
+     * 
+     * @param name
+     * @return 
+     */
     public Table getTable(String name) {        
         List <String> labels = new ArrayList();
         List <String> levels = getTableLevels(name);
