@@ -12,7 +12,7 @@ public interface MoBaVisualizationInterface {
     public AbstractComponent getComponent();
     public void resizePlots();
     /**
-     * Called when the visualization is used.
+     * Called when the visualization is displayed to the user.
      */
     public void handOver();
 }

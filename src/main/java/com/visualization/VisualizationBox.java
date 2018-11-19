@@ -28,8 +28,8 @@ import com.visualization.MoBaVisualizationInterface;
 
 /**
  * 
- * This class sets up the visualization part of the web application.
- * 
+ * This class sets up the visualization part of the web application;
+ * all visualization instance are handled here. 
  * 
  *
  * @author Christoffer Hjeltnes Støle
@@ -47,7 +47,6 @@ public class VisualizationBox {
     //Map <Integer, TabWrapper> genoTabWrappers = new HashMap();
     //Map <Integer, TabWrapper> summaryTabWrappers = new HashMap();
     
-    State state;
     ComboBox <String> SNPInput;
     
     TabSheet outerTabSheet;
@@ -56,11 +55,12 @@ public class VisualizationBox {
     
     String messageText;
     
+    /**
+     * 
+     * @param controller - the shared controller object for all visualization instances
+     */
     public VisualizationBox(Controller controller) {
         page.addStyleName("white");
-        
-        //state = new State(controller);
-        //state.getGenoState().setSNP(new SNP("rs13046557"));
         
         HorizontalLayout genoContainer = new HorizontalLayout();
         genoContainer.setSizeFull();
@@ -174,6 +174,11 @@ public class VisualizationBox {
         page.setSizeFull();
     }
     
+    /**
+     * Sets the current visualization in the tab sheet.
+     * 
+     * @param visualization 
+     */
     public void setVisualization(Visualization visualization) {
         System.out.println("Selecting tab: " + visualization);
         System.out.println("viewTabIndices.get(tab): " + viewTabIndices);        
@@ -185,13 +190,12 @@ public class VisualizationBox {
         else {
             summaryTabSheet.setSelectedTab(viewTabIndices.get(visualization).get("inner"));
         }
-        
     }
     
-    private MoBaVisualization getActiveVisualization() {
-        return null;//outerTabSheet.getSelectedTab();
-    }
-    
+    /**
+     * Catches when the user changes a tab to keep control of navigation.
+     * 
+     */
     private void changeTab() {
         int outerTabIndex = outerTabSheet.getTabPosition(outerTabSheet.getTab(outerTabSheet.getSelectedTab()));
         System.out.println("index of selected outer tab: " + outerTabIndex);
@@ -212,9 +216,6 @@ public class VisualizationBox {
         System.out.println("index of selected inner tab: " + innerTabIndex);
         
         TabWrapper tabWrapper = tabWrappers.get(outerTabIndex).get(innerTabIndex);
-        
-        
-        
 
         
         //TabWrapper tabWrapper = (TabWrapper) innerTabSheet.getTab(innerTabIndex).getComponent();
@@ -229,45 +230,12 @@ public class VisualizationBox {
         //tabSheet.setSelectedTab(outerTabIndex);
         
     }    
-//    private void changeGenoTab () {
-//        int tabIndex = genoTabSheet.getTabPosition(genoTabSheet.getTab(genoTabSheet.getSelectedTab()));
-//        System.out.println("index of selected genotab: " + tabIndex);
-//        
-//        TabWrapper tabWrapper = tabWrappers.get(tabIndex);
-//        
-//        //if (!genoTabLoaded.get(tabIndex)) {
-//        if (!tabWrapper.isLoaded()) {
-//            System.out.println("Loading genotab " + tabIndex + " for the first time.");
-//            //MoBaView view = instantiateMobaView(genoTabClasses.get(tabIndex));
-//            //genoTabSheet.addTab(view.getComponent(), tabIndex);
-//            //genoTabLoaded.put(tabIndex, true);
-//            tabWrapper.loadContents();
-//        }        
-        
-        //genoTabSheet.getTab(genoTabSheet.getSelectedTab()).setCaption("CAUGHT TAB");        
-//    }
     
-//     private void changeSummaryTab () {
-//        
-//        int tabIndex = summaryTabSheet.getTabPosition(summaryTabSheet.getTab(summaryTabSheet.getSelectedTab()));
-//        System.out.println("index of selected summary tab: " + tabIndex);
-//        
-//        TabWrapper tabWrapper = summaryTabWrappers.get(tabIndex);
-//        
-//         System.out.println("summary tab is attached: " + summaryTabSheet.getSelectedTab().isAttached());
-//        
-//        //if (!genoTabLoaded.get(tabIndex)) {
-//        if (!tabWrapper.isLoaded() && summaryTabSheet.getSelectedTab().isAttached()) {
-//            System.out.println("Loading summary tab " + tabIndex + " for the first time.");
-//            tabWrapper.loadContents();
-//        }
-//         
-//    }
-     
-//    public Map <Visualization, Map<String, Integer>> getViewTabIndices() {
-//        return viewTabIndices;
-//    }
-    
+    /**
+     * Returns the root component of the visualization box.
+     * 
+     * @return 
+     */
     public Component getComponent() {
         return page;
     }

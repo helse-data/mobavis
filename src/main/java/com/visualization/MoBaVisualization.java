@@ -14,9 +14,18 @@ import com.main.Controller;
 public abstract class MoBaVisualization implements MoBaVisualizationInterface {
     Controller controller;
     
+    /**
+     * 
+     * @param controller - the shared controller object for all visualization instances
+     */
     public MoBaVisualization(Controller controller) {
         this.controller = controller;        
     };
+    
+    /**
+     * Returns the controller object.
+     * @return 
+     */
     public Controller getController() {
         return controller;
     }
