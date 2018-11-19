@@ -29,7 +29,7 @@ import org.rocksdb.RocksDBException;
 /**
  * 
  * 
- * The main class the database system, requests for SNP data go through here.
+ * The main class the database system, requests for MoBa data on SNPS go through here.
  * 
  * @author Christoffer Hjeltnes Støle 
  * 
@@ -80,7 +80,12 @@ public class Database {
         return null;
     }
     
-    // https://www.ncbi.nlm.nih.gov/books/NBK44417/#Content.what_is_a_reference_snp_or__rs_i
+    /**
+     * Returns a SNP object with MoBa data based on the SNPs rsID.
+     * 
+     * @param rsID - the rsID of the SNP
+     * @return 
+     */
     public VerifiedSNP getSNP(String rsID) {
         System.out.println("Fetching SNP \"" + rsID + "\" ...");
         if (requestedSNPs.containsKey(rsID)) { // don't query the database system more than necessary
@@ -106,7 +111,15 @@ public class Database {
         
     }
     
-    public VerifiedSNP getSNP(String chromosome, String position) {   // TODO: implement
+    /**
+     * 
+     * Returns a SNP object with MoBa data based on the SNPs chromosome and position.
+     * 
+     * @param chromosome
+     * @param position
+     * @return 
+     */    
+    public VerifiedSNP getSNP(String chromosome, String position) {
         System.out.println("Fetching SNP on chromosome " + chromosome + " at position " + position + " ...");
         
         Map <String, String> result = getNearestSNPs(chromosome, Integer.parseInt(position));
@@ -128,7 +141,18 @@ public class Database {
         //return null;
     }
     
-    // of the form 21_9411298_G_A
+    
+    /**
+     * 
+     * Returns a SNP object with MoBa data based on the SNPs chromosome, position,
+     * reference allele and alternative allele.
+     * 
+     * @param chromosome
+     * @param position
+     * @param ref - reference allele
+     * @param alt - alternative alele
+     * @return 
+     */
     public VerifiedSNP getSNP(String chromosome, String position, String ref, String alt) {   
         String databaseSNPID = chromosome + "_" + position + "_" + ref + "_" + alt;
         if (requestedSNPs.containsKey(databaseSNPID)) { // don't query the database system more than necessary
@@ -145,15 +169,20 @@ public class Database {
     
     /**
      * 
+     * If a SNP is located at the provided position, the ID of the SNP is returned.
+     * Otherwise, the ID of the neareast SNP before or after the proved position is returned.
+     * 
      * @param chromosome - chromosome to search on
-     * @param position - position
-     * @return Map with mandatory key "result" and optional keys
+     * @param position - position to match
+     * @return HashMap with mandatory key "result" and optional keys
  "-1" - closest VerifiedSNP before before the position
  "0" - exact match
  "1" - closest VerifiedSNP after the position
+ * 
+ * The returned SNP ID is paired with the relevant key above.
      */
     public Map <String, String> getNearestSNPs(String chromosome, int position) {
-        int maxNumber = 5;
+        //int maxNumber = 5;
         
         Map <String, String> result = new HashMap();
         
@@ -163,7 +192,7 @@ public class Database {
         File file = new File(fileName);
         Long fileSize = file.length(); // get size of annotation file in bytes
         int bytesPerLine = 9621220/531277; // calculated for chr 21
-        Long offset = fileSize/bytesPerLine;
+        //Long offset = fileSize/bytesPerLine;
                 
         try (InputStream inputStream = new FileInputStream(fileName);
                 InputStream gzipStream = new GZIPInputStream(inputStream);) {
@@ -225,6 +254,14 @@ public class Database {
         return result;
     }
     
+    /**
+     * 
+     * Returns a SNPDatabaseEntry entry  based on provided ID of the SNP. Chromosome is required.
+     * 
+     * @param chromosome
+     * @param databaseSNPID - rsID or unique internal identifier
+     * @return 
+     */
     private SNPDatabaseEntry getEntry(String chromosome, String databaseSNPID) {
         String snpData = null;
         Options options = new Options().setCreateIfMissing(false);
@@ -245,6 +282,14 @@ public class Database {
         SNPDatabaseEntry databaseEntry = new SNPDatabaseEntry(snpData, annotation);
         return databaseEntry;
     }
+    /**
+     * 
+     * Searches the index files for the given SNP ID and returns the columns of the index entry
+     * as array elements, if found.
+     * 
+     * @param SNPID - rsID or unique internal identifier
+     * @return 
+     */
     
     private String[] searchIndices(String SNPID) {
         Alphanumerical index = getIndex(SNPID);
@@ -271,6 +316,12 @@ public class Database {
         return null;
     }
     
+    /**
+     * Retrieves the right index file from the given SNP from the master index.
+     * 
+     * @param SNPID - rsID or unique internal identifier
+     * @return 
+     */
     private Alphanumerical getIndex(String SNPID) {
         Alphanumerical ID = new Alphanumerical(SNPID, "<letters><integers>");
         for (int i = 1; i < masterIndex.size(); i++) {
@@ -285,6 +336,10 @@ public class Database {
         return masterIndex.get(masterIndex.size()-1);
     }
     
+    /**
+     * Parses the contents of the master index and loads the result
+     * into an ArrayList object.
+     */
     private void readMasterIndex() {
         try {
             System.out.println("Reading master index.");
