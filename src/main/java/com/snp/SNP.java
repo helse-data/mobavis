@@ -7,8 +7,23 @@ package com.snp;
  * 
  * @author Christoffer Hjeltnes Støle
  */
-public interface SNP {    
+public interface SNP {
+    /**
+     * Returns the input ID.
+     * 
+     * @return 
+     */
     public String getID();
+    /**
+     * Returns the provided chromosome.
+     * 
+     * @return 
+     */
     public String getChromosome();
+    /**
+     * Returns the input position.
+     * 
+     * @return 
+     */
     public String getPosition();    
 }

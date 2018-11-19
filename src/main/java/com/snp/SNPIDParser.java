@@ -1,11 +1,9 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.snp;
 
 /**
+ * 
+ * SNPIDParser parses the input string to identify a SNP,
+ * such as rsID or chromosome and position.
  *
  * @author Christoffer Hjeltnes Støle
  */
@@ -17,6 +15,10 @@ public class SNPIDParser {
     String ref;
     String alt;
     
+    /**
+     * The formats recognized.
+     * 
+     */
     public enum SNPIDFormat {
         RSID("rs ID"), // https://www.ncbi.nlm.nih.gov/books/NBK44417/#Content.what_is_a_reference_snp_or__rs_i
         CHROMOSOME_POSITION("chromosome:position"),
@@ -35,6 +37,10 @@ public class SNPIDParser {
         }
     }
     
+    /**
+     * 
+     * @param ID - the input to parse
+     */
     public SNPIDParser(String ID) {
         if (ID.matches("^rs\\d+")) {
             IDFormat = SNPIDFormat.RSID;
@@ -65,23 +71,53 @@ public class SNPIDParser {
             System.out.println("Unknown ID format.");
         }        
     }
+    /**
+     * Returns the ID format.
+     * 
+     * @return 
+     */
     public SNPIDFormat getIDFormat() {
         return IDFormat;
     }
+    /**
+     * Returns the rsID.
+     * 
+     * @return 
+     */
     public String getRsID() {
         return rsID;
     }
-        public String getChromosome() {
+    /** 
+     * Returns the chromosome.
+     * 
+     * @return 
+     */
+    public String getChromosome() {
         return chromosome;
     }
 
+    /**
+     * Returns the position.
+     * 
+     * @return 
+     */
     public String getPosition() {
         return position;
     }
+    /**
+     * Returns the reference allele.
+     * 
+     * @return 
+     */
     public String getRef() {
         return ref;
     }
 
+    /**
+     * Returns the alternative allele.
+     * 
+     * @return 
+     */
     public String getAlt() {
         return alt;
     }
