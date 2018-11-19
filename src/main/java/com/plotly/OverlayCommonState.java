@@ -2,6 +2,13 @@ package com.plotly;
 
 import elemental.json.JsonObject;
 
+/**
+ * 
+ * State class for the plot that allows the user to overlay data.
+ * 
+ * @author Christoffer Hjeltnes Støle
+ * 
+ */
 public class OverlayCommonState extends PlotlyJsState {
     
     private JsonObject percentileData;

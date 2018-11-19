@@ -8,6 +8,8 @@ import java.util.ArrayList;
 
 /**
  *
+ * Implements a Vaadin component for a Manhattan plot.
+ * 
  * @author Christoffer Hjeltnes Støle
  */
 
@@ -16,11 +18,19 @@ import java.util.ArrayList;
 })
 public class ManhattanPlot extends PlotlyJs {
 
+    /**
+     * Enables listening for clicked SNPs.
+     */
     public interface ValueChangeListener extends Serializable {
         void valueChange();
     }
     ArrayList <ValueChangeListener> listeners =
             new ArrayList();
+    /**
+     * Adds a listener for clicked SNPs.
+     * 
+     * @param listener 
+     */
     public void addValueChangeListener(
                    ValueChangeListener listener) {
         listeners.add(listener);
@@ -40,6 +50,11 @@ public class ManhattanPlot extends PlotlyJs {
         });
     }
     
+    /**
+     * Returns the clicked SNP.
+     * 
+     * @return 
+     */
     public String getClickedSNP() {
         return getState().getClickedSNP();
     }

@@ -4,13 +4,18 @@ import com.vaadin.shared.ui.JavaScriptComponentState;
 import elemental.json.JsonArray;
 import elemental.json.JsonObject;
 
+/**
+ * State class for LocusZoom.js.
+ * 
+ * @author Christoffer Hjeltnes Støle
+ */
 public class LocusZoomState extends JavaScriptComponentState {
     private JsonObject region;
     private String clickedSNP;
 
     /**
      * 
-     * Get the SNP that was clicked.
+     * Returns the SNP that was clicked.
      * 
      * @return 
      */

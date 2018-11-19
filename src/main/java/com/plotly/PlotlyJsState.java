@@ -5,6 +5,11 @@ import elemental.json.Json;
 import elemental.json.JsonObject;
 import java.util.Map;
 
+/**
+ * State class for plotly.js plots.
+ * 
+ * @author Christoffer Hjeltnes Støle
+ */
 public class PlotlyJsState extends JavaScriptComponentState {
     private JsonObject data;
     private JsonObject options;

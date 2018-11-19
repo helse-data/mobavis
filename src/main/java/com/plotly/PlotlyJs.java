@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * 
+ * Implements a Vaadin component for plotly.js plots.
  *
  * @author Christoffer Hjeltnes Støle
  */
@@ -22,6 +24,10 @@ public class PlotlyJs extends AbstractJavaScriptComponent {
     boolean initialBooleanVersion = false;
     Map <String, Boolean> booleanVersionsMap = new HashMap();
     
+   /**
+    * 
+    * @param setup - setup data
+    */
    public PlotlyJs(JsonObject setup) {
        if (setup != null) {
            getState().setSetup(setup);
@@ -36,33 +42,47 @@ public class PlotlyJs extends AbstractJavaScriptComponent {
        this(null);   
    }
    
-//   @Override
-//   public void setWidth(float width, Unit unit) {
-//       System.out.println("setWidth() called");
-//       System.out.println("width: " + width + ", unit: " + unit);
-//   }
-   
+
+   /**
+    * Sets the setup data in the state object.
+    * 
+    * @param setupData 
+    */
     public void setUp(JsonObject setupData) {
          getState().setSetupData(setupData);
     }
    
+    /**
+     * Returns the setup data stored in the state object.
+     * 
+     * @return 
+     */
     public JsonObject getSetupData() {
          return getState().getSetupData();
     }
    
+    /**
+     * Sets the data to plot in the state object.
+     * 
+     * @param data 
+     */
     public void sendData(JsonObject data) {
         version(data, "data");
         getState().setData(data);
     }
+    /**
+     * Sets the  options for the plot in the state object.
+     * 
+     * @param data 
+     */
     public void sendOptions(JsonObject options) {
         version(options, "options");
         getState().setOptions(options);
     }
-    public void sendData(Map data) {
-         getState().setMapData(data);
-    }
     
-
+    /**
+     * Request a resizing of the plot.
+     */
     public void resize() {
         JsonObject resizeDummyObject = Json.createObject();
         version(resizeDummyObject, "resize");
@@ -73,15 +93,6 @@ public class PlotlyJs extends AbstractJavaScriptComponent {
     public JsonObject getData() {
         return getState().getData();
     }
-   
-   public boolean allNull(List list) {
-       for (Object element : list) {
-           if (element != null) {
-               return false;
-           }
-       }
-       return true;
-   }
     
     @Override
     public PlotlyJsState getState() {

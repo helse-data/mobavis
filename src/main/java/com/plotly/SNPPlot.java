@@ -1,11 +1,14 @@
-// TODO: AA CI acts strangely on show/hide
-// TODO: control clicks on legends
-
 package com.plotly;
 
 import com.vaadin.annotations.JavaScript;
 import elemental.json.JsonObject;
 
+/**
+ * Implements a Vaadin component for the 2D version of the plots
+ * stratifying phenotypes by genotype.
+ * 
+ * @author Christoffer Hjeltnes Støle
+ */
 //@JavaScript({"vaadin://plotly/SNPPlot.js"})
 @JavaScript({
     "vaadin://plotly/SNPPlot.js",
@@ -16,43 +19,46 @@ public class SNPPlot extends PlotlyJs {
     boolean booleanShowStatusVersion;
     boolean booleanActivePlotVersion;
    
-   public SNPPlot(JsonObject setup) {
-       super(setup);
-   }
+    /**
+     * 
+     * @param setup - setup data
+     */
+    public SNPPlot(JsonObject setup) {
+        super(setup);
+    }
     
-   public SNPPlot() {
-       this(null);
-   }    
-
+    public SNPPlot() {
+        this(null);
+    }    
+   
     @Override
     public void sendData(JsonObject data) {
         data.put("boolean version", booleanDataVersion);
         booleanDataVersion = !booleanDataVersion;
         getState().setData(data);
     }
-    
+
     @Override
     public JsonObject getData() {
         return getState().getData();
     }
     
+    /**
+     * Sets the options for the plot in the state object.
+     * 
+     * @param showStatus 
+     */
     public void sendPlotOptions(JsonObject showStatus) {
         showStatus.put("boolean version", booleanShowStatusVersion);
         booleanShowStatusVersion = !booleanShowStatusVersion;
         getState().setPlotOptions(showStatus);       
     }
     
+    /**
+     * Returns the plot options stored in the state object.
+     * @return 
+     */
     public JsonObject getPlotOptions() {
-        return getState().getPlotOptions();       
-    }
-    
-    public void setActivePlot(JsonObject activePlot) {
-        activePlot.put("boolean version", booleanActivePlotVersion);
-        booleanActivePlotVersion = !booleanActivePlotVersion;
-        getState().setActivePlot(activePlot);       
-    }
-    
-    public JsonObject getActivePlot() {
         return getState().getPlotOptions();       
     }
     
@@ -60,7 +66,5 @@ public class SNPPlot extends PlotlyJs {
     public SNPPlotState getState() {
         return (SNPPlotState) super.getState();
     }
-    
-    
     
 }

@@ -4,6 +4,8 @@ import com.vaadin.annotations.JavaScript;
 import elemental.json.Json;
 
 /**
+ * 
+ * Implements a Vaadin component for a plot visualizing non-longitudinal percentile data.
  *
  * @author Christoffer Hjeltnes Støle
  */
