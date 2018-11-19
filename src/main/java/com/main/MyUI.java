@@ -1,6 +1,6 @@
 package com.main;
 
-import com.demo.temp.DemoCoverPage;
+import com.demo.DemoCoverPage;
 import com.main.Controller.ContentType;
 import com.main.Controller.Visualization;
 import javax.servlet.annotation.WebServlet;
