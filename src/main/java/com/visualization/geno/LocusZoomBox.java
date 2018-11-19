@@ -26,8 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 
- * This class is the container for the locus zoom plot and its interface.
+ * Class for the visualization instance for the regional plot (locus zoom plot).
  *
  * @author Christoffer Hjeltnes Støle
  */

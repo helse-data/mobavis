@@ -35,8 +35,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * 
- * This class is the container for the Manhattan plot and its interface.
+ * Class for the visualization instance for the Manhattan plot.
  *
  * @author Christoffer Hjeltnes Støle
  */

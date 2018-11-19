@@ -32,6 +32,8 @@ import com.visualization.MoBaVisualizationInterface;
 
 /**
  *
+ * Class for the visualization instance for the SNP statistics.
+ * 
  * @author ChristofferHjeltnes
  */
 public class SNPStatisticsBox extends GenoView {

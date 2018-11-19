@@ -58,8 +58,7 @@ import java.util.Set;
 import com.visualization.MoBaVisualizationInterface;
 
 /**
- * This class is the container for the phenotype plots stratified by genotype 
- * and their interface.
+ * Class for the visualization instance for the phenotype plots stratified by genotype.
  *
  * @author Christoffer Hjeltnes Støle
  */

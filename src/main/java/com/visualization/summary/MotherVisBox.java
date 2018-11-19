@@ -23,7 +23,9 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- *
+ * Class for the visualization instance for 
+ * the phenotype summary statistics (discrete variables).
+ * 
  * @author Christoffer Hjeltnes Støle
  */
 public class MotherVisBox extends MoBaVisualization {

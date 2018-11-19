@@ -56,8 +56,8 @@ import com.visualization.MoBaVisualizationInterface;
 
 /**
  *
- * This class is the container for the phenotype summary statistics plots
- * and their interface.
+ * Class for the visualization instance for 
+ * the phenotype summary statistics (continuous variables)
  * 
  * @author Christoffer Hjeltnes Støle
  */
