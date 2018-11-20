@@ -1,5 +1,6 @@
 This is a prototype web application for the visualization of summary statistics from the Norwegian Mother and Child Cohort Study (MoBa).
 
+Auxiliary code is available at [mobavis-utils](https://github.com/helse-data/mobavis-utils).
 
 # Normal order of code execution
 
