@@ -67,9 +67,7 @@ public class SNPPlotBox extends GenoView {
     
     JsonObject dataObject;
     JsonHelper jsonHelper = new JsonHelper();    
-    //JsonObject plotOptionsObject;
-        
-    //GridLayout box = new GridLayout(100, 100);
+
     VerticalLayout box = new VerticalLayout();
     HorizontalLayout middleBox = new HorizontalLayout();
     HorizontalLayout plotBox = new HorizontalLayout();
@@ -77,9 +75,7 @@ public class SNPPlotBox extends GenoView {
     SNPPlot femaleChart;
     SNPPlot maleChart;
     PlotDataWindow plotDataWindow = new PlotDataWindow();
-    //GridLayout rightGrid = new GridLayout(10, 10);
     VerticalLayout rightBox = new VerticalLayout();
-    //VerticalLayout showOptionsSelectorBox = new VerticalLayout();
     Button morePlotOptionsButton = new Button("More options");
     Window morePlotOptionsWindow;
     HorizontalLayout topBox = new HorizontalLayout();
@@ -95,7 +91,6 @@ public class SNPPlotBox extends GenoView {
     List <String> phenotypeOptions = new ArrayList();
     
     String currentPhenotype;
-    //VerifiedSNP currentSNP;
     
     List <String> SNPOptions;
     
@@ -125,16 +120,12 @@ public class SNPPlotBox extends GenoView {
     
     public SNPPlotBox(Controller controller) {
         super(controller);
-        // phenotype selector
-        //box.addComponent(getController().getSNPInputField());
         phenotypeOptions.addAll(Arrays.asList(new String[]{
             "height", "weight", "BMI"}));
-        //phenotypeSelector = new NativeSelect("Phenotype");
         phenotypeSelector = new NativeSelect();
         phenotypeSelector.setItems(phenotypeOptions);        
         phenotypeSelector.addValueChangeListener(event -> selectPhenotype(String.valueOf(
                 event.getValue())));  
-        //phenotypeSelector.setIcon(VaadinIcons.CLIPBOARD_PULSE);
         phenotypeSelector.setEmptySelectionAllowed(false);
         
         CaptionLeft phenotypeSelectorComponent = new CaptionLeft("Phenotype", phenotypeSelector, VaadinIcons.CLIPBOARD_PULSE);
@@ -145,8 +136,7 @@ public class SNPPlotBox extends GenoView {
         Button viewPlotDataButton = new Button("View plot data");
         viewPlotDataButton.addClickListener(event -> viewPlotData());
 
-        // plot options      
-        
+        // plot options        
         Option <String> ageSpacing = new Option("age spacing", "age spacing", "to scale");
         Option <Boolean> yaxisToZero = new Option("y to zero", "y-axis to zero", false);
         
@@ -157,9 +147,6 @@ public class SNPPlotBox extends GenoView {
             showOptions.put(showOption, showOption.getDefaultValue());
         }
         
-        //for (Option <Boolean> showOption : showOptionList) {
-        ///    booleanOptions.put(showOption.getName(), showOption);
-        //}
         booleanOptions.put(yaxisToZero.getName(), yaxisToZero);
         
         stringOptions.put(ageSpacing.getName(), ageSpacing);
@@ -174,16 +161,8 @@ public class SNPPlotBox extends GenoView {
         femaleChart = new SNPPlot(setup);
         maleChart = new SNPPlot(setup);
         
-        //femalePlotBox.addComponents(femaleChart, numberPlotFemale);
-        //malePlotBox.addComponents(maleChart, numberPlotMale);
-        //plotBox.addComponents(femalePlotBox, malePlotBox);
         plotBox.addComponents(femaleChart, maleChart);
         
-//        int n10 = (int) ((box.getColumns()-1)*0.1);        
-//        int plotStartY = 7;
-//        box.addComponent(topBox, 1, 0, 70, plotStartY-1);
-//        box.addComponent(plotBox, 1, plotStartY, 82, 99);
-//        box.addComponent(rightGrid, 83, plotStartY+1, 99, 99); 
 
         box.addComponent(topBox);
         box.setExpandRatio(topBox, 1);
@@ -195,9 +174,7 @@ public class SNPPlotBox extends GenoView {
         
         box.addComponent(middleBox);
         box.setExpandRatio(middleBox, 10);
-        
-        // default VerifiedSNP input
-        
+               
         SNPInput = new ComboBox("SNP");
         SNPInput.addFocusListener(event -> clearSNPInput(true));
         SNPInput.addBlurListener(event -> clearSNPInput(false));
@@ -213,9 +190,7 @@ public class SNPPlotBox extends GenoView {
                         
         //}
         
-        // rs72970193 (good spread between genotypes)
-        // rs17649232 (female below, male above)
-        // rs16861872 (male below, female above)
+
         SNPInput.setItems(SNPOptions);        
         SNPInput.addValueChangeListener(event -> snpInputEntered(event));
         //SNPInput.addValueChangeListener(event -> controller.SNPIDinputChanged()); 03.11
@@ -282,7 +257,10 @@ public class SNPPlotBox extends GenoView {
         //phenotypeSelector.setSizeFull();
     }
     
-    // enumerator of the show options; includes the default value for each option
+    /**
+     * Enumerator of the show options; includes the default value for each option.
+     * 
+     */
     public enum ShowOption {
         MEDIANS("medians", "medians", true),
         SEM("SEM", "SEM", true),
@@ -314,6 +292,12 @@ public class SNPPlotBox extends GenoView {
         }
     }
        
+    
+    /**
+     * 
+     * @param snp
+     * @param phenotype 
+     */
     public void setDatasets(VerifiedSNP snp, String phenotype) {
         int overallMaxN = 0;
         double overallMaxSEM = 0;
