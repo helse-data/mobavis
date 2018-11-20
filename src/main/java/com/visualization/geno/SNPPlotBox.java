@@ -444,6 +444,11 @@ public class SNPPlotBox extends GenoView {
         }
     }
     
+    /**
+     * Invokes the database system to search for the input string.
+     * 
+     * @param searchString 
+     */
     private void searchSNP(String searchString) {
         SNP currentSNP = getController().getActiveSNP();
         
