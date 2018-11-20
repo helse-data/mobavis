@@ -294,8 +294,9 @@ public class SNPPlotBox extends GenoView {
        
     
     /**
+     * Makes the data retrieved from the database system take effect.
      * 
-     * @param snp
+     * @param snp - VerifiedSNP object with data from the database system
      * @param phenotype 
      */
     public void setDatasets(VerifiedSNP snp, String phenotype) {
@@ -645,7 +646,7 @@ public class SNPPlotBox extends GenoView {
                 SNPinformationString += "<br><br>" + html.bold("No phenotype data could be found.");
                 plotReplacingMessageText = "No phenotype data could be found for the SNP " + html.italics(verifiedCurrentSNP.getID()) + ".";
                 plotReplacingMessage = new Label(html.bold(plotReplacingMessageText), ContentMode.HTML);
-                replacePlotWithMessage(plotReplacingMessage);
+                replacePlotsWithMessage(plotReplacingMessage);
   
                 SNPInformation = new Label(SNPinformationString, ContentMode.HTML);
 
@@ -684,12 +685,18 @@ public class SNPPlotBox extends GenoView {
                 }
             }
             plotReplacingMessage = new Label(html.bold(plotReplacingMessageText), ContentMode.HTML);
-            replacePlotWithMessage(plotReplacingMessage);    
+            replacePlotsWithMessage(plotReplacingMessage);    
         }
         snpUpdateInProgress = false;
     }
     
-    private void replacePlotWithMessage(Label message) {
+    /**
+     * 
+     * Replaces the plots with a message, e.g. when a SNP was not found.
+     * 
+     * @param message 
+     */
+    private void replacePlotsWithMessage(Label message) {
         message.setSizeFull();
         plotBox.removeAllComponents();
         rightBox.removeComponent(showOptionsSelector);        
@@ -701,6 +708,11 @@ public class SNPPlotBox extends GenoView {
         
     }
     
+    /**
+     * Adds a SNP to the drop-down list.
+     * 
+     * @param option 
+     */
     private void addSNP(String option) {
         //System.out.println(option);
         //System.out.println(currentSNP == null);
@@ -730,6 +742,12 @@ public class SNPPlotBox extends GenoView {
         }      
     }
     
+    
+    /**
+     * Responds to a phenotype selection by the user.
+     * 
+     * @param option 
+     */
     private void selectPhenotype(String option) {
         if (option.equals("null") || option.equals(currentPhenotype)){
             return;
@@ -740,7 +758,12 @@ public class SNPPlotBox extends GenoView {
     }
     
     
-    
+    /**
+     * 
+     * Responds to the user changing the plot settings.
+     * 
+     * @param event 
+     */
     private void changeShowSettings(SelectionEvent event) {
         //System.out.println("Show settings shanged");
         
@@ -787,6 +810,11 @@ public class SNPPlotBox extends GenoView {
         previousShowOptions = showOptionsSelector.getValue();
     }
 
+    /**
+     * Returns the current plot options.
+     * 
+     * @return 
+     */
     public JsonObject getPlotOptions() {
         JsonObject plotOptionsObject = Json.createObject(); // create a new object each time
         for (ShowOption showOption : ShowOption.values()) {
@@ -802,7 +830,12 @@ public class SNPPlotBox extends GenoView {
         }
         return plotOptionsObject;
     }
-        
+    
+    /**
+     * 
+     * Sends the current plot options towards the JavaScript code.
+     * 
+     */
     public void sendPlotOptions() {
         JsonObject plotOptions = getPlotOptions();
         //System.out.println("plotOptionsObject: " + plotOptionsObject.toJson());
@@ -866,6 +899,10 @@ public class SNPPlotBox extends GenoView {
         toggleWindowVisibility(locusZoomWindow);
     }
     
+    /**
+     * Opens the window for the LiteMol visualization.
+     * 
+     */
     private void openLiteMolWindow() {
         SNP currentSNP = getController().getActiveSNP();
         if (currentSNP == null) {
