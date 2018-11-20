@@ -4,11 +4,10 @@
  *
  */
 
-
 var i = 0; // div IDs for separate plots must be different, this number is passed on to plotlyPlot for this purpose
 
 /** 
- * Connector function for the SNP plot
+ * Connector function for the plot stratifying phenotype by genotype.
  */
 window.com_plotly_SNPPlot =
         
@@ -80,7 +79,9 @@ window.com_plotly_SNPPlot =
             };
 	};
         
-
+/** 
+ * Connector function for the plot that allows the user to overlay data.
+ */
 function OverlayCommon(plotObject) {    
     this.plotObject = plotObject;
     
@@ -152,25 +153,8 @@ function OverlayCommon(plotObject) {
     };
 };
 
-window.com_plotly_ParameterisedPlot =               
-	function() {            
-            i = i + 1;
-            
-            var parameterisedPlotComponent =
-                    new parameterisedPlot.Component(this.getElement(), i);
-            
-            var dataManager = new OverlayCommon(parameterisedPlotComponent);
-            
-            this.onStateChange = function() {
-                var percentileData = this.getState().percentileData;
-                var userData = this.getState().userData;
-                var showStatus = this.getState().showStatus;
-                dataManager.manageData(null, percentileData, userData, showStatus);
-            };
-        };
-
 /** 
- * Connector function for the whole-population summary plot
+ * Connector function for the plot that allows the user to overlay data.
  */
 window.com_plotly_OverlayPlot =            
 	function() {           
@@ -196,7 +180,7 @@ window.com_plotly_OverlayPlot =
         };
 
 /** 
- * Connector function for bar charts
+ * Connector function for the bar chart.
  */
 window.com_plotly_BarPlot =               
 	function() {            
@@ -239,29 +223,11 @@ window.com_plotly_BarPlot =
             };
         };
         
-/** 
- * Connector function for scatter plots
- */
-window.com_plotly_ScatterPlot =               
-	function() {            
-            i = i + 1;
-            
-            var scatterPlotComponent = null;
-
-            this.onStateChange = function() {
-                var setupData = this.getState().setupData;
-                var data = this.getState().data;
-                //console.log('Data provided:' + JSON.stringify(data));
-                if (setupData != null && scatterPlotComponent == null) {
-                    scatterPlotComponent = new scatterPlot.Component(this.getElement(), i, setupData);
-                };
-                if (scatterPlotComponent != null && data != null) {
-                    console.log('New data provided');//:' + JSON.stringify(data));
-                    scatterPlotComponent.setData(data);
-                };
-            };
-        };
-        
+/**
+ * 
+ * Connector function for the plot visualizing non-longitudinal percentile data.
+ * 
+ */        
 window.com_plotly_NonLongitudinalPercentiles =               
 	function() {            
             i = i + 1;
@@ -281,7 +247,12 @@ window.com_plotly_NonLongitudinalPercentiles =
                 };
             };
         };
-        
+/**
+ * 
+ * Connector function for for the 3D version of the plots
+ * stratifying phenotype by genotype.
+ * 
+ */        
 window.com_plotly_SNP3DPlot =               
 	function() {            
             i = i + 1;
@@ -301,6 +272,10 @@ window.com_plotly_SNP3DPlot =
                 //};
             };
         };
+/**
+ * Connector function for the Manhattan plot.
+ * 
+ */
 window.com_plotly_ManhattanPlot =               
 	function() {            
             i = i + 1;
@@ -344,7 +319,7 @@ window.com_plotly_ManhattanPlot =
         };
         
 /**
- * Constructor for an object to manage the versions of incoming data.
+ * Constructor for an object that manages the versions of incoming data.
  * 
  * @param {type} connectorObject
  * @param {type} variables
