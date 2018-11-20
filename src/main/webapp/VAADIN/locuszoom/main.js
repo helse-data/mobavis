@@ -1,7 +1,8 @@
 /*
+ * This file contains code by University of Michigan Center for Statistical Genetics. Copyright (c) 2017.
  * 
- * Sets up a LocusZoom.js plot.
- * 
+ * Sets up a LocusZoom.js plot. 
+ *  
  */
 
 var main = main || {};
@@ -19,8 +20,8 @@ main.Component = function (element, connector) {
     element.innerHTML = '<div id="' + divID + '" data-region="10:114550452-115067678" class="lz-container-responsive" style="width: 83vw; height: 30h; min-width: 400px; min-height: 400px;">';
     
     
-    // Beginning of code by University of Michigan Center for Statistical Genetics copyright (c) 2017
-    // Code used to help set up functional example of LocusZoom.js.
+    // Beginning of code by University of Michigan Center for Statistical Genetics
+    // Code below is used to help set up a working example of LocusZoom.js.
     
     // Determine if we're online, based on browser state or presence of an optional query parameter
     var online = !(typeof navigator != "undefined" && !navigator.onLine);
