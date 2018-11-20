@@ -1,6 +1,6 @@
 /** 
  * 
- * Connectors allow the Java code to communicate with the JavaScript code. * 
+ * Connectors allow the Java code and the JavaScript code to communicate with each other.
  *
  */
 

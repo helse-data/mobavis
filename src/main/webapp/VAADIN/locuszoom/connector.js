@@ -1,3 +1,8 @@
+/**
+ * 
+ * Connector function for LocusZoom.js.
+ * Connectors allow the Java code and the JavaScript code to communicate with each other.
+ */
 window.com_locuszoom_LocusZoom =
 	function() {
 		// Create the component
